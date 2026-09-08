@@ -1,0 +1,44 @@
+// Cliente HTTP del NAVEGADOR. Siempre le pega al proxy same-origin `/api/*`,
+// nunca al backend directo: el token vive en una cookie httpOnly y los Route
+// Handlers de src/app/api/** lo inyectan como `Authorization`. El JS nunca lo ve.
+
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+export async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`/api${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      credentials: "same-origin",
+    });
+  } catch {
+    throw new ApiError(0, "No se pudo conectar con el servidor.");
+  }
+
+  const raw = await res.text();
+  let data: unknown = null;
+  if (raw) {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      data = null;
+    }
+  }
+
+  if (!res.ok) {
+    const message = (data as { message?: string } | null)?.message ?? `Error ${res.status}`;
+    throw new ApiError(res.status, message);
+  }
+
+  return data as T;
+}

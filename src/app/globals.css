@@ -1,0 +1,27 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+/* Paleta de marca SIENEP sobre el theme "light" de daisyUI, tomada del prototipo (docs/prototipo.html) */
+[data-theme="light"] {
+  --color-primary: #0ea5e9; /* sky-500 */
+  --color-primary-content: #ffffff;
+  --color-base-100: #ffffff;
+  --color-base-200: #d6d3d1; /* stone-300 */
+  --color-base-300: #d6d3d1; /* stone-300 */
+  --color-base-content: #262626; /* neutral-800 */
+  --color-neutral: #262626; /* neutral-800 */
+  --color-neutral-content: #ffffff;
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Sin toggle de tema todavía: el sistema siempre corre en data-theme="light"
+   (ver layout.tsx), así que el body no debe reaccionar a prefers-color-scheme. */
+body {
+  background: var(--color-base-100);
+  color: var(--color-base-content);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
