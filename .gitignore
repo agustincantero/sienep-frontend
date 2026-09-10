@@ -43,12 +43,11 @@ yarn-error.log*
 !/docs/prototipo.html
 !/docs/wireframes.pdf
 
-# claude code: .agents/skills y .claude/skills SÍ se versionan (skill de daisyUI).
-# CLAUDE.md no: cada dev crea el suyo con `@AGENTS.md` (las reglas del equipo van
-# en AGENTS.md, que sí se versiona). Config y reglas personales tampoco.
+# claude code: solo se versiona skills/ (.agents/ y .claude/); el resto es personal.
 /CLAUDE.md
 CLAUDE.local.md
-.claude/settings.local.json
+.claude/*
+!.claude/skills/
 
 # vercel
 .vercel

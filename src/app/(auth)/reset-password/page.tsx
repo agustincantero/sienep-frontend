@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { RestablecerContraseniaForm } from "@/components/auth/RestablecerContraseniaForm";
+import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 
 export const metadata: Metadata = {
   title: "Restablecer contraseña · SIENEP",
@@ -7,11 +7,11 @@ export const metadata: Metadata = {
 
 // El token de recuperación llega como ?token= en el enlace del email.
 // Se lee acá (server) y se pasa como prop al form (client), sin useSearchParams.
-export default async function RestablecerContraseniaPage({
+export default async function ResetPasswordPage({
   searchParams,
 }: {
   searchParams: Promise<{ token?: string }>;
 }) {
   const { token } = await searchParams;
-  return <RestablecerContraseniaForm token={token ?? ""} />;
+  return <ResetPasswordForm token={token ?? ""} />;
 }

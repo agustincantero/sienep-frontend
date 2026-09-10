@@ -67,8 +67,8 @@ export function LoginForm() {
           />
         </label>
         {error ? (
-          <div role="alert" className="alert alert-error text-sm">
-            {error}
+          <div role="alert" className="alert alert-error alert-soft text-sm">
+            <span>{error}</span>
           </div>
         ) : null}
         <button
@@ -84,7 +84,7 @@ export function LoginForm() {
             ¿Olvidaste tu contraseña?
           </Link>
         </div>
-        <div className="divider text-sm text-base-content/60">o</div>
+        <div className="divider text-sm text-base-content/70">o</div>
         <GoogleLoginButton onSuccess={entrar} onError={setError} />
       </form>
     </AuthCard>

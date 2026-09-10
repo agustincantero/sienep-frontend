@@ -2,6 +2,8 @@
 // nunca al backend directo: el token vive en una cookie httpOnly y los Route
 // Handlers de src/app/api/** lo inyectan como `Authorization`. El JS nunca lo ve.
 
+import { shouldLogoutOn401 } from "./auth-paths";
+
 export class ApiError extends Error {
   readonly status: number;
 
@@ -10,6 +12,10 @@ export class ApiError extends Error {
     this.name = "ApiError";
     this.status = status;
   }
+}
+
+export function apiErrorMessage(err: unknown, fallback: string): string {
+  return err instanceof ApiError ? err.message : fallback;
 }
 
 export async function apiPost<T>(path: string, body: unknown): Promise<T> {
@@ -23,6 +29,15 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
     });
   } catch {
     throw new ApiError(0, "No se pudo conectar con el servidor.");
+  }
+
+  if (res.status === 401 && shouldLogoutOn401(path)) {
+    // La sesión murió (token vencido o invalidado). Recarga completa a propósito: tira toda la memoria del cliente (el usuario viejo en useSession(), estado de pantallas). El router de next/navigation no se puede usar acá (este archivo no es un componente) y además haría una navegación SPA que dejaría ese estado sucio.
+    if (typeof window !== "undefined") {
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- ver comentario de arriba
+      window.location.href = "/login";
+    }
+    throw new ApiError(401, "Tu sesión expiró. Volvé a iniciar sesión.");
   }
 
   const raw = await res.text();

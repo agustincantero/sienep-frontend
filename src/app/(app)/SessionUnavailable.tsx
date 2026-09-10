@@ -5,7 +5,7 @@ import Link from "next/link";
 // Fallback cuando no se puede resolver GET /auth/me por un problema del servidor
 // (backend caído, endpoint no desplegado). No es lo mismo que "no hay sesión"
 // (eso redirige a /login): acá no sabemos, así que ofrecemos reintentar.
-export function SesionNoDisponible() {
+export function SessionUnavailable() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-base-200">
       <div className="card bg-base-100 border border-base-300 shadow-sm w-full max-w-sm">

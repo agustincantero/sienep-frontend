@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import { ApiError } from "@/lib/api";
-import { loginConGoogle } from "@/lib/auth";
+import { loginWithGoogle } from "@/lib/auth";
 import { GoogleIcon } from "./GoogleIcon";
 
 // OAuth Client ID de Google (valor público; el mismo que verifica el backend).
@@ -64,7 +64,7 @@ export function GoogleLoginButton({ onSuccess, onError }: GoogleLoginButtonProps
     }
     setCargando(true);
     try {
-      await loginConGoogle(response.credential);
+      await loginWithGoogle(response.credential);
       cbRef.current.onSuccess();
     } catch (err) {
       cbRef.current.onError(

@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
-import { getUsuarioActual, type UsuarioAutenticado } from "@/lib/current-user";
+import { getCurrentUser, type AuthenticatedUser } from "@/lib/current-user";
 import { SessionProvider } from "@/lib/session-context";
-import { SesionNoDisponible } from "./SesionNoDisponible";
+import { SessionUnavailable } from "./SessionUnavailable";
 
 // El área autenticada depende de la sesión (cookie) en cada request: nunca se
 // prerenderiza. Declararlo evita que `next build` intente y loguee el
@@ -15,18 +15,18 @@ export const dynamic = "force-dynamic";
 //  - error real  -> aviso "no se pudo verificar" (backend caído / no desplegado)
 // Leer la cookie acá vuelve dinámico todo (app)/**.
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  let user: UsuarioAutenticado | null = null;
+  let user: AuthenticatedUser | null = null;
   let errorSesion = false;
 
   try {
-    user = await getUsuarioActual();
+    user = await getCurrentUser();
   } catch (err) {
-    // getUsuarioActual ya devuelve null en 401/403; acá caen fallos reales.
+    // getCurrentUser ya devuelve null en 401/403; acá caen fallos reales.
     console.error("[auth] no se pudo resolver GET /auth/me:", err);
     errorSesion = true;
   }
 
-  if (errorSesion) return <SesionNoDisponible />;
+  if (errorSesion) return <SessionUnavailable />;
   if (!user) redirect("/login");
 
   return (

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { OlvideContraseniaForm } from "@/components/auth/OlvideContraseniaForm";
+import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 
 export const metadata: Metadata = {
   title: "Recuperar contraseña · SIENEP",
 };
 
-export default function OlvideContraseniaPage() {
-  return <OlvideContraseniaForm />;
+export default function ForgotPasswordPage() {
+  return <ForgotPasswordForm />;
 }
