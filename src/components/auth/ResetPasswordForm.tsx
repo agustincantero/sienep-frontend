@@ -5,57 +5,12 @@ import Link from "next/link";
 import { apiErrorMessage, ApiError } from "@/lib/api";
 import { resetPassword } from "@/lib/auth";
 import { AuthCard } from "./AuthCard";
+import { PasswordInput } from "./PasswordInput";
 
 type ResetPasswordFormProps = {
   // Token de un solo uso que llega por email, leído de ?token= en la page.
   token: string;
 };
-
-function PasswordField({
-  id,
-  label,
-  value,
-  onValue,
-  error,
-  onClearError,
-  disabled,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  onValue: (v: string) => void;
-  error: string;
-  onClearError: () => void;
-  disabled: boolean;
-}) {
-  return (
-    <div>
-      <label className="floating-label">
-        <span>{label}</span>
-        <input
-          type="password"
-          required
-          autoComplete="new-password"
-          placeholder={label}
-          className={`input w-full${error ? " input-error" : ""}`}
-          value={value}
-          onChange={(e) => {
-            onValue(e.target.value);
-            if (error) onClearError();
-          }}
-          disabled={disabled}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? id : undefined}
-        />
-      </label>
-      {error ? (
-        <p id={id} className="mt-1 text-xs text-error">
-          {error}
-        </p>
-      ) : null}
-    </div>
-  );
-}
 
 // Paso 2 de la recuperación: el usuario elige la contraseña nueva.
 // POST /api/auth/restablecer-contrasenia con { token, contraseniaNueva }. El backend exige contraseniaNueva de 8 a 100 y responde 401 si el token está vencido, ya se usó o es inválido. El largo y la coincidencia se validan en JS y el mensaje va debajo del campo que falló (errores de campo); un 401 lleva al mismo panel de "enlace inválido" que cuando no hay token.
@@ -76,12 +31,14 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
     }
   }, [listo, enlaceInvalido]);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     setErrorForm("");
 
     let eNueva = "";
-    if (nueva.length < 8) eNueva = "Tiene que tener al menos 8 caracteres.";
+    // El backend valida @NotBlank además de @Size(8,100): una contraseña de solo espacios mide >= 8 pero igual la rechaza con 400. El largo se chequea sobre el string crudo (los espacios cuentan, igual que @Size).
+    if (!nueva.trim()) eNueva = "La contraseña no puede ser solo espacios.";
+    else if (nueva.length < 8) eNueva = "Tiene que tener al menos 8 caracteres.";
     else if (nueva.length > 100) eNueva = "No puede superar los 100 caracteres.";
     const eConfirmar = nueva === confirmar ? "" : "Las contraseñas no coinciden.";
 
@@ -149,22 +106,28 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
         </div>
       ) : null}
       <form onSubmit={handleSubmit} className="space-y-4">
-        <PasswordField
-          id="reset-nueva-error"
+        <PasswordInput
           label="Nueva contraseña"
+          autoComplete="new-password"
+          errorId="reset-nueva-error"
           value={nueva}
-          onValue={setNueva}
+          onChange={(v) => {
+            setNueva(v);
+            if (errorNueva) setErrorNueva("");
+          }}
           error={errorNueva}
-          onClearError={() => setErrorNueva("")}
           disabled={cargando}
         />
-        <PasswordField
-          id="reset-confirmar-error"
+        <PasswordInput
           label="Confirmar contraseña"
+          autoComplete="new-password"
+          errorId="reset-confirmar-error"
           value={confirmar}
-          onValue={setConfirmar}
+          onChange={(v) => {
+            setConfirmar(v);
+            if (errorConfirmar) setErrorConfirmar("");
+          }}
           error={errorConfirmar}
-          onClearError={() => setErrorConfirmar("")}
           disabled={cargando}
         />
         <button

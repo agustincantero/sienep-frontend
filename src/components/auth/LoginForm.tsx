@@ -7,11 +7,9 @@ import { ApiError } from "@/lib/api";
 import { login } from "@/lib/auth";
 import { AuthCard } from "./AuthCard";
 import { GoogleLoginButton } from "./GoogleLoginButton";
+import { PasswordInput } from "./PasswordInput";
 
-// Pantalla de login. Conectada a POST /api/auth/login y (vía GoogleLoginButton)
-// a POST /api/auth/google. Esos Route Handlers guardan el JWT en una cookie
-// httpOnly; acá no se maneja ningún token. Al entrar, se navega a /inicio
-// (el layout de (app) valida la sesión contra GET /auth/me).
+// Pantalla de login. Conectada a POST /api/auth/login y (vía GoogleLoginButton) a POST /api/auth/google. Esos Route Handlers guardan el JWT en una cookie httpOnly; acá no se maneja ningún token. Al entrar, se navega a /inicio (el layout de (app) valida la sesión contra GET /auth/me).
 export function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -24,7 +22,7 @@ export function LoginForm() {
     router.replace("/inicio");
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setCargando(true);
@@ -53,19 +51,13 @@ export function LoginForm() {
             disabled={cargando}
           />
         </label>
-        <label className="floating-label">
-          <span>Contraseña</span>
-          <input
-            type="password"
-            required
-            autoComplete="current-password"
-            placeholder="Contraseña"
-            className="input w-full"
-            value={contrasenia}
-            onChange={(e) => setContrasenia(e.target.value)}
-            disabled={cargando}
-          />
-        </label>
+        <PasswordInput
+          label="Contraseña"
+          autoComplete="current-password"
+          value={contrasenia}
+          onChange={setContrasenia}
+          disabled={cargando}
+        />
         {error ? (
           <div role="alert" className="alert alert-error alert-soft text-sm">
             <span>{error}</span>

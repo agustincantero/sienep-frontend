@@ -38,14 +38,13 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
-/* Foco de teclado visible y consistente (WCAG 2.4.7). daisyUI ya dibuja el outline al enfocar con `outline: 2px solid var(--input-color)`, pero pone --input-color = base-content (gris oscuro, poco visible); lo pasamos a primary para que el anillo sea celeste, igual que el del wrapper del botón de Google. `input.input` gana en especificidad a `.input:focus` de daisyUI. `:not(.input-error)` deja que un campo con error siga rojo aunque tenga foco. */
-input.input:focus:not(.input-error),
-input.input:focus-within:not(.input-error) {
+/* Foco de teclado visible y consistente (WCAG 2.4.7). daisyUI ya dibuja el outline al enfocar con `outline: 2px solid var(--input-color)`, pero pone --input-color = base-content (gris oscuro, poco visible); lo pasamos a primary para que el anillo sea celeste, igual que el del wrapper del botón de Google. Se apunta a `.input:focus-within` (y no `input.input:focus`) para cubrir también el patrón con `<div class="input">` de wrapper y control anidado, ej. PasswordInput; los tres selectores de clase ganan en especificidad a `.input:focus-within` de daisyUI. `:not(.input-error)` deja que un campo con error siga rojo aunque tenga foco. */
+.input:focus-within:not(.input-error) {
   --input-color: var(--color-primary);
 }
 
-/* En un floating-label, el placeholder es la etiqueta visible mientras el campo está vacío y sin foco. daisyUI lo pinta al 50% (contraste ~3.9:1, por debajo de AA); lo subimos. Se excluye :focus-within para no pisar la regla de daisyUI que oculta el placeholder al enfocar (y deja subir el <span>). */
-.floating-label:not(:focus-within) input.input::placeholder {
+/* En un floating-label, el placeholder es la etiqueta visible mientras el campo está vacío y sin foco. daisyUI lo pinta al 50% (contraste ~3.9:1, por debajo de AA); lo subimos. Se excluye :focus-within para no pisar la regla de daisyUI que oculta el placeholder al enfocar (y deja subir el <span>). Cubre el input con `.input` propio y el anidado dentro de un wrapper `.input`. */
+.floating-label:not(:focus-within) :is(input.input, .input input)::placeholder {
   color: var(--color-base-content);
   opacity: 0.7;
 }

@@ -1,13 +1,9 @@
 import Link from "next/link";
 import { Footer } from "@/components/layout/Footer";
 
-// 404 de toda la app: se muestra para cualquier URL que no matchee una ruta, y
-// cuando algún segmento llama notFound(). Renderiza dentro del root layout, así
-// que hereda data-theme, fuentes y daisyUI. Mismo chrome que las pantallas de
-// auth (ver src/app/(auth)/layout.tsx).
+// 404 de toda la app: se muestra para cualquier URL que no matchee una ruta, y cuando algún segmento llama notFound(). Renderiza dentro del root layout, así que hereda data-theme, fuentes y daisyUI. Mismo chrome que las pantallas de auth (ver src/app/(auth)/layout.tsx).
 //
-// El botón siempre va a /inicio: si hay sesión, es el dashboard; si no, el
-// layout de (app) redirige solo a /login.
+// El botón siempre va a /inicio: si hay sesión, es el dashboard; si no, el layout de (app) redirige solo a /login.
 export default function NotFound() {
   return (
     <div className="min-h-screen flex flex-col bg-primary">
