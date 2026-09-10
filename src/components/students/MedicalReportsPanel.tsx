@@ -60,13 +60,16 @@ export function MedicalReportsPanel({ idEstudiante }: { idEstudiante: number }) 
       ? "Hasta 50 caracteres: letras, números, espacios, guion y guion bajo."
       : "";
     // El accept="" del input solo filtra el selector de archivos, no impide
-    // elegir "todos los archivos" y adjuntar cualquier cosa — y no valida
-    // tamaño en absoluto. Se corta acá antes de mandar 5MB+ al servidor.
+    // elegir "todos los archivos" y adjuntar cualquier cosa — ni valida tipo
+    // ni tamaño. Se corta acá antes de mandar algo inválido/pesado al servidor.
+    const extension = archivo ? archivo.name.slice(archivo.name.lastIndexOf(".")).toLowerCase() : "";
     const eArchivo = !archivo
       ? "Elegí un archivo."
-      : archivo.size > MAX_TAMANIO_BYTES
-        ? "El archivo no puede superar los 5 MB."
-        : "";
+      : !EXTENSIONES_PERMITIDAS.includes(extension)
+        ? `Solo se aceptan archivos ${EXTENSIONES_PERMITIDAS.join(", ")}.`
+        : archivo.size > MAX_TAMANIO_BYTES
+          ? "El archivo no puede superar los 5 MB."
+          : "";
     setErrorNombre(eNombre);
     setErrorArchivo(eArchivo);
     if (eNombre || eArchivo) return;
