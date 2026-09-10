@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { logout } from "@/lib/auth";
 import { useSession } from "@/lib/session-context";
 import { TopBar } from "./TopBar";
@@ -10,7 +9,6 @@ import { TopBar } from "./TopBar";
 // solo aparece dentro de las secciones (ver src/app/(app)/(secciones)/layout.tsx),
 // como el prototipo — /inicio no tiene sidebar.
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const user = useSession();
   const [saliendo, setSaliendo] = useState(false);
 
@@ -20,8 +18,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     try {
       await logout();
     } finally {
-      router.replace("/login");
-      router.refresh();
+      // Recarga completa (no el router SPA) para tirar todo el estado en memoria, mismo criterio que el 401 de sesión muerta en src/lib/api.ts.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- ver comentario de arriba
+      window.location.href = "/login";
     }
   }
 

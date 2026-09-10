@@ -43,11 +43,11 @@ yarn-error.log*
 !/docs/prototipo.html
 !/docs/wireframes.pdf
 
-# claude code: solo se versiona skills/ (.agents/ y .claude/); el resto es personal.
+# claude code / agentes: nada se versiona, skills incluidas (viven local en cada máquina).
 /CLAUDE.md
 CLAUDE.local.md
-.claude/*
-!.claude/skills/
+.claude/
+.agents/
 
 # vercel
 .vercel
