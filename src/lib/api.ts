@@ -18,15 +18,12 @@ export function apiErrorMessage(err: unknown, fallback: string): string {
   return err instanceof ApiError ? err.message : fallback;
 }
 
-export async function apiPost<T>(path: string, body: unknown): Promise<T> {
+// Núcleo compartido por todos los verbos: maneja la conexión caída, la sesión
+// vencida (401 fuera de las rutas públicas de auth) y el parseo de error.
+async function request<T>(path: string, init: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`/api${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      credentials: "same-origin",
-    });
+    res = await fetch(`/api${path}`, { ...init, credentials: "same-origin" });
   } catch {
     throw new ApiError(0, "No se pudo conectar con el servidor.");
   }
@@ -56,4 +53,50 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   }
 
   return data as T;
+}
+
+function jsonInit(method: string, body: unknown): RequestInit {
+  return { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
+}
+
+// Arma el query string salteando valores vacíos/undefined, para no mandar
+// `?estado=` o `?grupo=` sueltos cuando un filtro no está aplicado.
+function withQuery(path: string, params?: Record<string, string | number | undefined>): string {
+  if (!params) return path;
+  const usp = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== "") usp.set(key, String(value));
+  }
+  const qs = usp.toString();
+  return qs ? `${path}?${qs}` : path;
+}
+
+export function apiGet<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {
+  return request<T>(withQuery(path, params), { method: "GET" });
+}
+
+export function apiPost<T>(path: string, body: unknown): Promise<T> {
+  return request<T>(path, jsonInit("POST", body));
+}
+
+export function apiPut<T>(path: string, body: unknown): Promise<T> {
+  return request<T>(path, jsonInit("PUT", body));
+}
+
+export function apiPatch<T>(path: string, body?: unknown): Promise<T> {
+  return request<T>(path, body === undefined ? { method: "PATCH" } : jsonInit("PATCH", body));
+}
+
+export function apiDelete<T = void>(path: string): Promise<T> {
+  return request<T>(path, { method: "DELETE" });
+}
+
+// Sin Content-Type manual: el navegador arma el boundary de multipart solo
+// cuando el body es un FormData.
+export function apiPostForm<T>(path: string, formData: FormData): Promise<T> {
+  return request<T>(path, { method: "POST", body: formData });
+}
+
+export function apiPutForm<T>(path: string, formData: FormData): Promise<T> {
+  return request<T>(path, { method: "PUT", body: formData });
 }
