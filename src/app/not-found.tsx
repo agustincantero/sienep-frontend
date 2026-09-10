@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Footer } from "@/components/layout/Footer";
 
 // 404 de toda la app: se muestra para cualquier URL que no matchee una ruta, y
 // cuando algún segmento llama notFound(). Renderiza dentro del root layout, así
@@ -26,11 +27,7 @@ export default function NotFound() {
           </div>
         </div>
       </main>
-      <footer className="py-4 bg-neutral text-neutral-content mt-auto">
-        <div className="w-full px-4 text-sm text-neutral-content/60">
-          Copyright © SIENEP 2026
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
