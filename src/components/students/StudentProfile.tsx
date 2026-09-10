@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
+import { formatFecha } from "@/lib/format";
 import {
   describeEstado,
   getStudent,
@@ -316,7 +317,7 @@ function DatosGenerales({ estudiante }: { estudiante: Student }) {
     <div>
       <Dato label="Documento" value={`${estudiante.documento} (${estudiante.paisDocumento})`} />
       <Dato label="Email" value={estudiante.email} />
-      <Dato label="Fecha de nacimiento" value={estudiante.fechaNacimiento} />
+      <Dato label="Fecha de nacimiento" value={formatFecha(estudiante.fechaNacimiento)} />
       <Dato label="Teléfono" value={estudiante.telefonos.join(", ")} />
       <Dato label="Dirección" value={direccion} />
       <Dato label="Grupos" value={estudiante.grupos.join(", ")} />

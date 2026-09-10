@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { cloneElement, isValidElement, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, X } from "lucide-react";
 import { apiErrorMessage, ApiError } from "@/lib/api";
@@ -26,9 +26,12 @@ const PAISES = [
   { codigo: "PER", nombre: "Perú" },
 ];
 
-const NOMBRE_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9 ]+$/;
+// Mismo patrón para nombre/apellido/ciudad/departamento/calle/sistemaSalud —
+// EstudianteRequestDTO/UpdateDTO usan exactamente este regex en los seis.
+const TEXTO_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9 ]+$/;
 const DOCUMENTO_REGEX = /^[A-Za-z0-9]+$/;
 const TELEFONO_REGEX = /^[0-9]{8,12}$/;
+const TEXTO_INVALIDO_MSG = "Solo se permiten letras, números y espacios.";
 
 type FormState = {
   nombre: string;
@@ -95,6 +98,7 @@ export function StudentForm(props: StudentFormProps) {
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const errorGeneralRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     listGroups()
@@ -112,6 +116,12 @@ export function StudentForm(props: StudentFormProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo debe correr cuando el catálogo de grupos llega
   }, [grupos]);
 
+  // El banner de error general puede quedar fuera de la vista si el usuario
+  // ya scrolleó hacia una sección más abajo del form (5 fieldsets).
+  useEffect(() => {
+    if (errorGeneral) errorGeneralRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [errorGeneral]);
+
   function campo<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
     if (errores[key]) setErrores((e) => ({ ...e, [key]: "" }));
@@ -127,6 +137,8 @@ export function StudentForm(props: StudentFormProps) {
 
   function cambiarTelefono(idx: number, value: string) {
     setForm((f) => ({ ...f, telefonos: f.telefonos.map((t, i) => (i === idx ? value : t)) }));
+    const key = `telefono-${idx}`;
+    if (errores[key]) setErrores((e) => ({ ...e, [key]: "" }));
   }
 
   function alternarGrupo(idGrupo: number) {
@@ -138,12 +150,15 @@ export function StudentForm(props: StudentFormProps) {
     }));
   }
 
+  // El orden de los checks importa: define qué campo se enfoca cuando falla
+  // la validación (el primero insertado acá), así que sigue el mismo orden
+  // en que los campos aparecen en la pantalla.
   function validar(): Record<string, string> {
     const e: Record<string, string> = {};
-    if (!form.nombre.trim() || !NOMBRE_REGEX.test(form.nombre)) {
+    if (!form.nombre.trim() || !TEXTO_REGEX.test(form.nombre)) {
       e.nombre = "Ingresá un nombre válido (solo letras, números y espacios).";
     }
-    if (!form.apellido.trim() || !NOMBRE_REGEX.test(form.apellido)) {
+    if (!form.apellido.trim() || !TEXTO_REGEX.test(form.apellido)) {
       e.apellido = "Ingresá un apellido válido (solo letras, números y espacios).";
     }
     if (!esEdicion) {
@@ -163,11 +178,28 @@ export function StudentForm(props: StudentFormProps) {
     } else if (form.fechaNacimiento < FECHA_MIN) {
       e.fechaNacimiento = "La fecha de nacimiento no puede ser mayor a 100 años.";
     }
-    for (const tel of form.telefonos) {
-      if (tel.trim() && !TELEFONO_REGEX.test(tel.trim())) {
-        e.telefonos = "Los teléfonos deben tener entre 8 y 12 dígitos numéricos.";
-        break;
+    if (form.calle.trim() && !TEXTO_REGEX.test(form.calle)) {
+      e.calle = TEXTO_INVALIDO_MSG;
+    }
+    if (form.nroPuerta) {
+      const n = Number(form.nroPuerta);
+      if (!Number.isInteger(n) || n < 1 || n > 9999) {
+        e.nroPuerta = "Tiene que ser un número entero entre 1 y 9999.";
       }
+    }
+    if (form.ciudad.trim() && !TEXTO_REGEX.test(form.ciudad)) {
+      e.ciudad = TEXTO_INVALIDO_MSG;
+    }
+    if (form.departamento.trim() && !TEXTO_REGEX.test(form.departamento)) {
+      e.departamento = TEXTO_INVALIDO_MSG;
+    }
+    form.telefonos.forEach((tel, idx) => {
+      if (tel.trim() && !TELEFONO_REGEX.test(tel.trim())) {
+        e[`telefono-${idx}`] = "Tiene que tener entre 8 y 12 dígitos numéricos.";
+      }
+    });
+    if (form.sistemaSalud.trim() && !TEXTO_REGEX.test(form.sistemaSalud)) {
+      e.sistemaSalud = TEXTO_INVALIDO_MSG;
     }
     return e;
   }
@@ -178,7 +210,12 @@ export function StudentForm(props: StudentFormProps) {
 
     const erroresValidacion = validar();
     setErrores(erroresValidacion);
-    if (Object.keys(erroresValidacion).some((k) => erroresValidacion[k])) return;
+    const primerCampoError = Object.keys(erroresValidacion).find((k) => erroresValidacion[k]);
+    if (primerCampoError) {
+      // .focus() ya hace scroll-into-view en los navegadores modernos.
+      document.getElementById(primerCampoError)?.focus();
+      return;
+    }
 
     const telefonos = form.telefonos.map((t) => t.trim()).filter(Boolean);
     const datosComunes = {
@@ -253,16 +290,20 @@ export function StudentForm(props: StudentFormProps) {
         ) : null}
 
         {errorGeneral ? (
-          <div role="alert" className="alert alert-error alert-soft text-sm mb-4">
+          <div ref={errorGeneralRef} role="alert" className="alert alert-error alert-soft text-sm mb-4">
             <span>{errorGeneral}</span>
           </div>
         ) : null}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {/* noValidate: sin esto, la validación nativa del navegador (required,
+            min/max) intercepta el submit ANTES de que corra validar() — el
+            foco salta al campo inválido pero nunca se ve el mensaje propio
+            ni queda enganchado a aria-describedby. Todo pasa por validar(). */}
+        <form onSubmit={handleSubmit} noValidate className="space-y-6">
           <fieldset className="fieldset space-y-3 p-0 border-0">
             <SeccionLegend>Datos personales</SeccionLegend>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Nombre" error={errores.nombre}>
+              <Field label="Nombre" fieldKey="nombre" error={errores.nombre}>
                 <input
                   className={`input w-full${errores.nombre ? " input-error" : ""}`}
                   placeholder="Nombre"
@@ -273,7 +314,7 @@ export function StudentForm(props: StudentFormProps) {
                   required
                 />
               </Field>
-              <Field label="Apellido" error={errores.apellido}>
+              <Field label="Apellido" fieldKey="apellido" error={errores.apellido}>
                 <input
                   className={`input w-full${errores.apellido ? " input-error" : ""}`}
                   placeholder="Apellido"
@@ -287,7 +328,7 @@ export function StudentForm(props: StudentFormProps) {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Field label="Documento" error={errores.documento}>
+              <Field label="Documento" fieldKey="documento" error={errores.documento}>
                 <input
                   className={`input w-full${errores.documento ? " input-error" : ""}`}
                   placeholder="Documento"
@@ -298,12 +339,8 @@ export function StudentForm(props: StudentFormProps) {
                   required
                 />
               </Field>
-              <div>
-                <label htmlFor="pais-documento" className="text-sm text-base-content/70 mb-1 block">
-                  País del documento
-                </label>
+              <Field label="País del documento" fieldKey="paisDocumento">
                 <select
-                  id="pais-documento"
                   className="select w-full"
                   value={form.paisDocumento}
                   onChange={(e) => campo("paisDocumento", e.target.value)}
@@ -315,8 +352,8 @@ export function StudentForm(props: StudentFormProps) {
                     </option>
                   ))}
                 </select>
-              </div>
-              <Field label="Fecha de nacimiento" error={errores.fechaNacimiento}>
+              </Field>
+              <Field label="Fecha de nacimiento" fieldKey="fechaNacimiento" error={errores.fechaNacimiento}>
                 <input
                   type="date"
                   className={`input w-full${errores.fechaNacimiento ? " input-error" : ""}`}
@@ -330,7 +367,7 @@ export function StudentForm(props: StudentFormProps) {
               </Field>
             </div>
 
-            <Field label="Email" error={errores.email}>
+            <Field label="Email" fieldKey="email" error={errores.email}>
               <input
                 type="email"
                 className={`input w-full${errores.email ? " input-error" : ""}`}
@@ -347,9 +384,9 @@ export function StudentForm(props: StudentFormProps) {
             <SeccionLegend>Dirección</SeccionLegend>
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <div className="sm:col-span-2">
-                <Field label="Calle">
+                <Field label="Calle" fieldKey="calle" error={errores.calle}>
                   <input
-                    className="input w-full"
+                    className={`input w-full${errores.calle ? " input-error" : ""}`}
                     placeholder="Calle"
                     value={form.calle}
                     maxLength={160}
@@ -358,21 +395,22 @@ export function StudentForm(props: StudentFormProps) {
                   />
                 </Field>
               </div>
-              <Field label="Número">
+              <Field label="Número" fieldKey="nroPuerta" error={errores.nroPuerta}>
                 <input
                   type="number"
-                  className="input w-full"
+                  className={`input w-full${errores.nroPuerta ? " input-error" : ""}`}
                   placeholder="Número"
                   value={form.nroPuerta}
                   min={1}
                   max={9999}
+                  step={1}
                   onChange={(e) => campo("nroPuerta", e.target.value)}
                   disabled={guardando}
                 />
               </Field>
-              <Field label="Ciudad">
+              <Field label="Ciudad" fieldKey="ciudad" error={errores.ciudad}>
                 <input
-                  className="input w-full"
+                  className={`input w-full${errores.ciudad ? " input-error" : ""}`}
                   placeholder="Ciudad"
                   value={form.ciudad}
                   maxLength={50}
@@ -381,9 +419,9 @@ export function StudentForm(props: StudentFormProps) {
                 />
               </Field>
             </div>
-            <Field label="Departamento">
+            <Field label="Departamento" fieldKey="departamento" error={errores.departamento}>
               <input
-                className="input w-full sm:w-1/2"
+                className={`input w-full sm:w-1/2${errores.departamento ? " input-error" : ""}`}
                 placeholder="Departamento"
                 value={form.departamento}
                 maxLength={20}
@@ -395,32 +433,44 @@ export function StudentForm(props: StudentFormProps) {
 
           <fieldset className="fieldset space-y-2 p-0 border-0">
             <SeccionLegend>Teléfonos</SeccionLegend>
-            {errores.telefonos ? (
-              <p className="text-xs text-error">{errores.telefonos}</p>
-            ) : null}
-            {form.telefonos.map((tel, idx) => (
-              <div key={idx} className="flex gap-2">
-                <input
-                  className="input w-full max-w-xs"
-                  placeholder="099123456"
-                  value={tel}
-                  maxLength={12}
-                  onChange={(e) => cambiarTelefono(idx, e.target.value)}
-                  disabled={guardando}
-                />
-                {form.telefonos.length > 1 ? (
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => quitarTelefono(idx)}
-                    disabled={guardando}
-                    aria-label="Quitar teléfono"
-                  >
-                    <X size={14} aria-hidden />
-                  </button>
-                ) : null}
-              </div>
-            ))}
+            {form.telefonos.map((tel, idx) => {
+              const key = `telefono-${idx}`;
+              const errorId = `${key}-error`;
+              const errorTel = errores[key];
+              return (
+                <div key={idx}>
+                  <div className="flex gap-2">
+                    <input
+                      id={key}
+                      className={`input w-full max-w-xs${errorTel ? " input-error" : ""}`}
+                      placeholder="099123456"
+                      value={tel}
+                      maxLength={12}
+                      onChange={(e) => cambiarTelefono(idx, e.target.value)}
+                      disabled={guardando}
+                      aria-invalid={errorTel ? true : undefined}
+                      aria-describedby={errorTel ? errorId : undefined}
+                    />
+                    {form.telefonos.length > 1 ? (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => quitarTelefono(idx)}
+                        disabled={guardando}
+                        aria-label="Quitar teléfono"
+                      >
+                        <X size={14} aria-hidden />
+                      </button>
+                    ) : null}
+                  </div>
+                  {errorTel ? (
+                    <p id={errorId} className="mt-1 text-xs text-error">
+                      {errorTel}
+                    </p>
+                  ) : null}
+                </div>
+              );
+            })}
             <button
               type="button"
               className="btn btn-link btn-sm pl-0 gap-1"
@@ -459,7 +509,7 @@ export function StudentForm(props: StudentFormProps) {
             <div role="note" className="alert alert-soft text-sm">
               <span>Esta información solo la ven funcionarios con el permiso VER_BLOQUE_CONFIDENCIAL.</span>
             </div>
-            <Field label="Información de salud">
+            <Field label="Información de salud" fieldKey="informacionSalud">
               <textarea
                 className="textarea w-full"
                 placeholder="Información de salud"
@@ -469,7 +519,7 @@ export function StudentForm(props: StudentFormProps) {
                 disabled={guardando}
               />
             </Field>
-            <Field label="Motivo de derivación">
+            <Field label="Motivo de derivación" fieldKey="motivoDerivacion">
               <textarea
                 className="textarea w-full"
                 placeholder="Motivo de derivación"
@@ -479,9 +529,9 @@ export function StudentForm(props: StudentFormProps) {
                 disabled={guardando}
               />
             </Field>
-            <Field label="Sistema de salud">
+            <Field label="Sistema de salud" fieldKey="sistemaSalud" error={errores.sistemaSalud}>
               <input
-                className="input w-full"
+                className={`input w-full${errores.sistemaSalud ? " input-error" : ""}`}
                 placeholder="Sistema de salud"
                 value={form.sistemaSalud}
                 maxLength={80}
@@ -512,25 +562,42 @@ export function StudentForm(props: StudentFormProps) {
 }
 
 // floating-label de daisyUI 5: el input va PRIMERO (con placeholder propio),
-// el <span> con la etiqueta después — así es como la librería detecta cuándo
-// "flotar" la etiqueta, y así es como engancha la regla de contraste de
-// placeholder en globals.css (input.input::placeholder).
+// el <span> con la etiqueta después. `fieldKey` se usa como id del control
+// (así handleSubmit puede enfocar el primer campo inválido con
+// document.getElementById) y arma el id del <p> de error para
+// aria-describedby — un lector de pantalla que tabula a un campo inválido
+// necesita esa asociación, no alcanza con el color rojo.
 function Field({
   label,
   error,
+  fieldKey,
   children,
 }: {
   label: string;
   error?: string;
-  children: React.ReactNode;
+  fieldKey: string;
+  children: React.ReactElement;
 }) {
+  const errorId = `${fieldKey}-error`;
+  const control = isValidElement(children)
+    ? cloneElement(children as React.ReactElement<Record<string, unknown>>, {
+        id: fieldKey,
+        "aria-invalid": error ? true : undefined,
+        "aria-describedby": error ? errorId : undefined,
+      })
+    : children;
+
   return (
     <div>
       <label className="floating-label">
-        {children}
+        {control}
         <span>{label}</span>
       </label>
-      {error ? <p className="mt-1 text-xs text-error">{error}</p> : null}
+      {error ? (
+        <p id={errorId} className="mt-1 text-xs text-error">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
