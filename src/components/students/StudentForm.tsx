@@ -212,9 +212,11 @@ export function StudentForm(props: StudentFormProps) {
       }
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
-        // El backend no distingue en el mensaje si duplicó documento o email —
-        // marcamos ambos campos para que el usuario revise cuál corresponde.
-        setErrores((e) => ({ ...e, documento: err.message, email: err.message }));
+        // EstudianteService.crear() tira dos 409 distintos según el campo
+        // duplicado ("...ese documento." / "...ese email.") — se detecta por
+        // el texto para marcar el error solo en el campo que corresponde.
+        const campo = err.message.toLowerCase().includes("documento") ? "documento" : "email";
+        setErrores((e) => ({ ...e, [campo]: err.message }));
       } else {
         setErrorGeneral(apiErrorMessage(err, "No se pudo guardar el estudiante. Probá de nuevo."));
       }
