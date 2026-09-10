@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import {
   describeEstado,
@@ -11,12 +12,33 @@ import {
   type Student,
 } from "@/lib/students";
 import { useSession } from "@/lib/session-context";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { MedicalReportsPanel } from "./MedicalReportsPanel";
 
 type Tab = "datos" | "salud" | "instancias" | "informes";
 
 function iniciales(nombre: string, apellido: string): string {
   return `${nombre.charAt(0)}${apellido.charAt(0)}`.toUpperCase();
+}
+
+// Un solo verbo por estado, sostenido en el botón, la confirmación y el
+// mensaje de éxito — antes el botón decía una cosa, el confirm otra y el
+// toast una tercera.
+function accionPassword(estudiante: Student) {
+  if (estudiante.estado === "PENDIENTE_DE_ACTIVACION") {
+    return {
+      boton: "Reenviar contraseña",
+      confirmTitulo: "Reenviar contraseña",
+      confirmMensaje: `Se va a generar una contraseña nueva y reenviarla por email a ${estudiante.nombre} ${estudiante.apellido}.`,
+      exito: "Contraseña reenviada por email.",
+    };
+  }
+  return {
+    boton: "Restablecer contraseña",
+    confirmTitulo: "Restablecer contraseña",
+    confirmMensaje: `Esto invalida la contraseña actual de ${estudiante.nombre} ${estudiante.apellido} y le manda una nueva por email.`,
+    exito: "Contraseña restablecida y enviada por email.",
+  };
 }
 
 export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
@@ -36,6 +58,7 @@ export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
   const [aviso, setAviso] = useState("");
   const [exito, setExito] = useState("");
   const [reenviando, setReenviando] = useState(false);
+  const [confirmandoPassword, setConfirmandoPassword] = useState(false);
   const inputFotoRef = useRef<HTMLInputElement>(null);
 
   // El aviso de "no se pudo enviar el email" viaja como query param desde
@@ -81,21 +104,14 @@ export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
     }
   }
 
-  async function handleReenviarPassword() {
-    const esPendiente = estudiante?.estado === "PENDIENTE_DE_ACTIVACION";
-    const confirmado = window.confirm(
-      esPendiente
-        ? "Se va a generar una contraseña nueva y reenviar el email de bienvenida. ¿Continuar?"
-        : "Esto invalida la contraseña actual del estudiante y le manda una nueva por email. ¿Continuar?",
-    );
-    if (!confirmado) return;
-
+  async function confirmarReenviarPassword() {
+    setConfirmandoPassword(false);
     setReenviando(true);
     setError("");
     setExito("");
     try {
       await resendStudentPassword(idEstudiante);
-      setExito("Se generó una contraseña nueva y se envió por email.");
+      setExito(estudiante ? accionPassword(estudiante).exito : "Contraseña enviada por email.");
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo enviar el email. Probá de nuevo."));
     } finally {
@@ -114,9 +130,10 @@ export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
   if (errorCarga || !estudiante) {
     return (
       <div className="grow overflow-auto">
-        <div className="max-w-[1100px] mx-auto w-full px-4 py-5">
-          <Link href="/estudiantes" className="btn btn-ghost mb-3 gap-1">
-            ← Volver a estudiantes
+        <div className="max-w-[980px] mx-auto w-full px-4 py-5">
+          <Link href="/estudiantes" className="btn btn-link no-underline mb-3 gap-1">
+            <ArrowLeft size={16} aria-hidden />
+            Volver a estudiantes
           </Link>
           <div role="alert" className="alert alert-error alert-soft text-sm">
             <span>{errorCarga || "Estudiante no encontrado."}</span>
@@ -130,9 +147,10 @@ export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
 
   return (
     <div className="grow overflow-auto">
-      <div className="max-w-[1100px] mx-auto w-full px-4 py-5">
-        <Link href="/estudiantes" className="btn btn-ghost mb-3 gap-1">
-          ← Volver a estudiantes
+      <div className="max-w-[980px] mx-auto w-full px-4 py-5">
+        <Link href="/estudiantes" className="btn btn-link no-underline mb-3 gap-1">
+          <ArrowLeft size={16} aria-hidden />
+          Volver a estudiantes
         </Link>
 
         {aviso ? (
@@ -196,11 +214,11 @@ export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
                 <button
                   type="button"
                   className="btn btn-outline btn-sm"
-                  onClick={handleReenviarPassword}
+                  onClick={() => setConfirmandoPassword(true)}
                   disabled={reenviando}
                 >
                   {reenviando ? <span className="loading loading-spinner loading-xs" /> : null}
-                  {estudiante.estado === "PENDIENTE_DE_ACTIVACION" ? "Reenviar contraseña" : "Restablecer contraseña"}
+                  {accionPassword(estudiante).boton}
                 </button>
                 <Link href={`/estudiantes/${idEstudiante}/editar`} className="btn btn-primary btn-sm">
                   Editar
@@ -263,6 +281,15 @@ export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
           <MedicalReportsPanel idEstudiante={idEstudiante} />
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmandoPassword}
+        title={accionPassword(estudiante).confirmTitulo}
+        message={accionPassword(estudiante).confirmMensaje}
+        confirmLabel={accionPassword(estudiante).boton}
+        onConfirm={confirmarReenviarPassword}
+        onCancel={() => setConfirmandoPassword(false)}
+      />
     </div>
   );
 }

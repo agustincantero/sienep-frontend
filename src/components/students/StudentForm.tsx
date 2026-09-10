@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, Plus, X } from "lucide-react";
 import { apiErrorMessage, ApiError } from "@/lib/api";
 import { isValidUruguayanCi } from "@/lib/document-validation";
 import { listGroups, type Group } from "@/lib/groups";
@@ -71,6 +72,13 @@ function estadoInicial(estudiante?: Student): FormState {
 const HOY = new Date();
 const FECHA_MAX = new Date(HOY.getFullYear() - 18, HOY.getMonth(), HOY.getDate()).toISOString().slice(0, 10);
 const FECHA_MIN = new Date(HOY.getFullYear() - 100, HOY.getMonth(), HOY.getDate()).toISOString().slice(0, 10);
+
+// Encabezado de sección del form: sentence case con peso real — el estilo
+// tracked-out en mayúscula queda reservado para rótulos secundarios como el
+// del Sidebar, no para cinco títulos apilados en la misma pantalla.
+function SeccionLegend({ children }: { children: React.ReactNode }) {
+  return <legend className="fieldset-legend text-sm font-semibold text-base-content mb-1">{children}</legend>;
+}
 
 type StudentFormProps =
   | { mode: "crear" }
@@ -230,10 +238,11 @@ export function StudentForm(props: StudentFormProps) {
       <div className="max-w-[720px] mx-auto w-full px-4 py-5">
         <button
           type="button"
-          className="btn btn-link btn-sm pl-0 no-underline mb-2"
+          className="btn btn-link btn-sm pl-0 no-underline mb-2 gap-1"
           onClick={() => router.back()}
         >
-          ← Cancelar
+          <ArrowLeft size={14} aria-hidden />
+          Cancelar
         </button>
 
         <h1 className="text-xl font-bold mb-1">{esEdicion ? "Editar estudiante" : "Nuevo estudiante"}</h1>
@@ -250,14 +259,13 @@ export function StudentForm(props: StudentFormProps) {
         ) : null}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <fieldset className="space-y-3">
-            <legend className="text-xs uppercase text-base-content/60 tracking-wide mb-1">
-              Datos personales
-            </legend>
+          <fieldset className="fieldset space-y-3 p-0 border-0">
+            <SeccionLegend>Datos personales</SeccionLegend>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Nombre" error={errores.nombre}>
                 <input
                   className={`input w-full${errores.nombre ? " input-error" : ""}`}
+                  placeholder="Nombre"
                   value={form.nombre}
                   maxLength={30}
                   onChange={(e) => campo("nombre", e.target.value)}
@@ -268,6 +276,7 @@ export function StudentForm(props: StudentFormProps) {
               <Field label="Apellido" error={errores.apellido}>
                 <input
                   className={`input w-full${errores.apellido ? " input-error" : ""}`}
+                  placeholder="Apellido"
                   value={form.apellido}
                   maxLength={30}
                   onChange={(e) => campo("apellido", e.target.value)}
@@ -281,6 +290,7 @@ export function StudentForm(props: StudentFormProps) {
               <Field label="Documento" error={errores.documento}>
                 <input
                   className={`input w-full${errores.documento ? " input-error" : ""}`}
+                  placeholder="Documento"
                   value={form.documento}
                   maxLength={12}
                   onChange={(e) => campo("documento", e.target.value)}
@@ -288,8 +298,12 @@ export function StudentForm(props: StudentFormProps) {
                   required
                 />
               </Field>
-              <Field label="País del documento">
+              <div>
+                <label htmlFor="pais-documento" className="text-sm text-base-content/70 mb-1 block">
+                  País del documento
+                </label>
                 <select
+                  id="pais-documento"
                   className="select w-full"
                   value={form.paisDocumento}
                   onChange={(e) => campo("paisDocumento", e.target.value)}
@@ -301,7 +315,7 @@ export function StudentForm(props: StudentFormProps) {
                     </option>
                   ))}
                 </select>
-              </Field>
+              </div>
               <Field label="Fecha de nacimiento" error={errores.fechaNacimiento}>
                 <input
                   type="date"
@@ -320,6 +334,7 @@ export function StudentForm(props: StudentFormProps) {
               <input
                 type="email"
                 className={`input w-full${errores.email ? " input-error" : ""}`}
+                placeholder="Email"
                 value={form.email}
                 onChange={(e) => campo("email", e.target.value)}
                 disabled={guardando}
@@ -328,13 +343,14 @@ export function StudentForm(props: StudentFormProps) {
             </Field>
           </fieldset>
 
-          <fieldset className="space-y-3">
-            <legend className="text-xs uppercase text-base-content/60 tracking-wide mb-1">Dirección</legend>
+          <fieldset className="fieldset space-y-3 p-0 border-0">
+            <SeccionLegend>Dirección</SeccionLegend>
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <div className="sm:col-span-2">
                 <Field label="Calle">
                   <input
                     className="input w-full"
+                    placeholder="Calle"
                     value={form.calle}
                     maxLength={160}
                     onChange={(e) => campo("calle", e.target.value)}
@@ -346,6 +362,7 @@ export function StudentForm(props: StudentFormProps) {
                 <input
                   type="number"
                   className="input w-full"
+                  placeholder="Número"
                   value={form.nroPuerta}
                   min={1}
                   max={9999}
@@ -356,6 +373,7 @@ export function StudentForm(props: StudentFormProps) {
               <Field label="Ciudad">
                 <input
                   className="input w-full"
+                  placeholder="Ciudad"
                   value={form.ciudad}
                   maxLength={50}
                   onChange={(e) => campo("ciudad", e.target.value)}
@@ -366,6 +384,7 @@ export function StudentForm(props: StudentFormProps) {
             <Field label="Departamento">
               <input
                 className="input w-full sm:w-1/2"
+                placeholder="Departamento"
                 value={form.departamento}
                 maxLength={20}
                 onChange={(e) => campo("departamento", e.target.value)}
@@ -374,8 +393,8 @@ export function StudentForm(props: StudentFormProps) {
             </Field>
           </fieldset>
 
-          <fieldset className="space-y-2">
-            <legend className="text-xs uppercase text-base-content/60 tracking-wide mb-1">Teléfonos</legend>
+          <fieldset className="fieldset space-y-2 p-0 border-0">
+            <SeccionLegend>Teléfonos</SeccionLegend>
             {errores.telefonos ? (
               <p className="text-xs text-error">{errores.telefonos}</p>
             ) : null}
@@ -397,24 +416,25 @@ export function StudentForm(props: StudentFormProps) {
                     disabled={guardando}
                     aria-label="Quitar teléfono"
                   >
-                    ✕
+                    <X size={14} aria-hidden />
                   </button>
                 ) : null}
               </div>
             ))}
             <button
               type="button"
-              className="link link-hover text-sm text-primary"
+              className="btn btn-link btn-sm pl-0 gap-1"
               onClick={agregarTelefono}
               disabled={guardando}
             >
-              + Agregar teléfono
+              <Plus size={14} aria-hidden />
+              Agregar teléfono
             </button>
           </fieldset>
 
           {grupos.length > 0 ? (
-            <fieldset className="space-y-2">
-              <legend className="text-xs uppercase text-base-content/60 tracking-wide mb-1">Grupos</legend>
+            <fieldset className="fieldset space-y-2 p-0 border-0">
+              <SeccionLegend>Grupos</SeccionLegend>
               <div className="flex flex-wrap gap-x-6 gap-y-2">
                 {grupos.map((g) => (
                   <label key={g.idGrupo} className="label cursor-pointer gap-2 justify-start">
@@ -425,7 +445,7 @@ export function StudentForm(props: StudentFormProps) {
                       onChange={() => alternarGrupo(g.idGrupo)}
                       disabled={guardando}
                     />
-                    <span className="label-text">
+                    <span>
                       {g.nomGrupo} — {g.nomCarrera}
                     </span>
                   </label>
@@ -434,16 +454,15 @@ export function StudentForm(props: StudentFormProps) {
             </fieldset>
           ) : null}
 
-          <fieldset className="space-y-3">
-            <legend className="text-xs uppercase text-base-content/60 tracking-wide mb-1">
-              Información de salud
-            </legend>
+          <fieldset className="fieldset space-y-3 p-0 border-0">
+            <SeccionLegend>Información de salud</SeccionLegend>
             <div role="note" className="alert alert-soft text-sm">
               <span>Esta información solo la ven funcionarios con el permiso VER_BLOQUE_CONFIDENCIAL.</span>
             </div>
             <Field label="Información de salud">
               <textarea
                 className="textarea w-full"
+                placeholder="Información de salud"
                 rows={2}
                 value={form.informacionSalud}
                 onChange={(e) => campo("informacionSalud", e.target.value)}
@@ -453,6 +472,7 @@ export function StudentForm(props: StudentFormProps) {
             <Field label="Motivo de derivación">
               <textarea
                 className="textarea w-full"
+                placeholder="Motivo de derivación"
                 rows={2}
                 value={form.motivoDerivacion}
                 onChange={(e) => campo("motivoDerivacion", e.target.value)}
@@ -462,6 +482,7 @@ export function StudentForm(props: StudentFormProps) {
             <Field label="Sistema de salud">
               <input
                 className="input w-full"
+                placeholder="Sistema de salud"
                 value={form.sistemaSalud}
                 maxLength={80}
                 onChange={(e) => campo("sistemaSalud", e.target.value)}
@@ -490,6 +511,10 @@ export function StudentForm(props: StudentFormProps) {
   );
 }
 
+// floating-label de daisyUI 5: el input va PRIMERO (con placeholder propio),
+// el <span> con la etiqueta después — así es como la librería detecta cuándo
+// "flotar" la etiqueta, y así es como engancha la regla de contraste de
+// placeholder en globals.css (input.input::placeholder).
 function Field({
   label,
   error,
@@ -502,8 +527,8 @@ function Field({
   return (
     <div>
       <label className="floating-label">
-        <span>{label}</span>
         {children}
+        <span>{label}</span>
       </label>
       {error ? <p className="mt-1 text-xs text-error">{error}</p> : null}
     </div>

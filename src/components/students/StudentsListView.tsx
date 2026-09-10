@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { listGroups, type Group } from "@/lib/groups";
 import { useSession } from "@/lib/session-context";
@@ -15,8 +16,8 @@ import {
 } from "@/lib/students";
 import { DataTable } from "@/components/ui/DataTable";
 import { PaginationFooter } from "@/components/ui/PaginationFooter";
-import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Toolbar, type ToolbarFilter } from "@/components/ui/Toolbar";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 const ESTADO_A_VALOR: Record<string, string> = {
   Activo: "ACTIVO",
@@ -70,6 +71,7 @@ export function StudentsListView() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
+  const [idADesactivar, setIdADesactivar] = useState<number | null>(null);
 
   const textoDebounced = useDebounced(texto, 300);
 
@@ -121,7 +123,12 @@ export function StudentsListView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- grupos/carreras solo se usan para resolver el id, no deben re-disparar el fetch por sí solos
   }, [textoDebounced, nomGrupo, nomCarrera, estadoLabel, page, puedeBuscar]);
 
-  async function handleDesactivar(id: number) {
+  const estudianteADesactivar = estudiantes.find((e) => e.idUsuario === idADesactivar);
+
+  async function confirmarDesactivar() {
+    if (idADesactivar == null) return;
+    const id = idADesactivar;
+    setIdADesactivar(null);
     setAccionEnCursoId(id);
     try {
       await deactivateStudent(id);
@@ -170,12 +177,20 @@ export function StudentsListView() {
 
   return (
     <div className="grow overflow-auto">
-      <div className="max-w-[1100px] mx-auto w-full px-4 py-5">
-        <SectionHeader
-          title="Estudiantes"
-          action={puedeCrear ? "+ Nuevo estudiante" : undefined}
-          onAction={() => router.push("/estudiantes/nuevo")}
-        />
+      <div className="max-w-[980px] mx-auto w-full px-4 py-5">
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <h1 className="text-xl font-bold mb-0">Estudiantes</h1>
+          {puedeCrear ? (
+            <button
+              type="button"
+              className="btn btn-primary btn-sm gap-1"
+              onClick={() => router.push("/estudiantes/nuevo")}
+            >
+              <Plus size={14} aria-hidden />
+              Nuevo estudiante
+            </button>
+          ) : null}
+        </div>
 
         {puedeBuscar ? (
           <Toolbar
@@ -204,8 +219,12 @@ export function StudentsListView() {
               {estudiantes.map((e) => (
                 <tr
                   key={e.idUsuario}
-                  className="cursor-pointer"
+                  className="cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+                  tabIndex={0}
                   onClick={() => router.push(`/estudiantes/${e.idUsuario}`)}
+                  onKeyDown={(ev) => {
+                    if (ev.key === "Enter") router.push(`/estudiantes/${e.idUsuario}`);
+                  }}
                 >
                   <td className="font-semibold">
                     {e.nombre} {e.apellido}
@@ -237,7 +256,7 @@ export function StudentsListView() {
                           type="button"
                           className="btn btn-ghost btn-xs text-error"
                           disabled={accionEnCursoId === e.idUsuario}
-                          onClick={() => handleDesactivar(e.idUsuario)}
+                          onClick={() => setIdADesactivar(e.idUsuario)}
                         >
                           Desactivar
                         </button>
@@ -270,6 +289,20 @@ export function StudentsListView() {
           </>
         )}
       </div>
+
+      <ConfirmDialog
+        open={idADesactivar != null}
+        title="Desactivar estudiante"
+        message={
+          estudianteADesactivar
+            ? `¿Desactivar a ${estudianteADesactivar.nombre} ${estudianteADesactivar.apellido}? Va a dejar de aparecer en las búsquedas activas, pero su historial se conserva.`
+            : ""
+        }
+        confirmLabel="Desactivar"
+        destructive
+        onConfirm={confirmarDesactivar}
+        onCancel={() => setIdADesactivar(null)}
+      />
     </div>
   );
 }

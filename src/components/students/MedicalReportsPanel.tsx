@@ -100,7 +100,7 @@ export function MedicalReportsPanel({ idEstudiante }: { idEstudiante: number }) 
               {puedeEliminar ? (
                 <button
                   type="button"
-                  className="link link-hover text-sm text-error shrink-0"
+                  className="btn btn-link btn-sm btn-error shrink-0"
                   disabled={eliminandoId === inf.idInforme}
                   onClick={() => handleEliminar(inf.idInforme)}
                 >
@@ -116,14 +116,15 @@ export function MedicalReportsPanel({ idEstudiante }: { idEstudiante: number }) 
         <form onSubmit={handleAdjuntar} className="flex flex-wrap items-end gap-2 pt-2 border-t border-base-300">
           <div className="flex-1 min-w-[180px]">
             <label className="floating-label">
-              <span>Nombre del informe</span>
               <input
                 className="input input-sm w-full"
+                placeholder="Nombre del informe"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 disabled={subiendo}
                 required
               />
+              <span>Nombre del informe</span>
             </label>
           </div>
           <input
