@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getSessionToken } from "@/lib/session";
+import { shouldLogoutOn401 } from "@/lib/auth-paths";
+import { getSessionToken, SESSION_COOKIE } from "@/lib/session";
 
 // Proxy autenticado genérico: todo lo que el navegador mande a /api/<x> se
 // reenvía a `${API_BASE_URL}/<x>` con el `Authorization: Bearer` sacado de la
@@ -34,7 +35,8 @@ async function handler(
   }
 
   const { path } = await ctx.params;
-  const target = new URL(`${API_BASE_URL}/${path.join("/")}`);
+  const backendPath = `/${path.join("/")}`;
+  const target = new URL(`${API_BASE_URL}${backendPath}`);
   target.search = request.nextUrl.search;
 
   const headers = new Headers(request.headers);
@@ -67,11 +69,18 @@ async function handler(
   resHeaders.delete("content-length");
   resHeaders.delete("transfer-encoding");
 
-  return new NextResponse(backendRes.body, {
+  const response = new NextResponse(backendRes.body, {
     status: backendRes.status,
     statusText: backendRes.statusText,
     headers: resHeaders,
   });
+
+  // Si el backend rechazó el token (vencido, o invalidado por un cambio de contraseña: ver credencialesVigentesDesde), la cookie ya no sirve: la borramos en esta misma respuesta para que el navegador la descarte ya, en vez de arrastrar una cookie muerta hasta la próxima carga de página. Mismo criterio que el cliente en src/lib/api.ts.
+  if (backendRes.status === 401 && shouldLogoutOn401(backendPath)) {
+    response.cookies.delete(SESSION_COOKIE);
+  }
+
+  return response;
 }
 
 export {

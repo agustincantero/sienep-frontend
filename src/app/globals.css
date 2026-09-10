@@ -11,6 +11,18 @@
   --color-base-content: #262626; /* neutral-800 */
   --color-neutral: #262626; /* neutral-800 */
   --color-neutral-content: #ffffff;
+
+  /* Estados: rojo / verde / azul "de verdad" en vez de los tonos oklch de daisyUI, para que no choquen con el celeste de marca. Se usan siempre con la variante `alert-soft` (fondo tenue + texto del color). */
+  --color-error: #dc2626; /* red-600 */
+  --color-error-content: #ffffff;
+  --color-success: #16a34a; /* green-600 */
+  --color-success-content: #ffffff;
+  --color-info: #0284c7; /* sky-600 */
+  --color-info-content: #ffffff;
+
+  /* Jerarquía de forma: la card y los alerts (--radius-box) claramente más redondos que los controles (--radius-field), que quedan casi rectos. */
+  --radius-box: 1rem;
+  --radius-field: 0.375rem;
 }
 
 @theme inline {
@@ -24,4 +36,16 @@ body {
   background: var(--color-base-100);
   color: var(--color-base-content);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Foco de teclado visible y consistente (WCAG 2.4.7). daisyUI ya dibuja el outline al enfocar con `outline: 2px solid var(--input-color)`, pero pone --input-color = base-content (gris oscuro, poco visible); lo pasamos a primary para que el anillo sea celeste, igual que el del wrapper del botón de Google. `input.input` gana en especificidad a `.input:focus` de daisyUI. `:not(.input-error)` deja que un campo con error siga rojo aunque tenga foco. */
+input.input:focus:not(.input-error),
+input.input:focus-within:not(.input-error) {
+  --input-color: var(--color-primary);
+}
+
+/* En un floating-label, el placeholder es la etiqueta visible mientras el campo está vacío y sin foco. daisyUI lo pinta al 50% (contraste ~3.9:1, por debajo de AA); lo subimos. Se excluye :focus-within para no pisar la regla de daisyUI que oculta el placeholder al enfocar (y deja subir el <span>). */
+.floating-label:not(:focus-within) input.input::placeholder {
+  color: var(--color-base-content);
+  opacity: 0.7;
 }

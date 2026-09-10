@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 // Cookie de sesión: httpOnly, no accesible desde JavaScript. El JWT del backend
 // vive acá; los Route Handlers de src/app/api/** lo leen y lo mandan al backend
 // como `Authorization: Bearer`. El navegador nunca ve el token.
-const SESSION_COOKIE = "sienep_session";
+export const SESSION_COOKIE = "sienep_session";
 const MAX_AGE_FALLBACK = 60 * 60 * 5; // 5 h, igual que el JWT del backend
 
 export async function getSessionToken(): Promise<string | null> {

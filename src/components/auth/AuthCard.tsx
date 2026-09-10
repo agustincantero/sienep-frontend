@@ -4,20 +4,16 @@ type AuthCardProps = {
   children: React.ReactNode;
 };
 
-// Card blanca centrada de las pantallas de autenticación (login, recuperación).
-// El chrome de alrededor (fondo primary, footer) lo pone src/app/(auth)/layout.tsx.
-// Ver docs/prototipo.html (LoginScreen / PasswordScreen / RestablecerContraseniaScreen).
+// Card blanca centrada de las pantallas de autenticación (login, recuperación). El chrome de alrededor (fondo primary, logo, footer) lo pone src/app/(auth)/layout.tsx. Ver docs/prototipo.html.
 export function AuthCard({ title, description, children }: AuthCardProps) {
   return (
-    <div className="card bg-base-100 shadow-lg border border-base-300">
-      <div className="px-6 pt-6">
-        <h1 className="text-center font-light text-3xl my-4">{title}</h1>
-      </div>
-      <div className="card-body pt-2">
+    <div className="card w-full border border-base-300 bg-base-100 shadow-lg">
+      <div className="card-body">
+        <h1 className="text-center text-3xl font-light">{title}</h1>
         {description ? (
-          <p className="text-sm mb-3 text-base-content/60">{description}</p>
+          <p className="text-sm leading-relaxed text-base-content/70">{description}</p>
         ) : null}
-        {children}
+        <div className="mt-4">{children}</div>
       </div>
     </div>
   );

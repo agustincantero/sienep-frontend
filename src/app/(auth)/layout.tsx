@@ -3,12 +3,12 @@
 // Ver docs/prototipo.html (rama authView de App()).
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col bg-primary">
-      <main className="flex-1 flex items-center justify-center px-4 py-10">
+    <div className="flex min-h-dvh flex-col bg-primary">
+      <main className="flex flex-1 items-center justify-center px-6 py-10">
         <div className="w-full max-w-md">{children}</div>
       </main>
-      <footer className="py-4 bg-neutral text-neutral-content mt-auto">
-        <div className="w-full px-4 text-sm text-neutral-content/60">
+      <footer className="mt-auto bg-neutral py-4 text-neutral-content">
+        <div className="w-full px-4 text-sm text-neutral-content/80">
           Copyright © SIENEP 2026
         </div>
       </footer>
