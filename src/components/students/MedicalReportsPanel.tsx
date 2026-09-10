@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiErrorMessage } from "@/lib/api";
 import {
   attachMedicalReport,
@@ -9,6 +9,7 @@ import {
   type MedicalReport,
 } from "@/lib/medical-reports";
 import { useSession } from "@/lib/session-context";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 const EXTENSIONES_PERMITIDAS = [".pdf", ".jpg", ".jpeg", ".png"];
 // InformeAdjuntoRequestDTO.nombre — mismo patrón que nombre/apellido de
@@ -31,15 +32,32 @@ export function MedicalReportsPanel({ idEstudiante }: { idEstudiante: number }) 
   const [errorArchivo, setErrorArchivo] = useState("");
   const [subiendo, setSubiendo] = useState(false);
   const [eliminandoId, setEliminandoId] = useState<number | null>(null);
+  const [informeAEliminar, setInformeAEliminar] = useState<MedicalReport | null>(null);
+
+  // idEstudianteRef: cargar() se llama tanto desde el efecto (al cambiar de
+  // estudiante) como a mano después de adjuntar un informe. Si el usuario
+  // navega a otra ficha mientras el primer pedido sigue en vuelo, esta
+  // referencia evita que la respuesta vieja pise el estado del nuevo.
+  const idEstudianteRef = useRef(idEstudiante);
+  useEffect(() => {
+    idEstudianteRef.current = idEstudiante;
+  }, [idEstudiante]);
 
   function cargar() {
-    listMedicalReports(idEstudiante)
+    const idAlPedir = idEstudiante;
+    listMedicalReports(idAlPedir)
       .then((res) => {
+        if (idEstudianteRef.current !== idAlPedir) return;
         setInformes(res.content);
         setError("");
       })
-      .catch((err) => setError(apiErrorMessage(err, "No se pudieron cargar los informes.")))
-      .finally(() => setCargando(false));
+      .catch((err) => {
+        if (idEstudianteRef.current !== idAlPedir) return;
+        setError(apiErrorMessage(err, "No se pudieron cargar los informes."));
+      })
+      .finally(() => {
+        if (idEstudianteRef.current === idAlPedir) setCargando(false);
+      });
   }
 
   useEffect(cargar, [idEstudiante]);
@@ -89,7 +107,10 @@ export function MedicalReportsPanel({ idEstudiante }: { idEstudiante: number }) 
     }
   }
 
-  async function handleEliminar(id: number) {
+  async function confirmarEliminar() {
+    if (!informeAEliminar) return;
+    const id = informeAEliminar.idInforme;
+    setInformeAEliminar(null);
     setEliminandoId(id);
     try {
       await deleteMedicalReport(id);
@@ -132,7 +153,7 @@ export function MedicalReportsPanel({ idEstudiante }: { idEstudiante: number }) 
                   type="button"
                   className="btn btn-link btn-sm btn-error shrink-0"
                   disabled={eliminandoId === inf.idInforme}
-                  onClick={() => handleEliminar(inf.idInforme)}
+                  onClick={() => setInformeAEliminar(inf)}
                 >
                   Eliminar
                 </button>
@@ -199,6 +220,16 @@ export function MedicalReportsPanel({ idEstudiante }: { idEstudiante: number }) 
           </button>
         </form>
       ) : null}
+
+      <ConfirmDialog
+        open={informeAEliminar != null}
+        title="Eliminar informe"
+        message={informeAEliminar ? `¿Eliminar "${informeAEliminar.nombre}"? Esta acción no se puede deshacer desde la ficha.` : ""}
+        confirmLabel="Eliminar"
+        destructive
+        onConfirm={confirmarEliminar}
+        onCancel={() => setInformeAEliminar(null)}
+      />
     </div>
   );
 }

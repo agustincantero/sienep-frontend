@@ -78,17 +78,28 @@ export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
     }
   }, []);
 
-  function cargar() {
+  // cancelado: si idEstudiante cambia mientras un GET anterior todavía está
+  // en vuelo (navegación rápida entre dos fichas), esa respuesta vieja no
+  // debe pisar los datos del estudiante nuevo que ya está cargando.
+  useEffect(() => {
+    let cancelado = false;
     getStudent(idEstudiante)
       .then((s) => {
+        if (cancelado) return;
         setEstudiante(s);
         setErrorCarga("");
       })
-      .catch((err) => setErrorCarga(apiErrorMessage(err, "No se pudo cargar el estudiante.")))
-      .finally(() => setCargando(false));
-  }
-
-  useEffect(cargar, [idEstudiante]);
+      .catch((err) => {
+        if (cancelado) return;
+        setErrorCarga(apiErrorMessage(err, "No se pudo cargar el estudiante."));
+      })
+      .finally(() => {
+        if (!cancelado) setCargando(false);
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [idEstudiante]);
 
   async function handleFoto(ev: React.ChangeEvent<HTMLInputElement>) {
     const foto = ev.target.files?.[0];
