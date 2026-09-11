@@ -4,8 +4,8 @@
 const BUSINESS_401_PATHS = [
   "/auth/login",
   "/auth/google",
-  "/auth/olvide-contrasenia",
-  "/auth/restablecer-contrasenia",
+  "/auth/forgot-password",
+  "/auth/reset-password",
 ];
 
 // PATCH /funcionarios/{id}/contrasenia y /estudiantes/{id}/contrasenia (cambiar la contraseña propia) devuelven 401 cuando la contraseña actual no coincide: también es un 401 de negocio, no de sesión muerta.

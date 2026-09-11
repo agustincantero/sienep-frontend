@@ -25,21 +25,21 @@ export function me(): Promise<AuthenticatedUser> {
   return apiGet<AuthenticatedUser>("/auth/me");
 }
 
-// POST /api/auth/olvide-contrasenia — { email }. Pide el enlace de recuperación.
-// El backend responde siempre 200 (no revela si el email existe) y sin cuerpo.
-// 429 si se pidió demasiadas veces para el mismo email (3 / 15 min).
+// POST /api/auth/forgot-password — { email }. Pide el enlace de recuperación. Path renombrado por
+// backend (antes /auth/olvide-contrasenia); mismo contrato. El backend responde siempre 200 (no
+// revela si el email existe) y sin cuerpo. 429 si se pidió demasiadas veces para el mismo email (3 / 15 min).
 export function forgotPassword(email: string): Promise<void> {
-  return apiPost<void>("/auth/olvide-contrasenia", { email });
+  return apiPost<void>("/auth/forgot-password", { email });
 }
 
-// POST /api/auth/restablecer-contrasenia — { token, contraseniaNueva }. Aplica la
-// contraseña nueva con el token de un solo uso del email. 401 = token inválido,
-// vencido o ya usado.
+// POST /api/auth/reset-password — { token, contraseniaNueva }. Aplica la contraseña nueva con el
+// token de un solo uso del email. Path renombrado por backend (antes /auth/restablecer-contrasenia);
+// mismo contrato. 401 = token inválido, vencido o ya usado.
 export function resetPassword(
   token: string,
   contraseniaNueva: string,
 ): Promise<void> {
-  return apiPost<void>("/auth/restablecer-contrasenia", { token, contraseniaNueva });
+  return apiPost<void>("/auth/reset-password", { token, contraseniaNueva });
 }
 
 // PATCH /api/{funcionarios|estudiantes}/{id}/contrasenia — cambia la contraseña propia. No vive bajo /auth, pero es parte del flujo de login: la usa la pantalla obligatoria de primer inicio de sesión (estado PENDIENTE_DE_ACTIVACION) para reemplazar la contraseña temporal por una elegida por el usuario. 401 = la contraseña actual no es correcta (ver BUSINESS_401_SUFFIXES en auth-paths.ts).
