@@ -48,8 +48,8 @@ body {
   --input-color: var(--color-primary);
 }
 
-/* En un floating-label, el placeholder es la etiqueta visible mientras el campo está vacío y sin foco. daisyUI lo pinta al 50% (contraste ~3.9:1, por debajo de AA); lo subimos. Se excluye :focus-within para no pisar la regla de daisyUI que oculta el placeholder al enfocar (y deja subir el <span>). Cubre el input con `.input` propio y el anidado dentro de un wrapper `.input`. */
+/* Placeholder como label visible: zinc-500 sólido, no opacity (daisyUI da ~3:1, no pasa AA). Cubre el input con `.input` propio y el anidado dentro de un wrapper `.input` (ej. PasswordInput). */
 .floating-label:not(:focus-within) :is(input.input, .input input)::placeholder {
-  color: var(--color-base-content);
-  opacity: 0.7;
+  color: #71717a; /* zinc-500 */
+  opacity: 1;
 }
