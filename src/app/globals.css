@@ -1,10 +1,17 @@
 @import "tailwindcss";
-@plugin "daisyui";
+
+@plugin "daisyui" {
+  themes: light --default;
+}
 
 /* Paleta de marca SIENEP sobre el theme "light" de daisyUI, tomada del prototipo (docs/prototipo.html) */
-[data-theme="light"] {
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+  color-scheme: light;
+
   --color-primary: #0ea5e9; /* sky-500 */
-  --color-primary-content: #ffffff;
+  --color-primary-content: #262626; /* neutral-800 — texto blanco sobre sky-500 da 2.77:1, por debajo de AA; con neutral-800 da 5.46:1 */
   --color-base-100: #ffffff;
   --color-base-200: #d6d3d1; /* stone-300 */
   --color-base-300: #d6d3d1; /* stone-300 */
@@ -26,12 +33,10 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-onest);
 }
 
-/* Sin toggle de tema todavía: el sistema siempre corre en data-theme="light"
-   (ver layout.tsx), así que el body no debe reaccionar a prefers-color-scheme. */
+/* Sin toggle de tema: la app corre siempre con el theme "light" de arriba (ver layout.tsx). No agregar manejo de prefers-color-scheme. */
 body {
   background: var(--color-base-100);
   color: var(--color-base-content);
