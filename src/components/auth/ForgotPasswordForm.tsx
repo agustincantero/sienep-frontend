@@ -56,7 +56,6 @@ export function ForgotPasswordForm() {
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="floating-label">
-            <span>Correo electrónico</span>
             <input
               type="email"
               required
@@ -67,6 +66,7 @@ export function ForgotPasswordForm() {
               onChange={(e) => setEmail(e.target.value)}
               disabled={cargando}
             />
+            <span>Correo electrónico</span>
           </label>
           {error ? (
             <div role="alert" className="alert alert-error alert-soft text-sm">

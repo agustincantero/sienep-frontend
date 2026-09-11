@@ -63,7 +63,6 @@ export function LoginForm() {
     <AuthCard title="Iniciar sesión">
       <form onSubmit={handleSubmit} className="space-y-4">
         <label className="floating-label">
-          <span>Correo electrónico</span>
           <input
             type="email"
             required
@@ -74,6 +73,7 @@ export function LoginForm() {
             onChange={(e) => setEmail(e.target.value)}
             disabled={cargando}
           />
+          <span>Correo electrónico</span>
         </label>
         <PasswordInput
           label="Contraseña"
