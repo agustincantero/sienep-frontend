@@ -49,3 +49,94 @@ input.input:focus-within:not(.input-error) {
   color: var(--color-base-content);
   opacity: 0.7;
 }
+
+/* ── Chrome de las pantallas de auth: portal UTEC ──────────────────────────
+   Fondo del login: fotos del campus de UTEC en cross-fade lento, con un filtro
+   celeste encima (LoginBackground.tsx). Todo esto es decorativo (aria-hidden);
+   el contenido va en una capa z-10 aparte. */
+.login-slideshow {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background-color: var(--color-primary); /* color base mientras carga la 1ª foto */
+}
+
+/* Cada foto ocupa todo el fondo y aparece/desaparece en su turno. Con 4 fotos y
+   un ciclo de 40s, cada una está visible ~10s con transiciones de ~1,6s. */
+.login-slideshow__frame {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation: login-slideshow 40s linear infinite;
+}
+.login-slideshow__frame img {
+  object-fit: cover;
+}
+.login-slideshow__frame:nth-child(1) {
+  animation-delay: 0s;
+}
+.login-slideshow__frame:nth-child(2) {
+  animation-delay: 10s;
+}
+.login-slideshow__frame:nth-child(3) {
+  animation-delay: 20s;
+}
+.login-slideshow__frame:nth-child(4) {
+  animation-delay: 30s;
+}
+
+@keyframes login-slideshow {
+  0% {
+    opacity: 0;
+  }
+  4% {
+    opacity: 1;
+  }
+  25% {
+    opacity: 1;
+  }
+  29% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Filtro celeste: una capa multiply liviana que tiñe la foto hacia el azul de
+   marca sin taparla, más un degradé celeste→tinta de arriba a abajo. Arriba el
+   campus se ve claramente; abajo se oscurece para anclar el footer y dar
+   contraste al título en blanco. */
+.login-wash {
+  position: absolute;
+  inset: 0;
+}
+.login-wash::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #0ea5e9, #075985);
+  opacity: 0.38;
+  mix-blend-mode: multiply;
+}
+.login-wash::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(2, 132, 199, 0.16) 0%,
+    rgba(2, 132, 199, 0.3) 42%,
+    rgba(4, 27, 44, 0.62) 100%
+  );
+}
+
+/* Sin animación para quien la desactivó: queda la primera foto fija. */
+@media (prefers-reduced-motion: reduce) {
+  .login-slideshow__frame {
+    animation: none;
+  }
+  .login-slideshow__frame:nth-child(1) {
+    opacity: 1;
+  }
+}

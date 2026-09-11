@@ -38,7 +38,7 @@ export function LoginForm() {
   }
 
   return (
-    <AuthCard title="Iniciar sesión">
+    <AuthCard title="Iniciar sesión" titleAs="h2">
       <form onSubmit={handleSubmit} className="space-y-4">
         <label className="floating-label">
           <span>Correo electrónico</span>
