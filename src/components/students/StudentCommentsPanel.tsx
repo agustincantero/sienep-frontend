@@ -5,42 +5,51 @@ import { apiErrorMessage } from "@/lib/api";
 import {
   createConfidentialComment,
   createNormalComment,
-  deleteConfidentialComment,
-  deleteNormalComment,
   listConfidentialComments,
   listNormalComments,
-  updateConfidentialComment,
-  updateNormalComment,
   type StudentComment,
 } from "@/lib/comments";
 import { formatFechaHora } from "@/lib/format";
 import { useSession } from "@/lib/session-context";
-import { ConfirmDialog } from "./ConfirmDialog";
 
 // Comentarios normales (ComentarioNormalEstudiante) y observaciones
 // confidenciales (ComentarioConfidencialEstudiante) son dos recursos del
 // backend, con tablas e IDs propios — un id=5 normal y un id=5 confidencial
 // pueden existir a la vez. Acá se muestran mezclados en un único historial
-// ordenado por fecha (para no tener que ir comparando fechas entre dos
-// listas separadas), y `tipo` es lo que evita que se pisen: sirve de
-// discriminante para saber a qué endpoint pegarle en editar/eliminar, y para
-// armar una key de React única (`${tipo}-${id}`).
+// ordenado por fecha, y `tipo` es lo que evita que se pisen: sirve de
+// discriminante para armar una key de React única (`${tipo}-${id}`) y para
+// resolver a qué comentario apunta una cita.
 type Tipo = "normal" | "confidencial";
 type ComentarioConTipo = StudentComment & { tipo: Tipo };
 
-// @CreationTimestamp/@UpdateTimestamp (Hibernate) capturan el reloj en dos
-// llamadas separadas al insertar, así que createdAt/updatedAt casi nunca
-// coinciden ni al crear — comparar por igualdad exacta marca "(editado)" en
-// TODOS los comentarios. Un margen de un par de segundos absorbe ese jitter
-// sin dejar de detectar una edición real (que en la práctica pasa minutos u
-// horas después, no milisegundos).
-const MARGEN_EDICION_MS = 2000;
-function fueEditado(c: StudentComment): boolean {
-  return Math.abs(new Date(c.updatedAt).getTime() - new Date(c.createdAt).getTime()) > MARGEN_EDICION_MS;
-}
-
 function clave(c: { tipo: Tipo; id: number }): string {
   return `${c.tipo}-${c.id}`;
+}
+
+// No hay edición ni borrado (ver decisión más abajo): un comentario, una vez
+// publicado, es historia clínica/de seguimiento — se corrige citando, no
+// reescribiendo. La única forma de "responder a" o "aclarar" otro comentario
+// es citarlo, y el backend no tiene un campo para eso (ComentarioNormal/
+// ConfidencialEstudianteRequestDTO solo tienen `contenido` e `idEstudiante`).
+// Se resuelve 100% del lado del cliente: la cita viaja codificada como un
+// prefijo al principio del propio `contenido`, y se separa de vuelta al
+// mostrarlo. Documentado en el doc de hallazgos del Escritorio junto con la
+// alternativa de agregar un campo real en el backend.
+const CITA_REGEX = /^\[\[cita:(normal|confidencial):(\d+)\]\]\n/;
+
+function parseComentario(contenido: string): { citaTipo: Tipo | null; citaId: number | null; texto: string } {
+  const m = CITA_REGEX.exec(contenido);
+  if (!m) return { citaTipo: null, citaId: null, texto: contenido };
+  return { citaTipo: m[1] as Tipo, citaId: Number(m[2]), texto: contenido.slice(m[0].length) };
+}
+
+function previsualizar(c: ComentarioConTipo, largo = 60): string {
+  const { texto } = parseComentario(c.contenido);
+  return texto.length > largo ? `${texto.slice(0, largo)}…` : texto;
+}
+
+function domId(c: { tipo: Tipo; id: number }): string {
+  return `comentario-${clave(c)}`;
 }
 
 export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number }) {
@@ -51,27 +60,21 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
   const puedeCrearNormal = permisos.includes("CREAR_COMENTARIO_NORMAL_ESTUDIANTE");
   const puedeCrearConfidencial = permisos.includes("CREAR_COMENTARIO_CONFIDENCIAL_ESTUDIANTE");
   const puedeCrear = puedeCrearNormal || puedeCrearConfidencial;
-  const puedeEditarNormal = permisos.includes("EDITAR_COMENTARIO_NORMAL_ESTUDIANTE");
-  const puedeEditarConfidencial = permisos.includes("EDITAR_COMENTARIO_CONFIDENCIAL_ESTUDIANTE");
-  const puedeEliminarNormal = permisos.includes("ELIMINAR_COMENTARIO_NORMAL_ESTUDIANTE");
-  const puedeEliminarConfidencial = permisos.includes("ELIMINAR_COMENTARIO_CONFIDENCIAL_ESTUDIANTE");
   const idNuevo = useId();
 
   const [comentarios, setComentarios] = useState<ComentarioConTipo[]>([]);
   const [cargando, setCargando] = useState(puedeVer);
-  // error: falla al cargar la lista O al publicar/editar/eliminar — se
-  // muestra junto al contenido ya cargado, mismo patrón que MedicalReportsPanel.
+  // error: falla al cargar la lista O al publicar — se muestra junto al
+  // contenido ya cargado, mismo patrón que MedicalReportsPanel.
   const [error, setError] = useState("");
   const [contenidoNuevo, setContenidoNuevo] = useState("");
   const [esConfidencialNuevo, setEsConfidencialNuevo] = useState(false);
+  const [citando, setCitando] = useState<ComentarioConTipo | null>(null);
   const [errorNuevo, setErrorNuevo] = useState("");
   const [publicando, setPublicando] = useState(false);
-  const [editandoClave, setEditandoClave] = useState<string | null>(null);
-  const [contenidoEdicion, setContenidoEdicion] = useState("");
-  const [errorEdicion, setErrorEdicion] = useState("");
-  const [guardandoClave, setGuardandoClave] = useState<string | null>(null);
-  const [eliminandoClave, setEliminandoClave] = useState<string | null>(null);
-  const [comentarioAEliminar, setComentarioAEliminar] = useState<ComentarioConTipo | null>(null);
+  // Comentario al que se acaba de saltar desde una cita: se resalta un rato
+  // para que quede claro cuál es, sin depender del hash de la URL.
+  const [resaltado, setResaltado] = useState<string | null>(null);
 
   // Mismo motivo que en MedicalReportsPanel: si el usuario navega a otra
   // ficha mientras un pedido sigue en vuelo, la respuesta vieja no debe
@@ -83,9 +86,6 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
 
   // Nunca se llama si !puedeVer: el formulario de alta (único otro punto que
   // la invoca) ni siquiera se renderiza en ese caso, ver el return de abajo.
-  // No hace setCargando(true) acá (mismo patrón que MedicalReportsPanel): el
-  // spinner es solo para la carga inicial, un recargo tras publicar/editar/
-  // eliminar actualiza la lista sin taparla de nuevo.
   function cargar() {
     const idAlPedir = idEstudiante;
     const pedidos: Promise<ComentarioConTipo[]>[] = [];
@@ -124,79 +124,55 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
     // eslint-disable-next-line react-hooks/exhaustive-deps -- puedeVer* no cambian durante la vida del componente, solo idEstudiante
   }, [idEstudiante]);
 
-  function iniciarEdicion(c: ComentarioConTipo) {
-    setEditandoClave(clave(c));
-    setContenidoEdicion(c.contenido);
-    setErrorEdicion("");
+  // Si el citado es confidencial, el default es marcar la respuesta también
+  // como confidencial — citar su contenido (aunque sea parcialmente, en la
+  // previsualización) en un comentario público sería filtrar información
+  // confidencial. El usuario puede destildarlo a mano si igual quiere que
+  // sea público.
+  function iniciarCita(c: ComentarioConTipo) {
+    setCitando(c);
+    if (c.tipo === "confidencial" && puedeCrearNormal && puedeCrearConfidencial) {
+      setEsConfidencialNuevo(true);
+    }
+    document.getElementById(idNuevo)?.focus();
   }
 
-  function cancelarEdicion() {
-    setEditandoClave(null);
-    setContenidoEdicion("");
-    setErrorEdicion("");
+  function irAComentario(c: ComentarioConTipo) {
+    const el = document.getElementById(domId(c));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    const claveDestino = clave(c);
+    setResaltado(claveDestino);
+    setTimeout(() => setResaltado((actual) => (actual === claveDestino ? null : actual)), 1500);
   }
 
   async function handleComentar(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
-    const contenido = contenidoNuevo.trim();
-    if (!contenido) {
+    const textoNuevo = contenidoNuevo.trim();
+    if (!textoNuevo) {
       setErrorNuevo("El comentario no puede estar vacío.");
       return;
     }
     setErrorNuevo("");
     setError("");
     setPublicando(true);
+    const prefijoCita = citando ? `[[cita:${citando.tipo}:${citando.id}]]\n` : "";
     try {
       // Con los dos permisos, manda lo que haya elegido en el checkbox. Con
       // uno solo, no hay checkbox (ver el form más abajo) y va directo al
       // único tipo que el usuario puede crear.
       const esConfidencial = puedeCrearNormal && puedeCrearConfidencial ? esConfidencialNuevo : puedeCrearConfidencial;
-      if (esConfidencial) await createConfidentialComment(idEstudiante, contenido);
-      else await createNormalComment(idEstudiante, contenido);
+      const contenidoFinal = prefijoCita + textoNuevo;
+      if (esConfidencial) await createConfidentialComment(idEstudiante, contenidoFinal);
+      else await createNormalComment(idEstudiante, contenidoFinal);
       setContenidoNuevo("");
       setEsConfidencialNuevo(false);
+      setCitando(null);
       cargar();
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo publicar el comentario."));
     } finally {
       setPublicando(false);
-    }
-  }
-
-  async function handleGuardarEdicion(c: ComentarioConTipo) {
-    const contenido = contenidoEdicion.trim();
-    if (!contenido) {
-      setErrorEdicion("El comentario no puede estar vacío.");
-      return;
-    }
-    setErrorEdicion("");
-    setGuardandoClave(clave(c));
-    try {
-      const actualizar = c.tipo === "normal" ? updateNormalComment : updateConfidentialComment;
-      await actualizar(c.id, contenido);
-      cancelarEdicion();
-      cargar();
-    } catch (err) {
-      setError(apiErrorMessage(err, "No se pudo guardar el cambio."));
-    } finally {
-      setGuardandoClave(null);
-    }
-  }
-
-  async function confirmarEliminar() {
-    if (!comentarioAEliminar) return;
-    const c = comentarioAEliminar;
-    const claveEliminada = clave(c);
-    setComentarioAEliminar(null);
-    setEliminandoClave(claveEliminada);
-    try {
-      const eliminar = c.tipo === "normal" ? deleteNormalComment : deleteConfidentialComment;
-      await eliminar(c.id);
-      setComentarios((prev) => prev.filter((x) => clave(x) !== claveEliminada));
-    } catch (err) {
-      setError(apiErrorMessage(err, "No se pudo eliminar el comentario."));
-    } finally {
-      setEliminandoClave(null);
     }
   }
 
@@ -222,86 +198,54 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
         <ul className="divide-y divide-base-300 mb-3">
           {comentarios.map((c) => {
             const claveActual = clave(c);
-            const puedeEditarEste = c.tipo === "normal" ? puedeEditarNormal : puedeEditarConfidencial;
-            const puedeEliminarEste = c.tipo === "normal" ? puedeEliminarNormal : puedeEliminarConfidencial;
+            const { citaTipo, citaId, texto } = parseComentario(c.contenido);
+            const citado =
+              citaTipo && citaId != null ? comentarios.find((x) => x.tipo === citaTipo && x.id === citaId) : undefined;
             return (
-              <li key={claveActual} className="py-2">
-                {editandoClave === claveActual ? (
-                  <div>
-                    <textarea
-                      className={`textarea textarea-sm w-full${errorEdicion ? " textarea-error" : ""}`}
-                      rows={2}
-                      value={contenidoEdicion}
-                      onChange={(e) => {
-                        setContenidoEdicion(e.target.value);
-                        if (errorEdicion) setErrorEdicion("");
-                      }}
-                      disabled={guardandoClave === claveActual}
-                      aria-invalid={errorEdicion ? true : undefined}
-                      autoFocus
-                    />
-                    {errorEdicion ? <p className="mt-1 text-xs text-error">{errorEdicion}</p> : null}
-                    <div className="flex gap-2 mt-1">
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-xs"
-                        onClick={() => handleGuardarEdicion(c)}
-                        disabled={guardandoClave === claveActual}
-                      >
-                        {guardandoClave === claveActual ? (
-                          <span className="loading loading-spinner loading-xs" />
-                        ) : null}
-                        Guardar
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-xs"
-                        onClick={cancelarEdicion}
-                        disabled={guardandoClave === claveActual}
-                      >
-                        Cancelar
-                      </button>
-                    </div>
+              <li
+                key={claveActual}
+                id={domId(c)}
+                className={`py-2 transition-colors duration-700 ${resaltado === claveActual ? "bg-warning/20" : ""}`}
+              >
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <span className="text-sm font-semibold">{c.nombreAutor}</span>
+                    {c.tipo === "confidencial" ? <span className="badge badge-warning badge-sm">Confidencial</span> : null}
+                    <span className="text-xs text-base-content/50">{formatFechaHora(c.createdAt)}</span>
                   </div>
-                ) : (
-                  <>
-                    <div className="flex items-center justify-between gap-3 flex-wrap">
-                      <div className="flex items-baseline gap-2 flex-wrap">
-                        <span className="text-sm font-semibold">{c.nombreAutor}</span>
-                        {c.tipo === "confidencial" ? (
-                          <span className="badge badge-warning badge-sm">Confidencial</span>
-                        ) : null}
-                        <span className="text-xs text-base-content/50">
-                          {formatFechaHora(c.createdAt)}
-                          {fueEditado(c) ? " (editado)" : ""}
-                        </span>
-                      </div>
-                      <div className="flex gap-1 shrink-0">
-                        {puedeEditarEste ? (
-                          <button
-                            type="button"
-                            className="btn btn-link btn-xs no-underline"
-                            onClick={() => iniciarEdicion(c)}
-                            disabled={eliminandoClave === claveActual}
-                          >
-                            Editar
-                          </button>
-                        ) : null}
-                        {puedeEliminarEste ? (
-                          <button
-                            type="button"
-                            className="btn btn-link btn-xs btn-error no-underline"
-                            onClick={() => setComentarioAEliminar(c)}
-                            disabled={eliminandoClave === claveActual}
-                          >
-                            Eliminar
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
-                    <p className="text-sm whitespace-pre-wrap mt-1">{c.contenido}</p>
-                  </>
-                )}
+                  {puedeCrear ? (
+                    <button
+                      type="button"
+                      className="btn btn-link btn-xs no-underline shrink-0"
+                      onClick={() => iniciarCita(c)}
+                    >
+                      Citar
+                    </button>
+                  ) : null}
+                </div>
+                {/* citaTipo !== null: este comentario cita a otro. El flag es
+                    clickeable y lleva hasta el comentario citado (si sigue
+                    visible para este usuario — un comentario confidencial
+                    citado no aparece acá para quien no tiene permiso de
+                    verlo, aunque sí vea que "cita algo"). */}
+                {citaTipo && citaId != null ? (
+                  <button
+                    type="button"
+                    className="mt-1 flex w-full items-start gap-1.5 rounded-field border-l-2 border-primary/50 bg-base-200 px-2 py-1 text-left text-xs text-base-content/70 hover:bg-base-300 disabled:cursor-default disabled:hover:bg-base-200"
+                    onClick={() => citado && irAComentario(citado)}
+                    disabled={!citado}
+                  >
+                    <span aria-hidden>↩</span>
+                    {citado ? (
+                      <span>
+                        Responde a <span className="font-semibold">{citado.nombreAutor}</span>: “{previsualizar(citado)}”
+                      </span>
+                    ) : (
+                      <span>Responde a un comentario que no está disponible acá.</span>
+                    )}
+                  </button>
+                ) : null}
+                <p className="text-sm whitespace-pre-wrap mt-1">{texto}</p>
               </li>
             );
           })}
@@ -313,6 +257,25 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
           validar() y nunca se ve el mensaje propio. */}
       {puedeCrear ? (
         <form onSubmit={handleComentar} noValidate className="pt-2 border-t border-base-300">
+          {citando ? (
+            <div className="mb-1 flex items-start justify-between gap-2 rounded-field bg-base-200 px-2 py-1 text-xs">
+              <button
+                type="button"
+                className="link link-hover text-left"
+                onClick={() => citando && irAComentario(citando)}
+              >
+                Citando a <span className="font-semibold">{citando.nombreAutor}</span>: “{previsualizar(citando)}”
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-xs shrink-0"
+                onClick={() => setCitando(null)}
+                aria-label="Quitar cita"
+              >
+                ✕
+              </button>
+            </div>
+          ) : null}
           <label className="floating-label">
             <textarea
               id={idNuevo}
@@ -353,16 +316,6 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
           </div>
         </form>
       ) : null}
-
-      <ConfirmDialog
-        open={comentarioAEliminar != null}
-        title="Eliminar comentario"
-        message="¿Eliminar este comentario? Esta acción no se puede deshacer desde la ficha."
-        confirmLabel="Eliminar"
-        destructive
-        onConfirm={confirmarEliminar}
-        onCancel={() => setComentarioAEliminar(null)}
-      />
     </div>
   );
 }
