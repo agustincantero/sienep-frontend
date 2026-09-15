@@ -15,8 +15,6 @@ import { ConfirmDialog } from "./ConfirmDialog";
 import { EstadoBadge } from "./EstadoBadge";
 import { StudentAvatar } from "./StudentAvatar";
 
-const FILAS_ESQUELETO = 6;
-
 const ESTADO_A_VALOR: Record<string, string> = {
   Activo: "ACTIVO",
   Inactivo: "INACTIVO",
@@ -206,28 +204,9 @@ export function StudentsListView() {
         ) : null}
 
         {cargando ? (
-          <DataTable headers={["Estudiante", "Documento", "Grupo", "Estado", ""]}>
-            {Array.from({ length: FILAS_ESQUELETO }).map((_, i) => (
-              <tr key={i}>
-                <td>
-                  <div className="flex items-center gap-2">
-                    <div className="skeleton size-8 shrink-0 rounded-full" />
-                    <div className="skeleton h-4 w-32 rounded" />
-                  </div>
-                </td>
-                <td>
-                  <div className="skeleton h-4 w-20 rounded" />
-                </td>
-                <td>
-                  <div className="skeleton h-4 w-24 rounded" />
-                </td>
-                <td>
-                  <div className="skeleton h-4 w-16 rounded" />
-                </td>
-                <td />
-              </tr>
-            ))}
-          </DataTable>
+          <div className="flex justify-center py-10">
+            <span className="loading loading-spinner loading-md" />
+          </div>
         ) : estudiantes.length === 0 ? (
           <p className="text-base-content/60 py-6 text-center">No se encontraron estudiantes.</p>
         ) : (
