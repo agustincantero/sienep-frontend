@@ -3,21 +3,19 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Eye, Pencil, Plus, UserCheck, UserX } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { listGroups, type Group } from "@/lib/groups";
 import { useSession } from "@/lib/session-context";
-import {
-  deactivateStudent,
-  describeEstado,
-  listStudents,
-  reactivateStudent,
-  type StudentSummary,
-} from "@/lib/students";
+import { deactivateStudent, listStudents, reactivateStudent, type StudentSummary } from "@/lib/students";
 import { DataTable } from "@/components/ui/DataTable";
 import { PaginationFooter } from "@/components/ui/PaginationFooter";
 import { Toolbar, type ToolbarFilter } from "@/components/ui/Toolbar";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { EstadoBadge } from "./EstadoBadge";
+import { StudentAvatar } from "./StudentAvatar";
+
+const FILAS_ESQUELETO = 6;
 
 const ESTADO_A_VALOR: Record<string, string> = {
   Activo: "ACTIVO",
@@ -208,9 +206,28 @@ export function StudentsListView() {
         ) : null}
 
         {cargando ? (
-          <div className="flex justify-center py-10">
-            <span className="loading loading-spinner loading-md" />
-          </div>
+          <DataTable headers={["Estudiante", "Documento", "Grupo", "Estado", ""]}>
+            {Array.from({ length: FILAS_ESQUELETO }).map((_, i) => (
+              <tr key={i}>
+                <td>
+                  <div className="flex items-center gap-2">
+                    <div className="skeleton size-8 shrink-0 rounded-full" />
+                    <div className="skeleton h-4 w-32 rounded" />
+                  </div>
+                </td>
+                <td>
+                  <div className="skeleton h-4 w-20 rounded" />
+                </td>
+                <td>
+                  <div className="skeleton h-4 w-24 rounded" />
+                </td>
+                <td>
+                  <div className="skeleton h-4 w-16 rounded" />
+                </td>
+                <td />
+              </tr>
+            ))}
+          </DataTable>
         ) : estudiantes.length === 0 ? (
           <p className="text-base-content/60 py-6 text-center">No se encontraron estudiantes.</p>
         ) : (
@@ -219,7 +236,7 @@ export function StudentsListView() {
               {estudiantes.map((e) => (
                 <tr
                   key={e.idUsuario}
-                  className="cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+                  className="cursor-pointer select-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
                   tabIndex={0}
                   onClick={() => router.push(`/estudiantes/${e.idUsuario}`)}
                   onKeyDown={(ev) => {
@@ -227,14 +244,15 @@ export function StudentsListView() {
                   }}
                 >
                   <td className="font-semibold">
-                    {e.nombre} {e.apellido}
+                    <div className="flex items-center gap-2">
+                      <StudentAvatar nombre={e.nombre} apellido={e.apellido} />
+                      {e.nombre} {e.apellido}
+                    </div>
                   </td>
                   <td>{e.documento}</td>
                   <td>{e.grupos.join(", ") || "—"}</td>
                   <td>
-                    <span className={`badge badge-sm ${describeEstado(e.estado).badgeClass}`}>
-                      {describeEstado(e.estado).label}
-                    </span>
+                    <EstadoBadge estado={e.estado} />
                   </td>
                   {/* stopPropagation: sin esto, cualquier click acá también dispara la
                       navegación de la fila hacia la ficha. */}
@@ -243,31 +261,35 @@ export function StudentsListView() {
                       "Ver ficha"/"Editar" en la misma columna en vez de correrse. */}
                   <td className="whitespace-nowrap" onClick={(ev) => ev.stopPropagation()}>
                     <div className="inline-flex gap-1">
-                      <Link href={`/estudiantes/${e.idUsuario}`} className="btn btn-ghost btn-xs">
+                      <Link href={`/estudiantes/${e.idUsuario}`} className="btn btn-ghost btn-xs gap-1">
+                        <Eye size={13} aria-hidden />
                         Ver ficha
                       </Link>
                       {puedeEditar ? (
-                        <Link href={`/estudiantes/${e.idUsuario}/editar`} className="btn btn-ghost btn-xs">
+                        <Link href={`/estudiantes/${e.idUsuario}/editar`} className="btn btn-ghost btn-xs gap-1">
+                          <Pencil size={13} aria-hidden />
                           Editar
                         </Link>
                       ) : null}
                       {e.estado === "ACTIVO" && puedeDesactivar ? (
                         <button
                           type="button"
-                          className="btn btn-ghost btn-xs text-error"
+                          className="btn btn-ghost btn-xs gap-1 text-error"
                           disabled={accionEnCursoId === e.idUsuario}
                           onClick={() => setIdADesactivar(e.idUsuario)}
                         >
+                          <UserX size={13} aria-hidden />
                           Desactivar
                         </button>
                       ) : null}
                       {e.estado === "INACTIVO" && puedeReactivar ? (
                         <button
                           type="button"
-                          className="btn btn-ghost btn-xs"
+                          className="btn btn-ghost btn-xs gap-1"
                           disabled={accionEnCursoId === e.idUsuario}
                           onClick={() => handleReactivar(e.idUsuario)}
                         >
+                          <UserCheck size={13} aria-hidden />
                           Activar
                         </button>
                       ) : null}

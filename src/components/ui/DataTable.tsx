@@ -6,7 +6,7 @@ type DataTableProps = {
 export function DataTable({ headers, children }: DataTableProps) {
   return (
     <div className="overflow-x-auto">
-      <table className="table align-middle [&_tbody_tr:hover]:bg-base-200">
+      <table className="table align-middle [&_tbody_tr]:transition-colors [&_tbody_tr]:duration-150 [&_tbody_tr:hover]:bg-base-200">
         <thead>
           <tr>
             {headers.map((hd) => (
