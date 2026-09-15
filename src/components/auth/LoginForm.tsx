@@ -18,19 +18,19 @@ export function LoginForm() {
   const [contrasenia, setContrasenia] = useState("");
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
-  const [porActivar, setPorActivar] = useState<AuthenticatedUser | null>(null);
+  const [porActivar, setPorActivar] = useState<{ user: AuthenticatedUser; contraseniaActual?: string } | null>(null);
 
   function entrar() {
     setCargando(true); // se mantiene deshabilitado durante la navegación
     router.replace("/inicio");
   }
 
-  // Tras un login exitoso (contraseña o Google), fija si hay que activar la cuenta antes de entrar.
-  async function despuesDeLoguear() {
+  // Tras un login exitoso, fija si hay que activar la cuenta antes de entrar. `contraseniaValidada` solo llega cuando el login fue por credenciales (nunca por Google, que no valida ninguna contraseña) y es la que se le pasa como fallback a SetPasswordForm.
+  async function despuesDeLoguear(contraseniaValidada?: string) {
     try {
       const user = await me();
       if (user.estado === "PENDIENTE_DE_ACTIVACION") {
-        setPorActivar(user);
+        setPorActivar({ user, contraseniaActual: contraseniaValidada });
         setCargando(false);
       } else {
         entrar();
@@ -47,7 +47,7 @@ export function LoginForm() {
     setCargando(true);
     try {
       await login(email, contrasenia);
-      await despuesDeLoguear();
+      await despuesDeLoguear(contrasenia);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Ocurrió un error inesperado.");
       setCargando(false);
@@ -55,8 +55,7 @@ export function LoginForm() {
   }
 
   if (porActivar) {
-    // Con Google no hay contraseña tipeada (login sin password): SetPasswordForm la pide como fallback.
-    return <SetPasswordForm user={porActivar} contraseniaActual={contrasenia || undefined} />;
+    return <SetPasswordForm user={porActivar.user} contraseniaActual={porActivar.contraseniaActual} />;
   }
 
   return (
@@ -101,7 +100,7 @@ export function LoginForm() {
           </Link>
         </div>
         <div className="divider text-sm text-base-content/70">o</div>
-        <GoogleLoginButton onSuccess={despuesDeLoguear} onError={setError} />
+        <GoogleLoginButton onSuccess={() => despuesDeLoguear()} onError={setError} />
       </form>
     </AuthCard>
   );
