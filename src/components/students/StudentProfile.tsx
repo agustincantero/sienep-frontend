@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ClipboardList, FileText, HeartPulse, User } from "lucide-react";
+import { ArrowLeft, ClipboardList, FileText, HeartPulse, MessageSquare, User } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFecha } from "@/lib/format";
 import { getStudent, resendStudentPassword, uploadStudentPhoto, type Student } from "@/lib/students";
@@ -11,14 +11,16 @@ import { ConfirmDialog } from "./ConfirmDialog";
 import { EstadoBadge } from "./EstadoBadge";
 import { MedicalReportsPanel } from "./MedicalReportsPanel";
 import { StudentAvatar } from "./StudentAvatar";
+import { StudentCommentsPanel } from "./StudentCommentsPanel";
 
-type Tab = "datos" | "salud" | "instancias" | "informes";
+type Tab = "datos" | "salud" | "instancias" | "informes" | "comentarios";
 
 const TABS: { id: Tab; label: string; icon: typeof User }[] = [
   { id: "datos", label: "Datos generales", icon: User },
   { id: "salud", label: "Salud (confidencial)", icon: HeartPulse },
   { id: "instancias", label: "Instancias e incidencias", icon: ClipboardList },
   { id: "informes", label: "Informes médicos", icon: FileText },
+  { id: "comentarios", label: "Comentarios", icon: MessageSquare },
 ];
 
 // Un solo verbo por estado, sostenido en el botón, la confirmación y el
@@ -270,8 +272,10 @@ export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
             <p className="text-base-content/60 text-sm">
               Se completa en el módulo de Instancias e Incidencias.
             </p>
-          ) : (
+          ) : tab === "informes" ? (
             <MedicalReportsPanel idEstudiante={idEstudiante} />
+          ) : (
+            <StudentCommentsPanel idEstudiante={idEstudiante} />
           )}
         </div>
       </div>
