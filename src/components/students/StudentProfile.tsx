@@ -12,20 +12,10 @@ import {
   uploadStudentPhoto,
   type Student,
 } from "@/lib/students";
-import {
-  createConfidentialComment,
-  createNormalComment,
-  deleteConfidentialComment,
-  deleteNormalComment,
-  listConfidentialComments,
-  listNormalComments,
-  updateConfidentialComment,
-  updateNormalComment,
-} from "@/lib/comments";
 import { useSession } from "@/lib/session-context";
-import { CommentsSection } from "./CommentsSection";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { MedicalReportsPanel } from "./MedicalReportsPanel";
+import { StudentCommentsPanel } from "./StudentCommentsPanel";
 
 type Tab = "datos" | "salud" | "instancias" | "informes" | "comentarios";
 
@@ -311,38 +301,7 @@ export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
         ) : tab === "informes" ? (
           <MedicalReportsPanel idEstudiante={idEstudiante} />
         ) : (
-          <div className="space-y-6">
-            <CommentsSection
-              idEstudiante={idEstudiante}
-              titulo="Comentarios"
-              placeholder="Escribir un comentario"
-              permisoVer="VER_COMENTARIO_NORMAL_ESTUDIANTE"
-              permisoCrear="CREAR_COMENTARIO_NORMAL_ESTUDIANTE"
-              permisoEditar="EDITAR_COMENTARIO_NORMAL_ESTUDIANTE"
-              permisoEliminar="ELIMINAR_COMENTARIO_NORMAL_ESTUDIANTE"
-              api={{
-                list: listNormalComments,
-                create: createNormalComment,
-                update: updateNormalComment,
-                delete: deleteNormalComment,
-              }}
-            />
-            <CommentsSection
-              idEstudiante={idEstudiante}
-              titulo="Observaciones confidenciales"
-              placeholder="Escribir una observación confidencial"
-              permisoVer="VER_COMENTARIO_CONFIDENCIAL_ESTUDIANTE"
-              permisoCrear="CREAR_COMENTARIO_CONFIDENCIAL_ESTUDIANTE"
-              permisoEditar="EDITAR_COMENTARIO_CONFIDENCIAL_ESTUDIANTE"
-              permisoEliminar="ELIMINAR_COMENTARIO_CONFIDENCIAL_ESTUDIANTE"
-              api={{
-                list: listConfidentialComments,
-                create: createConfidentialComment,
-                update: updateConfidentialComment,
-                delete: deleteConfidentialComment,
-              }}
-            />
-          </div>
+          <StudentCommentsPanel idEstudiante={idEstudiante} />
         )}
       </div>
 
