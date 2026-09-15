@@ -9,3 +9,15 @@ export function formatFecha(fechaIso: string): string {
   if (!anio || !mes || !dia) return fechaIso;
   return `${dia}/${mes}/${anio}`;
 }
+
+// Formatea un LocalDateTime ISO del backend (ej. "2026-09-15T14:30:00", hora
+// del servidor, sin offset) a "dd/mm/aaaa hh:mm". Mismo motivo que
+// formatFecha para no usar `new Date()`: acá no hay date-only así que no hay
+// riesgo de "cae en el día anterior", pero si en algún momento el backend
+// empieza a mandar offset (ej. "...Z"), `new Date()` sí lo reinterpretaría a
+// la hora local del navegador — partir el string a mano evita ese problema.
+export function formatFechaHora(fechaIso: string): string {
+  const [fecha, hora] = fechaIso.split("T");
+  if (!fecha || !hora) return fechaIso;
+  return `${formatFecha(fecha)} ${hora.slice(0, 5)}`;
+}
