@@ -104,9 +104,10 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
     Promise.all(pedidos)
       .then((listas) => {
         if (idEstudianteRef.current !== idAlPedir) return;
-        // Más nuevo primero: es lo que arma el "orden" que se pidió, sin
-        // depender de que el usuario compare fechas entre dos listas.
-        const todos = listas.flat().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        // Más viejo primero, más nuevo al final (como un hilo de conversación):
+        // el formulario de alta vive justo debajo de la lista, así que el
+        // último comentario queda pegado a donde se escribe el siguiente.
+        const todos = listas.flat().sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
         setComentarios(todos);
         setError("");
       })
