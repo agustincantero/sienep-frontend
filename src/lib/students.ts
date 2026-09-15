@@ -4,14 +4,14 @@ import { apiDelete, apiGet, apiPatch, apiPost, apiPut, apiPutForm } from "./api"
 // contraseña — no es lo mismo que "desactivado" (RF06), así que se etiqueta
 // distinto y no ofrece las acciones Desactivar/Activar (ver wireframe 05,
 // fila "Camila Rodríguez").
-export function describeEstado(estado: string): { label: string; badgeClass: string } {
+export function describeEstado(estado: string): { label: string; badgeClass: string; dotClass: string } {
   switch (estado) {
     case "ACTIVO":
-      return { label: "Activo", badgeClass: "badge-success" };
+      return { label: "Activo", badgeClass: "badge-success", dotClass: "bg-success" };
     case "INACTIVO":
-      return { label: "Inactivo", badgeClass: "badge-ghost" };
+      return { label: "Inactivo", badgeClass: "badge-ghost", dotClass: "bg-base-content/40" };
     default:
-      return { label: "Pendiente", badgeClass: "badge-warning" };
+      return { label: "Pendiente", badgeClass: "badge-warning", dotClass: "bg-warning" };
   }
 }
 

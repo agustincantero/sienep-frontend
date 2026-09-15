@@ -9,3 +9,8 @@ export function formatFecha(fechaIso: string): string {
   if (!anio || !mes || !dia) return fechaIso;
   return `${dia}/${mes}/${anio}`;
 }
+
+// Iniciales para el avatar de respaldo (estudiante sin foto subida).
+export function iniciales(nombre: string, apellido: string): string {
+  return `${nombre.charAt(0)}${apellido.charAt(0)}`.toUpperCase();
+}

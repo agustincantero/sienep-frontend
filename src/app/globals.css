@@ -140,3 +140,20 @@ body {
     opacity: 1;
   }
 }
+
+/* Leve elevación al hover en botones "con cuerpo" (primary/outline/error/plano). Se excluyen
+   ghost y link porque su lenguaje es justamente no tener cuerpo — una sombra ahí desentonaría. */
+.btn:not(.btn-ghost):not(.btn-link):not(:disabled):hover {
+  box-shadow: 0 2px 8px -2px rgb(0 0 0 / 0.15);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

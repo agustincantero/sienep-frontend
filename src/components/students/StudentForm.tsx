@@ -2,7 +2,7 @@
 
 import { cloneElement, isValidElement, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, X } from "lucide-react";
+import { ArrowLeft, HeartPulse, MapPin, Phone, Plus, User, Users, X } from "lucide-react";
 import { apiErrorMessage, ApiError } from "@/lib/api";
 import { isValidUruguayanCi } from "@/lib/document-validation";
 import { listGroups, type Group } from "@/lib/groups";
@@ -78,9 +78,26 @@ const FECHA_MIN = new Date(HOY.getFullYear() - 100, HOY.getMonth(), HOY.getDate(
 
 // Encabezado de sección del form: sentence case con peso real — el estilo
 // tracked-out en mayúscula queda reservado para rótulos secundarios como el
-// del Sidebar, no para cinco títulos apilados en la misma pantalla.
-function SeccionLegend({ children }: { children: React.ReactNode }) {
-  return <legend className="fieldset-legend text-sm font-semibold text-base-content mb-1">{children}</legend>;
+// del Sidebar, no para cinco títulos apilados en la misma pantalla. El ícono
+// es el mismo lenguaje que las tabs de la ficha (StudentProfile).
+function SeccionLegend({ icon: Icon, children }: { icon: typeof User; children: React.ReactNode }) {
+  return (
+    <legend className="fieldset-legend text-sm font-semibold text-base-content mb-1 gap-1.5">
+      <Icon size={15} aria-hidden className="text-primary" />
+      {children}
+    </legend>
+  );
+}
+
+// Cada sección del form es su propia card — con cinco fieldsets apilados sin
+// separación visual, la pantalla se sentía como un solo bloque de texto
+// interminable. El radius acá es --radius-box (redondeado), igual que el
+// resto de las cards de la app; los controles adentro siguen con
+// --radius-field (casi recto).
+function SeccionCard({ children }: { children: React.ReactNode }) {
+  return (
+    <fieldset className="fieldset space-y-3 p-4 rounded-box border border-base-300">{children}</fieldset>
+  );
 }
 
 type StudentFormProps =
@@ -300,8 +317,8 @@ export function StudentForm(props: StudentFormProps) {
             foco salta al campo inválido pero nunca se ve el mensaje propio
             ni queda enganchado a aria-describedby. Todo pasa por validar(). */}
         <form onSubmit={handleSubmit} noValidate className="space-y-6">
-          <fieldset className="fieldset space-y-3 p-0 border-0">
-            <SeccionLegend>Datos personales</SeccionLegend>
+          <SeccionCard>
+            <SeccionLegend icon={User}>Datos personales</SeccionLegend>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Nombre" fieldKey="nombre" error={errores.nombre}>
                 <input
@@ -378,10 +395,10 @@ export function StudentForm(props: StudentFormProps) {
                 required
               />
             </Field>
-          </fieldset>
+          </SeccionCard>
 
-          <fieldset className="fieldset space-y-3 p-0 border-0">
-            <SeccionLegend>Dirección</SeccionLegend>
+          <SeccionCard>
+            <SeccionLegend icon={MapPin}>Dirección</SeccionLegend>
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <div className="sm:col-span-2">
                 <Field label="Calle" fieldKey="calle" error={errores.calle}>
@@ -429,10 +446,10 @@ export function StudentForm(props: StudentFormProps) {
                 disabled={guardando}
               />
             </Field>
-          </fieldset>
+          </SeccionCard>
 
-          <fieldset className="fieldset space-y-2 p-0 border-0">
-            <SeccionLegend>Teléfonos</SeccionLegend>
+          <SeccionCard>
+            <SeccionLegend icon={Phone}>Teléfonos</SeccionLegend>
             {form.telefonos.map((tel, idx) => {
               const key = `telefono-${idx}`;
               const errorId = `${key}-error`;
@@ -480,34 +497,44 @@ export function StudentForm(props: StudentFormProps) {
               <Plus size={14} aria-hidden />
               Agregar teléfono
             </button>
-          </fieldset>
+          </SeccionCard>
 
           {grupos.length > 0 ? (
-            <fieldset className="fieldset space-y-2 p-0 border-0">
-              <SeccionLegend>Grupos</SeccionLegend>
-              <div className="flex flex-wrap gap-x-6 gap-y-2">
-                {grupos.map((g) => (
-                  <label key={g.idGrupo} className="label cursor-pointer gap-2 justify-start">
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-sm"
-                      checked={form.idGrupos.includes(g.idGrupo)}
-                      onChange={() => alternarGrupo(g.idGrupo)}
-                      disabled={guardando}
-                    />
-                    <span>
+            <SeccionCard>
+              <SeccionLegend icon={Users}>Grupos</SeccionLegend>
+              {/* Chips en vez de checkboxes con texto: el estado seleccionado/no
+                  seleccionado se ve de un vistazo, mismo lenguaje que los badges
+                  de estado del estudiante. El <input> real queda oculto pero
+                  sigue manejando el foco de teclado y el estado accesible. */}
+              <div className="flex flex-wrap gap-2">
+                {grupos.map((g) => {
+                  const seleccionado = form.idGrupos.includes(g.idGrupo);
+                  return (
+                    <label
+                      key={g.idGrupo}
+                      className={`btn btn-sm rounded-full normal-case font-normal ${
+                        seleccionado ? "btn-primary" : "btn-outline"
+                      }${guardando ? " btn-disabled" : ""}`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        checked={seleccionado}
+                        onChange={() => alternarGrupo(g.idGrupo)}
+                        disabled={guardando}
+                      />
                       {g.nomGrupo} — {g.nomCarrera}
-                    </span>
-                  </label>
-                ))}
+                    </label>
+                  );
+                })}
               </div>
-            </fieldset>
+            </SeccionCard>
           ) : null}
 
-          <fieldset className="fieldset space-y-3 p-0 border-0">
-            <SeccionLegend>Información de salud</SeccionLegend>
+          <SeccionCard>
+            <SeccionLegend icon={HeartPulse}>Información de salud</SeccionLegend>
             <div role="note" className="alert alert-soft text-sm">
-              <span>Esta información solo la ven funcionarios con el permiso VER_BLOQUE_CONFIDENCIAL.</span>
+              <span>Esta información solo la ven funcionarios con permiso para ver datos de salud.</span>
             </div>
             <Field label="Información de salud" fieldKey="informacionSalud">
               <textarea
@@ -539,7 +566,7 @@ export function StudentForm(props: StudentFormProps) {
                 disabled={guardando}
               />
             </Field>
-          </fieldset>
+          </SeccionCard>
 
           <div className="flex justify-end gap-2">
             <button

@@ -1,3 +1,5 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
 type PaginationFooterProps = {
   shown: number;
   total: number;
@@ -27,16 +29,23 @@ export function PaginationFooter({
           <li className="list-none inline-block">
             <button
               type="button"
-              className="join-item btn btn-sm"
+              className="join-item btn btn-sm gap-1"
               disabled={!hasPrevious}
               onClick={onPrevious}
             >
+              <ChevronLeft size={14} aria-hidden />
               Anterior
             </button>
           </li>
           <li className="list-none inline-block">
-            <button type="button" className="join-item btn btn-sm" disabled={!hasNext} onClick={onNext}>
+            <button
+              type="button"
+              className="join-item btn btn-sm gap-1"
+              disabled={!hasNext}
+              onClick={onNext}
+            >
               Siguiente
+              <ChevronRight size={14} aria-hidden />
             </button>
           </li>
         </ul>
