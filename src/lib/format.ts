@@ -21,3 +21,8 @@ export function formatFechaHora(fechaIso: string): string {
   if (!fecha || !hora) return fechaIso;
   return `${formatFecha(fecha)} ${hora.slice(0, 5)}`;
 }
+
+// Iniciales para el avatar de respaldo (estudiante sin foto subida).
+export function iniciales(nombre: string, apellido: string): string {
+  return `${nombre.charAt(0)}${apellido.charAt(0)}`.toUpperCase();
+}
