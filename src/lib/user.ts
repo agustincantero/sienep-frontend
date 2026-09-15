@@ -2,13 +2,16 @@
 
 export type UserType = "FUNCIONARIO" | "ESTUDIANTE";
 
+// Valores del enum EstadoUsuario del backend (ver docs/openapi.json, UsuarioAutenticadoDTO.estado).
+export type EstadoUsuario = "ACTIVO" | "INACTIVO" | "ELIMINADO" | "PENDIENTE_DE_ACTIVACION";
+
 export type AuthenticatedUser = {
   idUsuario: number;
   tipo: UserType;
   email: string;
   nombre: string;
   apellido: string;
-  estado: string;
+  estado: EstadoUsuario;
   // Nombre del rol (ej. "ADMINISTRADOR"). Solo para mostrar/diagnóstico:
   // el gating fino se hace con `permisos`, el shell con `tipo`.
   rol: string;

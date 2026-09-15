@@ -7,7 +7,7 @@ import { forgotPassword } from "@/lib/auth";
 import { AuthCard } from "./AuthCard";
 
 // Paso 1 de la recuperación de contraseña: el usuario pide el enlace por email.
-// POST /api/auth/olvide-contrasenia con { email }. La respuesta del backend es siempre genérica (no revela si el email existe), así que ante un 200 mostramos el mismo mensaje sin importar el caso.
+// POST /api/auth/forgot-password con { email }. La respuesta del backend es siempre genérica (no revela si el email existe), así que ante un 200 mostramos el mismo mensaje sin importar el caso.
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [cargando, setCargando] = useState(false);
@@ -56,7 +56,6 @@ export function ForgotPasswordForm() {
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="floating-label">
-            <span>Correo electrónico</span>
             <input
               type="email"
               required
@@ -67,6 +66,7 @@ export function ForgotPasswordForm() {
               onChange={(e) => setEmail(e.target.value)}
               disabled={cargando}
             />
+            <span>Correo electrónico</span>
           </label>
           {error ? (
             <div role="alert" className="alert alert-error alert-soft text-sm">

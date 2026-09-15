@@ -13,7 +13,7 @@ type ResetPasswordFormProps = {
 };
 
 // Paso 2 de la recuperación: el usuario elige la contraseña nueva.
-// POST /api/auth/restablecer-contrasenia con { token, contraseniaNueva }. El backend exige contraseniaNueva de 8 a 100 y responde 401 si el token está vencido, ya se usó o es inválido. El largo y la coincidencia se validan en JS y el mensaje va debajo del campo que falló (errores de campo); un 401 lleva al mismo panel de "enlace inválido" que cuando no hay token.
+// POST /api/auth/reset-password con { token, contraseniaNueva }. El backend exige contraseniaNueva de 8 a 100 y responde 401 si el token está vencido, ya se usó o es inválido. El largo y la coincidencia se validan en JS y el mensaje va debajo del campo que falló (errores de campo); un 401 lleva al mismo panel de "enlace inválido" que cuando no hay token.
 export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const [nueva, setNueva] = useState("");
   const [confirmar, setConfirmar] = useState("");
