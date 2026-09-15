@@ -4,22 +4,41 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ApiError } from "@/lib/api";
-import { login } from "@/lib/auth";
+import { login, me } from "@/lib/auth";
+import type { AuthenticatedUser } from "@/lib/user";
 import { AuthCard } from "./AuthCard";
 import { GoogleLoginButton } from "./GoogleLoginButton";
 import { PasswordInput } from "./PasswordInput";
+import { SetPasswordForm } from "./SetPasswordForm";
 
-// Pantalla de login. Conectada a POST /api/auth/login y (vía GoogleLoginButton) a POST /api/auth/google. Esos Route Handlers guardan el JWT en una cookie httpOnly; acá no se maneja ningún token. Al entrar, se navega a /inicio (el layout de (app) valida la sesión contra GET /auth/me).
+// Pantalla de login. Conectada a POST /api/auth/login y (vía GoogleLoginButton) a POST /api/auth/google. Esos Route Handlers guardan el JWT en una cookie httpOnly; acá no se maneja ningún token. Al entrar, se navega a /inicio (el layout de (app) valida la sesión contra GET /auth/me) — salvo que GET /auth/me diga que la cuenta quedó PENDIENTE_DE_ACTIVACION (contraseña temporal), en cuyo caso se muestra SetPasswordForm ahí mismo con la contraseña recién tipeada, en vez de navegar y pedírsela de nuevo.
 export function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [contrasenia, setContrasenia] = useState("");
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
+  const [porActivar, setPorActivar] = useState<{ user: AuthenticatedUser; contraseniaActual?: string } | null>(null);
 
   function entrar() {
     setCargando(true); // se mantiene deshabilitado durante la navegación
     router.replace("/inicio");
+  }
+
+  // Tras un login exitoso, fija si hay que activar la cuenta antes de entrar. `contraseniaValidada` solo llega cuando el login fue por credenciales (nunca por Google, que no valida ninguna contraseña) y es la que se le pasa como fallback a SetPasswordForm.
+  async function despuesDeLoguear(contraseniaValidada?: string) {
+    try {
+      const user = await me();
+      if (user.estado === "PENDIENTE_DE_ACTIVACION") {
+        setPorActivar({ user, contraseniaActual: contraseniaValidada });
+        setCargando(false);
+      } else {
+        entrar();
+      }
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Ocurrió un error inesperado.");
+      setCargando(false);
+    }
   }
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
@@ -28,18 +47,21 @@ export function LoginForm() {
     setCargando(true);
     try {
       await login(email, contrasenia);
-      entrar();
+      await despuesDeLoguear(contrasenia);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Ocurrió un error inesperado.");
       setCargando(false);
     }
   }
 
+  if (porActivar) {
+    return <SetPasswordForm user={porActivar.user} contraseniaActual={porActivar.contraseniaActual} />;
+  }
+
   return (
     <AuthCard title="Iniciar sesión">
       <form onSubmit={handleSubmit} className="space-y-4">
         <label className="floating-label">
-          <span>Correo electrónico</span>
           <input
             type="email"
             required
@@ -50,6 +72,7 @@ export function LoginForm() {
             onChange={(e) => setEmail(e.target.value)}
             disabled={cargando}
           />
+          <span>Correo electrónico</span>
         </label>
         <PasswordInput
           label="Contraseña"
@@ -77,7 +100,7 @@ export function LoginForm() {
           </Link>
         </div>
         <div className="divider text-sm text-base-content/70">o</div>
-        <GoogleLoginButton onSuccess={entrar} onError={setError} />
+        <GoogleLoginButton onSuccess={() => despuesDeLoguear()} onError={setError} />
       </form>
     </AuthCard>
   );

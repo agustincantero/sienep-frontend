@@ -2,26 +2,24 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ClipboardList, FileText, HeartPulse, User } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFecha } from "@/lib/format";
-import {
-  describeEstado,
-  getStudent,
-  resendStudentPassword,
-  uploadStudentPhoto,
-  type Student,
-} from "@/lib/students";
+import { getStudent, resendStudentPassword, uploadStudentPhoto, type Student } from "@/lib/students";
 import { useSession } from "@/lib/session-context";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { EstadoBadge } from "./EstadoBadge";
 import { MedicalReportsPanel } from "./MedicalReportsPanel";
 import { StudentCommentsPanel } from "./StudentCommentsPanel";
 
 type Tab = "datos" | "salud" | "instancias" | "informes" | "comentarios";
 
-function iniciales(nombre: string, apellido: string): string {
-  return `${nombre.charAt(0)}${apellido.charAt(0)}`.toUpperCase();
-}
+const TABS: { id: Tab; label: string; icon: typeof User }[] = [
+  { id: "datos", label: "Datos generales", icon: User },
+  { id: "salud", label: "Salud (confidencial)", icon: HeartPulse },
+  { id: "instancias", label: "Instancias e incidencias", icon: ClipboardList },
+  { id: "informes", label: "Informes médicos", icon: FileText },
+];
 
 // Un solo verbo por estado, sostenido en el botón, la confirmación y el
 // mensaje de éxito — antes el botón decía una cosa, el confirm otra y el
@@ -156,7 +154,7 @@ export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
     );
   }
 
-  const grupos = estudiante.grupos.join(", ") || "—";
+  const grupos = estudiante.grupos.join(", ");
 
   return (
     <div className="grow overflow-auto">
@@ -185,22 +183,22 @@ export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
         ) : null}
 
         <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="avatar avatar-placeholder">
-              <div className="bg-neutral text-neutral-content rounded-full w-12">
-                {estudiante.urlFoto ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- foto servida por el proxy autenticado, no un asset estático de Next
-                  <img src={`/api${estudiante.urlFoto}`} alt="" className="rounded-full" />
-                ) : (
-                  <span>{iniciales(estudiante.nombre, estudiante.apellido)}</span>
-                )}
-              </div>
-            </div>
+          <div className="flex items-center gap-3 select-none cursor-default">
+            <StudentAvatar
+              nombre={estudiante.nombre}
+              apellido={estudiante.apellido}
+              urlFoto={estudiante.urlFoto}
+              size="lg"
+            />
             <div>
               <h1 className="text-xl font-bold mb-0">
                 {estudiante.nombre} {estudiante.apellido}
               </h1>
-              <p className="text-sm text-base-content/60 mb-0">{grupos}</p>
+              {/* Sin fallback "—": un guión suelto sin etiqueta al lado no comunica nada. Si no
+                  tiene grupo, directamente no se muestra esta línea (el dato completo sigue
+                  disponible, con su etiqueta, en la pestaña Datos generales). */}
+              {grupos ? <p className="text-sm text-base-content/60 mb-1">{grupos}</p> : null}
+              <EstadoBadge estado={estudiante.estado} />
             </div>
           </div>
 
@@ -284,14 +282,21 @@ export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
           </button>
         </div>
 
-        {tab === "datos" ? (
-          <DatosGenerales estudiante={estudiante} />
-        ) : tab === "salud" ? (
-          puedeVerSalud ? (
-            <SaludConfidencial estudiante={estudiante} />
-          ) : (
+        {/* key={tab} fuerza el remount al cambiar de tab, así la animación se repite cada vez en vez de correr una sola vez al montar la ficha. */}
+        <div key={tab} className="animate-[fade-in_180ms_ease-out]">
+          {tab === "datos" ? (
+            <DatosGenerales estudiante={estudiante} />
+          ) : tab === "salud" ? (
+            puedeVerSalud ? (
+              <SaludConfidencial estudiante={estudiante} />
+            ) : (
+              <p className="text-base-content/60 text-sm">
+                No tenés permiso para ver la información de salud de este estudiante.
+              </p>
+            )
+          ) : tab === "instancias" ? (
             <p className="text-base-content/60 text-sm">
-              No tenés permiso para ver la información de salud de este estudiante.
+              Se completa en el módulo de Instancias e Incidencias.
             </p>
           )
         ) : tab === "instancias" ? (
@@ -319,7 +324,7 @@ export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
 
 function Dato({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="py-2 border-b border-base-300 flex flex-wrap gap-x-4">
+    <div className="py-2 border-b border-base-300 flex flex-wrap gap-x-4 select-none cursor-default">
       <span className="text-base-content/60 w-40 shrink-0">{label}</span>
       <span className="font-medium">{value || "—"}</span>
     </div>
@@ -343,14 +348,6 @@ function DatosGenerales({ estudiante }: { estudiante: Student }) {
       <Dato label="Teléfono" value={estudiante.telefonos.join(", ")} />
       <Dato label="Dirección" value={direccion} />
       <Dato label="Grupos" value={estudiante.grupos.join(", ")} />
-      <Dato
-        label="Estado"
-        value={
-          <span className={`badge badge-sm ${describeEstado(estudiante.estado).badgeClass}`}>
-            {describeEstado(estudiante.estado).label}
-          </span>
-        }
-      />
     </div>
   );
 }
@@ -359,7 +356,7 @@ function SaludConfidencial({ estudiante }: { estudiante: Student }) {
   return (
     <div>
       <div role="alert" className="alert alert-soft text-sm mb-3">
-        <span>Bloque confidencial — visible solo con el permiso VER_BLOQUE_CONFIDENCIAL.</span>
+        <span>Bloque confidencial — visible solo para quienes tienen permiso de ver información de salud.</span>
       </div>
       <Dato label="Información de salud" value={estudiante.informacionSalud} />
       <Dato label="Sistema de salud" value={estudiante.sistemaSalud} />

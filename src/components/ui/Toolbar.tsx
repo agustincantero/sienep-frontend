@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 export type ToolbarFilter = {
   label: string;
@@ -23,11 +23,21 @@ export function Toolbar({ placeholder, searchValue, onSearchChange, filters }: T
             <Search size={14} aria-hidden />
           </span>
           <input
-            className="input input-bordered input-sm w-full pl-9 border-neutral-800/30"
+            className="input input-bordered input-sm w-full pl-9 pr-8 border-neutral-800/30"
             placeholder={placeholder}
             value={searchValue}
             onChange={(e) => onSearchChange?.(e.target.value)}
           />
+          {searchValue ? (
+            <button
+              type="button"
+              className="btn btn-ghost btn-circle btn-xs absolute right-1 top-1/2 -translate-y-1/2 text-base-content/50 hover:text-base-content"
+              onClick={() => onSearchChange?.("")}
+              aria-label="Limpiar búsqueda"
+            >
+              <X size={13} aria-hidden />
+            </button>
+          ) : null}
         </div>
       </div>
       {(filters ?? []).map((f) => (

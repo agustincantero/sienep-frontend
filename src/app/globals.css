@@ -1,10 +1,17 @@
 @import "tailwindcss";
-@plugin "daisyui";
+
+@plugin "daisyui" {
+  themes: light --default;
+}
 
 /* Paleta de marca SIENEP sobre el theme "light" de daisyUI, tomada del prototipo (docs/prototipo.html) */
-[data-theme="light"] {
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+  color-scheme: light;
+
   --color-primary: #0ea5e9; /* sky-500 */
-  --color-primary-content: #ffffff;
+  --color-primary-content: #262626; /* neutral-800 — texto blanco sobre sky-500 da 2.77:1, por debajo de AA; con neutral-800 da 5.46:1 */
   --color-base-100: #ffffff;
   --color-base-200: #d6d3d1; /* stone-300 */
   --color-base-300: #d6d3d1; /* stone-300 */
@@ -26,12 +33,10 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-onest);
 }
 
-/* Sin toggle de tema todavía: el sistema siempre corre en data-theme="light"
-   (ver layout.tsx), así que el body no debe reaccionar a prefers-color-scheme. */
+/* Sin toggle de tema: la app corre siempre con el theme "light" de arriba (ver layout.tsx). No agregar manejo de prefers-color-scheme. */
 body {
   background: var(--color-base-100);
   color: var(--color-base-content);
@@ -43,8 +48,112 @@ body {
   --input-color: var(--color-primary);
 }
 
-/* En un floating-label, el placeholder es la etiqueta visible mientras el campo está vacío y sin foco. daisyUI lo pinta al 50% (contraste ~3.9:1, por debajo de AA); lo subimos. Se excluye :focus-within para no pisar la regla de daisyUI que oculta el placeholder al enfocar (y deja subir el <span>). Cubre el input con `.input` propio y el anidado dentro de un wrapper `.input`. */
+/* Placeholder como label visible: zinc-500 sólido, no opacity (daisyUI da ~3:1, no pasa AA). Cubre el input con `.input` propio y el anidado dentro de un wrapper `.input` (ej. PasswordInput). */
 .floating-label:not(:focus-within) :is(input.input, .input input)::placeholder {
-  color: var(--color-base-content);
-  opacity: 0.7;
+  color: #71717a; /* zinc-500 */
+  opacity: 1;
+}
+
+/* ── Chrome de las pantallas de auth: fondo con fotos del campus ───────────
+   Fotos en cross-fade lento, con un filtro celeste encima (LoginBackground.tsx).
+   Todo esto es decorativo (aria-hidden); el contenido va en una capa z-10 aparte. */
+.login-slideshow {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background-color: var(--color-primary); /* color base mientras carga la 1ª foto */
+}
+
+/* Cada foto ocupa todo el fondo y aparece/desaparece en su turno. Con 3 fotos y
+   un ciclo de 45s, cada una está visible ~12,6s con transiciones de ~2,3-2,7s. */
+.login-slideshow__frame {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation: login-slideshow 45s linear infinite;
+}
+.login-slideshow__frame img {
+  object-fit: cover;
+}
+.login-slideshow__frame:nth-child(1) {
+  animation-delay: 0s;
+}
+.login-slideshow__frame:nth-child(2) {
+  animation-delay: 15s;
+}
+.login-slideshow__frame:nth-child(3) {
+  animation-delay: 30s;
+}
+
+@keyframes login-slideshow {
+  0% {
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  33% {
+    opacity: 1;
+  }
+  39% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Filtro celeste: una capa multiply liviana que tiñe la foto hacia el azul de
+   marca sin taparla, más un degradé celeste→tinta de arriba a abajo. Arriba el
+   campus se ve claramente; abajo se oscurece para anclar el footer y dar
+   contraste al título en blanco. */
+.login-wash {
+  position: absolute;
+  inset: 0;
+}
+.login-wash::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #0ea5e9, #075985);
+  opacity: 0.38;
+  mix-blend-mode: multiply;
+}
+.login-wash::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(2, 132, 199, 0.16) 0%,
+    rgba(2, 132, 199, 0.3) 42%,
+    rgba(4, 27, 44, 0.62) 100%
+  );
+}
+
+/* Sin animación para quien la desactivó: queda la primera foto fija. */
+@media (prefers-reduced-motion: reduce) {
+  .login-slideshow__frame {
+    animation: none;
+  }
+  .login-slideshow__frame:nth-child(1) {
+    opacity: 1;
+  }
+}
+
+/* Leve elevación al hover en botones "con cuerpo" (primary/outline/error/plano). Se excluyen
+   ghost y link porque su lenguaje es justamente no tener cuerpo — una sombra ahí desentonaría. */
+.btn:not(.btn-ghost):not(.btn-link):not(:disabled):hover {
+  box-shadow: 0 2px 8px -2px rgb(0 0 0 / 0.15);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

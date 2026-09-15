@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Paperclip, Trash2, Upload } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import {
   attachMedicalReport,
@@ -139,23 +140,32 @@ export function MedicalReportsPanel({ idEstudiante }: { idEstudiante: number }) 
       ) : (
         <ul className="divide-y divide-base-300">
           {informes.map((inf) => (
-            <li key={inf.idInforme} className="py-2 flex items-center justify-between gap-3">
+            <li
+              key={inf.idInforme}
+              className="px-2 -mx-2 rounded-field flex items-center justify-between gap-3 transition-colors hover:bg-base-200"
+            >
               <a
                 href={`/api${inf.urlDescarga}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="link link-hover text-sm truncate"
+                className="link link-hover text-sm truncate flex items-center gap-2 py-2"
               >
+                <Paperclip size={14} aria-hidden className="text-base-content/50 shrink-0" />
                 {inf.nombre}
               </a>
               {puedeEliminar ? (
                 <button
                   type="button"
-                  className="btn btn-link btn-sm btn-error shrink-0"
+                  className="btn btn-ghost btn-xs btn-circle text-error shrink-0"
                   disabled={eliminandoId === inf.idInforme}
                   onClick={() => setInformeAEliminar(inf)}
+                  aria-label={`Eliminar informe "${inf.nombre}"`}
                 >
-                  Eliminar
+                  {eliminandoId === inf.idInforme ? (
+                    <span className="loading loading-spinner loading-xs" />
+                  ) : (
+                    <Trash2 size={14} aria-hidden />
+                  )}
                 </button>
               ) : null}
             </li>
@@ -214,8 +224,12 @@ export function MedicalReportsPanel({ idEstudiante }: { idEstudiante: number }) 
               </p>
             ) : null}
           </div>
-          <button type="submit" className="btn btn-primary btn-sm" disabled={subiendo}>
-            {subiendo ? <span className="loading loading-spinner loading-xs" /> : null}
+          <button type="submit" className="btn btn-primary btn-sm gap-1" disabled={subiendo}>
+            {subiendo ? (
+              <span className="loading loading-spinner loading-xs" />
+            ) : (
+              <Upload size={14} aria-hidden />
+            )}
             Adjuntar
           </button>
         </form>
