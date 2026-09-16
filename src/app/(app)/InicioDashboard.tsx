@@ -10,8 +10,7 @@ import {
 } from "@/lib/nav-items";
 import { useSession } from "@/lib/session-context";
 
-// Tarjeta de acceso a un módulo. Toda la tarjeta es el link (patrón del
-// prototipo docs/prototipo.html, LauncherCard).
+// Tarjeta de acceso a un módulo. Toda la tarjeta es el link (patrón del prototipo docs/prototipo.html, LauncherCard).
 function TarjetaAcceso({ item }: { item: NavItem }) {
   return (
     <Link
@@ -29,8 +28,7 @@ function TarjetaAcceso({ item }: { item: NavItem }) {
   );
 }
 
-// Franja horaria (convención rioplatense): 05–11:59 días, 12–19:59 tardes,
-// 20–04:59 noches.
+// Franja horaria: 05–11:59 días, 12–19:59 tardes, 20–04:59 noches.
 function saludoPorHora(hora: number): string {
   if (hora >= 5 && hora < 12) return "Buenos días";
   if (hora >= 12 && hora < 20) return "Buenas tardes";
@@ -39,9 +37,7 @@ function saludoPorHora(hora: number): string {
 
 const noSuscribir = () => () => {};
 
-// El server no conoce la hora local del usuario -> "Hola" en el HTML inicial;
-// el cliente ya resuelve la franja según su reloj. useSyncExternalStore hace
-// que React acepte los dos valores sin warning de hidratación.
+// El server no conoce la hora local del usuario -> "Hola" en el HTML inicial; el cliente ya resuelve la franja según su reloj. useSyncExternalStore hace que React acepte los dos valores sin warning de hidratación.
 function useSaludo(): string {
   const hora = useSyncExternalStore(
     noSuscribir,

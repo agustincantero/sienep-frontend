@@ -7,7 +7,7 @@ import { TopBar } from "./TopBar";
 
 // Frame de toda pantalla autenticada: TopBar + contenido. El Sidebar NO va acá:
 // solo aparece dentro de las secciones (ver src/app/(app)/(secciones)/layout.tsx),
-// como el prototipo — /inicio no tiene sidebar.
+// como el prototipo — el dashboard en / no tiene sidebar.
 export function AppShell({ children }: { children: React.ReactNode }) {
   const user = useSession();
   const [saliendo, setSaliendo] = useState(false);

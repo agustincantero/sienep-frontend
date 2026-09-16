@@ -8,7 +8,7 @@ import { Sidebar } from "./Sidebar";
 
 // Chrome de las páginas de módulo (secciones), por dentro del AppShell:
 //  - funcionario: Sidebar + toggle de menú mobile + contenido
-//  - estudiante:  BackButton a /inicio + contenido, sin sidebar (como el prototipo)
+//  - estudiante:  BackButton a / + contenido, sin sidebar (como el prototipo)
 export function SeccionShell({ children }: { children: React.ReactNode }) {
   const user = useSession();
   const [showSidebar, setShowSidebar] = useState(false);
@@ -17,7 +17,7 @@ export function SeccionShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="grow overflow-auto">
         <div className="max-w-[980px] mx-auto w-full px-4 pt-4">
-          <BackButton href="/inicio" label="Inicio" />
+          <BackButton href="/" label="Inicio" />
         </div>
         {children}
       </div>

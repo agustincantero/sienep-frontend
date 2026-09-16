@@ -43,7 +43,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
 
         <div className="h-full flex flex-col overflow-auto">
           <div className="h-full flex flex-col p-3 overflow-auto">
-            <BackButton href="/inicio" label="Inicio" />
+            <BackButton href="/" label="Inicio" />
             {grupos.map((group) => (
               <div key={group.label}>
                 <h6 className="uppercase text-base-content/60 text-xs font-bold px-2 mb-1 tracking-wide">{group.label}</h6>

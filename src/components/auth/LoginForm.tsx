@@ -11,7 +11,7 @@ import { GoogleLoginButton } from "./GoogleLoginButton";
 import { PasswordInput } from "./PasswordInput";
 import { SetPasswordForm } from "./SetPasswordForm";
 
-// Pantalla de login. Conectada a POST /api/auth/login y (vía GoogleLoginButton) a POST /api/auth/google. Esos Route Handlers guardan el JWT en una cookie httpOnly; acá no se maneja ningún token. Al entrar, se navega a /inicio (el layout de (app) valida la sesión contra GET /auth/me) — salvo que GET /auth/me diga que la cuenta quedó PENDIENTE_DE_ACTIVACION (contraseña temporal), en cuyo caso se muestra SetPasswordForm ahí mismo con la contraseña recién tipeada, en vez de navegar y pedírsela de nuevo.
+// Pantalla de login. Conectada a POST /api/auth/login y (vía GoogleLoginButton) a POST /api/auth/google. Esos Route Handlers guardan el JWT en una cookie httpOnly; acá no se maneja ningún token. Al entrar, se navega a / (el layout de (app) valida la sesión contra GET /auth/me y ahí mismo muestra el dashboard) — salvo que GET /auth/me diga que la cuenta quedó PENDIENTE_DE_ACTIVACION (contraseña temporal), en cuyo caso se muestra SetPasswordForm ahí mismo con la contraseña recién tipeada, en vez de navegar y pedírsela de nuevo.
 export function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -22,7 +22,7 @@ export function LoginForm() {
 
   function entrar() {
     setCargando(true); // se mantiene deshabilitado durante la navegación
-    router.replace("/inicio");
+    router.replace("/");
   }
 
   // Tras un login exitoso, fija si hay que activar la cuenta antes de entrar. `contraseniaValidada` solo llega cuando el login fue por credenciales (nunca por Google, que no valida ninguna contraseña) y es la que se le pasa como fallback a SetPasswordForm.

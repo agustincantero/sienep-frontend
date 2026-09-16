@@ -10,7 +10,7 @@ import { SetPasswordScreen } from "./SetPasswordScreen";
 // "Dynamic server usage" al chocar con `cookies()`.
 export const dynamic = "force-dynamic";
 
-// Portón del área autenticada. Resuelve GET /auth/me en el server:
+// Portón del área autenticada — incluye la propia raíz "/" (dashboard, en (app)/page.tsx), no solo las secciones. Resuelve GET /auth/me en el server:
 //  - usuario, estado ACTIVO           -> monta el AppShell (TopBar + Sidebar) y deja el usuario en context
 //  - usuario, estado PENDIENTE_DE_ACTIVACION -> SetPasswordScreen en vez del AppShell (respaldo del server: LoginForm ya resuelve el caso normal antes de llegar acá; el backend igual lo hace cumplir en cualquier otro endpoint)
 //  - null (401)                       -> a /login
