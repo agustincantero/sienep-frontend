@@ -1,11 +1,12 @@
 "use client";
 
-import { cloneElement, isValidElement, useEffect, useRef, useState } from "react";
+import { cloneElement, isValidElement, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, HeartPulse, MapPin, Phone, Plus, User, Users, X } from "lucide-react";
 import { apiErrorMessage, ApiError } from "@/lib/api";
 import { isValidUruguayanCi } from "@/lib/document-validation";
 import { listGroups, type Group } from "@/lib/groups";
+import { listItrs, type Itr } from "@/lib/itrs";
 import {
   createStudent,
   updateStudent,
@@ -112,6 +113,10 @@ export function StudentForm(props: StudentFormProps) {
     estadoInicial(esEdicion ? props.estudiante : undefined),
   );
   const [grupos, setGrupos] = useState<Group[]>([]);
+  const [itrs, setItrs] = useState<Itr[]>([]);
+  const [filtroItr, setFiltroItr] = useState<number | "">("");
+  const [filtroCarrera, setFiltroCarrera] = useState<number | "">("");
+  const autoseleccionoFiltro = useRef(false);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -121,7 +126,39 @@ export function StudentForm(props: StudentFormProps) {
     listGroups()
       .then(setGrupos)
       .catch(() => setGrupos([]));
+    listItrs()
+      .then(setItrs)
+      .catch(() => setItrs([]));
   }, []);
+
+  // Las carreras no tienen catálogo propio acá: se derivan de los grupos ya
+  // cargados (mismo criterio que StudentsListView — cada Grupo trae
+  // idCarrera/nomCarrera, y toda carrera relevante tiene al menos un grupo).
+  const carreras = useMemo(() => {
+    const vistas = new Map<string, number>();
+    for (const g of grupos) vistas.set(g.nomCarrera, g.idCarrera);
+    return [...vistas.entries()].map(([nomCarrera, idCarrera]) => ({ nomCarrera, idCarrera }));
+  }, [grupos]);
+
+  // No todos los ITR tienen todas las carreras — ItrResponseDTO.carreras solo
+  // trae nombres (no ids), así que se cruza por nombre contra `carreras`.
+  const carrerasDelItr = useMemo(() => {
+    if (filtroItr === "") return [];
+    const itr = itrs.find((i) => i.idItr === filtroItr);
+    if (!itr) return [];
+    const nombres = new Set(itr.carreras);
+    return carreras.filter((c) => nombres.has(c.nomCarrera));
+  }, [filtroItr, itrs, carreras]);
+
+  const gruposDeLaCarrera = useMemo(() => {
+    if (filtroCarrera === "") return [];
+    return grupos.filter((g) => g.idCarrera === filtroCarrera);
+  }, [filtroCarrera, grupos]);
+
+  const gruposSeleccionados = useMemo(
+    () => grupos.filter((g) => form.idGrupos.includes(g.idGrupo)),
+    [grupos, form.idGrupos],
+  );
 
   // Los grupos actuales del estudiante llegan como nombres (EstudianteResponseDTO.grupos),
   // hay que resolverlos a id una vez que el catálogo de grupos está cargado.
@@ -132,6 +169,25 @@ export function StudentForm(props: StudentFormProps) {
     setForm((f) => ({ ...f, idGrupos: ids }));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo debe correr cuando el catálogo de grupos llega
   }, [grupos]);
+
+  // Al editar, arranca el selector de ITR/carrera ya posicionado en el grupo
+  // vigente del estudiante, en vez de forzarlo a rearmar el camino ITR →
+  // carrera desde cero para ver algo que ya está seleccionado. Solo una vez
+  // (autoseleccionoFiltro) para no pisar una navegación manual posterior.
+  useEffect(() => {
+    if (autoseleccionoFiltro.current) return;
+    if (gruposSeleccionados.length === 0 || itrs.length === 0) return;
+    const primerGrupo = gruposSeleccionados[0];
+    const itrDeLaCarrera = itrs.find((i) => i.carreras.includes(primerGrupo.nomCarrera));
+    autoseleccionoFiltro.current = true;
+    setFiltroCarrera(primerGrupo.idCarrera);
+    if (itrDeLaCarrera) setFiltroItr(itrDeLaCarrera.idItr);
+  }, [gruposSeleccionados, itrs]);
+
+  function alternarFiltroItr(value: string) {
+    setFiltroItr(value ? Number(value) : "");
+    setFiltroCarrera("");
+  }
 
   // El banner de error general puede quedar fuera de la vista si el usuario
   // ya scrolleó hacia una sección más abajo del form (5 fieldsets).
@@ -499,35 +555,98 @@ export function StudentForm(props: StudentFormProps) {
             </button>
           </SeccionCard>
 
-          {grupos.length > 0 ? (
+          {itrs.length > 0 || grupos.length > 0 ? (
             <SeccionCard>
-              <SeccionLegend icon={Users}>Grupos</SeccionLegend>
-              {/* Chips en vez de checkboxes con texto: el estado seleccionado/no
-                  seleccionado se ve de un vistazo, mismo lenguaje que los badges
-                  de estado del estudiante. El <input> real queda oculto pero
-                  sigue manejando el foco de teclado y el estado accesible. */}
-              <div className="flex flex-wrap gap-2">
-                {grupos.map((g) => {
-                  const seleccionado = form.idGrupos.includes(g.idGrupo);
-                  return (
-                    <label
-                      key={g.idGrupo}
-                      className={`btn btn-sm rounded-full normal-case font-normal ${
-                        seleccionado ? "btn-primary" : "btn-outline"
-                      }${guardando ? " btn-disabled" : ""}`}
-                    >
-                      <input
-                        type="checkbox"
-                        className="hidden"
-                        checked={seleccionado}
-                        onChange={() => alternarGrupo(g.idGrupo)}
-                        disabled={guardando}
-                      />
-                      {g.nomGrupo} — {g.nomCarrera}
-                    </label>
-                  );
-                })}
+              <SeccionLegend icon={Users}>Grupo</SeccionLegend>
+
+              {gruposSeleccionados.length > 0 ? (
+                <div>
+                  <p className="text-xs font-medium text-base-content/60 mb-1">Asignados</p>
+                  {/* Se muestran siempre, sin importar el filtro ITR/carrera vigente —
+                      si no, cambiar el filtro para agregar otro grupo hace "desaparecer"
+                      de la vista uno ya elegido, aunque siga asignado. */}
+                  <div className="flex flex-wrap gap-2">
+                    {gruposSeleccionados.map((g) => (
+                      <span key={g.idGrupo} className="badge badge-primary gap-1.5 py-3">
+                        {g.nomGrupo} · {g.generacion} — {g.nomCarrera}
+                        <button
+                          type="button"
+                          className="hover:opacity-70"
+                          onClick={() => alternarGrupo(g.idGrupo)}
+                          disabled={guardando}
+                          aria-label={`Quitar ${g.nomGrupo}`}
+                        >
+                          <X size={12} aria-hidden />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field label="ITR" fieldKey="itr">
+                  <select
+                    className="select w-full"
+                    value={filtroItr}
+                    onChange={(e) => alternarFiltroItr(e.target.value)}
+                    disabled={guardando}
+                  >
+                    <option value="">Seleccioná un ITR</option>
+                    {itrs.map((i) => (
+                      <option key={i.idItr} value={i.idItr}>
+                        {i.nomItr}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Carrera" fieldKey="carrera">
+                  <select
+                    className="select w-full"
+                    value={filtroCarrera}
+                    onChange={(e) => setFiltroCarrera(e.target.value ? Number(e.target.value) : "")}
+                    disabled={guardando || filtroItr === ""}
+                  >
+                    <option value="">
+                      {filtroItr === "" ? "Elegí un ITR primero" : "Seleccioná una carrera"}
+                    </option>
+                    {carrerasDelItr.map((c) => (
+                      <option key={c.idCarrera} value={c.idCarrera}>
+                        {c.nomCarrera}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
               </div>
+
+              {filtroCarrera !== "" ? (
+                gruposDeLaCarrera.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {gruposDeLaCarrera.map((g) => {
+                      const seleccionado = form.idGrupos.includes(g.idGrupo);
+                      return (
+                        <label
+                          key={g.idGrupo}
+                          className={`btn btn-sm rounded-full normal-case font-normal ${
+                            seleccionado ? "btn-primary" : "btn-outline"
+                          }${guardando ? " btn-disabled" : ""}`}
+                        >
+                          <input
+                            type="checkbox"
+                            className="hidden"
+                            checked={seleccionado}
+                            onChange={() => alternarGrupo(g.idGrupo)}
+                            disabled={guardando}
+                          />
+                          {g.nomGrupo} · {g.generacion}
+                        </label>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-base-content/60">No hay grupos activos para esta carrera.</p>
+                )
+              ) : null}
             </SeccionCard>
           ) : null}
 
