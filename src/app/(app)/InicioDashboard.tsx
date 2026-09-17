@@ -15,13 +15,13 @@ function TarjetaAcceso({ item }: { item: NavItem }) {
   return (
     <Link
       href={item.href}
-      className="card bg-base-100 border border-base-content/20 shadow-sm hover:shadow-md transition-shadow"
+      className="card bg-base-100 border border-base-content/30 hover:border-primary/40 transition-colors"
     >
       <div className="card-body">
-        <span className="w-10 h-10 rounded-lg bg-primary/10 text-primary inline-flex items-center justify-center mb-3">
-          <item.icon size={20} aria-hidden />
-        </span>
-        <h2 className="card-title text-base">{item.title}</h2>
+        <div className="flex items-center gap-2 mb-1">
+          <item.icon size={20} className="text-primary shrink-0" aria-hidden />
+          <h2 className="card-title text-base">{item.title}</h2>
+        </div>
         <p className="text-sm text-base-content/60">{item.desc}</p>
       </div>
     </Link>
