@@ -17,7 +17,7 @@ export function TopBar({ userName, userRole, onLogout }: TopBarProps) {
     .join("");
 
   return (
-    <nav className="navbar bg-neutral-700 text-white">
+    <nav className="navbar bg-zinc-700 text-white">
       <div className="flex items-center justify-between w-full px-4 flex-wrap gap-2">
         <span className="inline-flex items-center h-7">
           <Logo />
