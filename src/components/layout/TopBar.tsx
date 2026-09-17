@@ -36,9 +36,9 @@ export function TopBar({ userName, userRole, onLogout }: TopBarProps) {
           </div>
           <ul tabIndex={0} className="dropdown-content menu bg-base-100 border border-base-300 rounded-box z-10 w-52 p-2 shadow-md mt-2">
             <li>
-              <a onClick={onLogout} className="text-error">
+              <button type="button" onClick={onLogout} className="text-error">
                 Cerrar sesión
-              </a>
+              </button>
             </li>
           </ul>
         </div>
