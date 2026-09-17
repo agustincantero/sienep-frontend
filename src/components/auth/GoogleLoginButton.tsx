@@ -123,7 +123,7 @@ export function GoogleLoginButton({ onSuccess, onError }: GoogleLoginButtonProps
           <GoogleIcon />
           Iniciar sesión con Google
         </button>
-        <p className="text-xs text-base-content/50 mt-1">
+        <p className="text-xs text-base-content/70 mt-1">
           Falta configurar <code>NEXT_PUBLIC_GOOGLE_CLIENT_ID</code>.
         </p>
       </div>

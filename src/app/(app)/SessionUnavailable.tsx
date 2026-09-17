@@ -11,7 +11,7 @@ export function SessionUnavailable() {
       <div className="card bg-base-100 border border-base-300 shadow-sm w-full max-w-sm">
         <div className="card-body items-center text-center">
           <h1 className="text-lg font-semibold">No se pudo verificar la sesión</h1>
-          <p className="text-sm text-base-content/60">
+          <p className="text-sm text-base-content/70">
             Hubo un problema al conectar con el servidor. Probá de nuevo en unos segundos.
           </p>
           <div className="flex gap-2 mt-3">

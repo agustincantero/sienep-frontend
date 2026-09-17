@@ -89,7 +89,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
             </ul>
             {grupos.map((group) => (
               <div key={group.label}>
-                <h6 className="uppercase text-base-content/50 text-xs font-bold px-2 mb-1 tracking-wide">{group.label}</h6>
+                <h6 className="uppercase text-base-content/70 text-xs font-bold px-2 mb-1 tracking-wide">{group.label}</h6>
                 <ul className="flex flex-col gap-1 mb-3">
                   {group.items.map((item) => {
                     const active = pathname === item.href || pathname.startsWith(item.href + "/");

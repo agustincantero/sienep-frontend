@@ -50,7 +50,7 @@ export function PasswordInput({
             type="button"
             onClick={() => setVisible((v) => !v)}
             disabled={disabled}
-            aria-label="Mostrar contraseña"
+            aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
             aria-pressed={visible}
             className="btn btn-ghost btn-circle btn-xs text-base-content/60 hover:text-base-content"
           >

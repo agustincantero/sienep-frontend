@@ -31,7 +31,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         userRole={user.rol}
         onLogout={handleLogout}
       />
-      {children}
+      <main className="flex grow min-h-0">{children}</main>
     </div>
   );
 }

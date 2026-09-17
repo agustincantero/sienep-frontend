@@ -22,7 +22,7 @@ function TarjetaAcceso({ item }: { item: NavItem }) {
           <item.icon size={20} className="text-primary shrink-0" aria-hidden />
           <h2 className="card-title text-base">{item.title}</h2>
         </div>
-        <p className="text-sm text-base-content/60">{item.desc}</p>
+        <p className="text-sm text-base-content/70">{item.desc}</p>
       </div>
     </Link>
   );
@@ -78,7 +78,7 @@ function ModulosFuncionario({ permisos }: { permisos: string[] }) {
 
   if (grupos.length === 0) {
     return (
-      <p className="text-base-content/60">
+      <p className="text-base-content/70">
         Tu usuario no tiene acceso a ningún módulo todavía. Contactá al administrador.
       </p>
     );
@@ -88,7 +88,7 @@ function ModulosFuncionario({ permisos }: { permisos: string[] }) {
     <>
       {grupos.map((group) => (
         <div key={group.label}>
-          <h2 className="uppercase text-base-content/60 text-xs font-bold mt-4 mb-2 tracking-wide">
+          <h2 className="uppercase text-base-content/70 text-xs font-bold mt-4 mb-2 tracking-wide">
             {group.label}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">

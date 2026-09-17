@@ -25,7 +25,7 @@ export function TopBar({ userName, userRole, onLogout }: TopBarProps) {
 
         <div className="dropdown dropdown-end ml-auto">
           <div tabIndex={0} role="button" className="flex items-center gap-2 cursor-pointer">
-            <span className="w-8 h-8 text-xs rounded-full bg-primary/10 text-primary inline-flex items-center justify-center font-semibold">
+            <span className="w-8 h-8 text-xs rounded-full bg-primary text-primary-content inline-flex items-center justify-center font-semibold">
               {iniciales}
             </span>
             <div className="hidden sm:block leading-tight">
