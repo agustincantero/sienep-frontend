@@ -11,7 +11,9 @@ type PasswordInputProps = {
   disabled?: boolean;
   required?: boolean;
   error?: string;
-  // id para enlazar el <p> de error con aria-describedby; si no se pasa se genera uno
+  // Ayuda visible de antemano; cuando hay error, este ocupa su lugar.
+  hint?: string;
+  // id para enlazar el <p> de error/ayuda con aria-describedby; si no se pasa se genera uno
   errorId?: string;
 };
 
@@ -24,11 +26,12 @@ export function PasswordInput({
   disabled,
   required = true,
   error,
+  hint,
   errorId,
 }: PasswordInputProps) {
   const [visible, setVisible] = useState(false);
   const generatedId = useId();
-  const describedBy = error ? (errorId ?? generatedId) : undefined;
+  const describedBy = error || hint ? (errorId ?? generatedId) : undefined;
 
   return (
     <div>
@@ -62,6 +65,10 @@ export function PasswordInput({
       {error ? (
         <p id={describedBy} className="mt-1 text-xs text-error">
           {error}
+        </p>
+      ) : hint ? (
+        <p id={describedBy} className="mt-1 text-xs text-base-content/70">
+          {hint}
         </p>
       ) : null}
     </div>

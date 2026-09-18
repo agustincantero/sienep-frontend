@@ -110,6 +110,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
           label="Nueva contraseña"
           autoComplete="new-password"
           errorId="reset-nueva-error"
+          hint="Mínimo 8 caracteres."
           value={nueva}
           onChange={(v) => {
             setNueva(v);

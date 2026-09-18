@@ -103,6 +103,7 @@ export function SetPasswordForm({ user, contraseniaActual }: SetPasswordFormProp
             label="Nueva contraseña"
             autoComplete="new-password"
             errorId="set-password-nueva-error"
+            hint="Mínimo 8 caracteres."
             value={nueva}
             onChange={(v) => {
               setNueva(v);
