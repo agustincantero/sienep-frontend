@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { logout } from "@/lib/auth";
 import { useSession } from "@/lib/session-context";
+import { SesionExpiradaModal } from "./SesionExpiradaModal";
 import { TopBar } from "./TopBar";
 
 // Frame de toda pantalla autenticada: TopBar + contenido. El Sidebar NO va acá:
@@ -32,6 +33,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         onLogout={handleLogout}
       />
       <main className="flex grow min-h-0">{children}</main>
+      <SesionExpiradaModal />
     </div>
   );
 }

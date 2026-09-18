@@ -4,6 +4,8 @@
 
 import { shouldLogoutOn401 } from "./auth-paths";
 
+export const SESION_EXPIRADA = "sienep:sesion-expirada";
+
 export class ApiError extends Error {
   readonly status: number;
 
@@ -29,10 +31,13 @@ async function request<T>(path: string, init: RequestInit): Promise<T> {
   }
 
   if (res.status === 401 && shouldLogoutOn401(path)) {
-    // La sesión murió (token vencido o invalidado). Recarga completa a propósito: tira toda la memoria del cliente (el usuario viejo en useSession(), estado de pantallas). El router de next/navigation no se puede usar acá (este archivo no es un componente) y además haría una navegación SPA que dejaría ese estado sucio.
+    // La sesión murió (token vencido o invalidado). Avisa al SesionExpiradaModal del AppShell; si nadie lo maneja (preventDefault), cae a la recarga completa, que tira toda la memoria del cliente (el usuario viejo en useSession(), estado de pantallas). El router de next/navigation no se puede usar acá (este archivo no es un componente) y además haría una navegación SPA que dejaría ese estado sucio.
     if (typeof window !== "undefined") {
-      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- ver comentario de arriba
-      window.location.href = "/login";
+      const manejado = !window.dispatchEvent(new Event(SESION_EXPIRADA, { cancelable: true }));
+      if (!manejado) {
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- ver comentario de arriba
+        window.location.href = "/login";
+      }
     }
     throw new ApiError(401, "Tu sesión expiró. Volvé a iniciar sesión.");
   }
