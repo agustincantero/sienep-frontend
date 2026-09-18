@@ -11,7 +11,8 @@ import {
 import { useSession } from "@/lib/session-context";
 
 // Tarjeta de acceso a un módulo. Toda la tarjeta es el link (patrón del prototipo docs/prototipo.html, LauncherCard).
-function TarjetaAcceso({ item }: { item: NavItem }) {
+function TarjetaAcceso({ item, nivelTitulo }: { item: NavItem; nivelTitulo: "h2" | "h3" }) {
+  const Titulo = nivelTitulo;
   return (
     <Link
       href={item.href}
@@ -20,7 +21,7 @@ function TarjetaAcceso({ item }: { item: NavItem }) {
       <div className="card-body">
         <div className="flex items-center gap-2 mb-1">
           <item.icon size={20} className="text-primary shrink-0" aria-hidden />
-          <h2 className="card-title text-base">{item.title}</h2>
+          <Titulo className="card-title text-base">{item.title}</Titulo>
         </div>
         <p className="text-sm text-base-content/70">{item.desc}</p>
       </div>
@@ -62,7 +63,7 @@ export function InicioDashboard() {
         {user.tipo === "ESTUDIANTE" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {ESTUDIANTE_NAV.map((item) => (
-              <TarjetaAcceso key={item.key} item={item} />
+              <TarjetaAcceso key={item.key} item={item} nivelTitulo="h2" />
             ))}
           </div>
         ) : (
@@ -93,7 +94,7 @@ function ModulosFuncionario({ permisos }: { permisos: string[] }) {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {group.items.map((item) => (
-              <TarjetaAcceso key={item.key} item={item} />
+              <TarjetaAcceso key={item.key} item={item} nivelTitulo="h3" />
             ))}
           </div>
         </div>
