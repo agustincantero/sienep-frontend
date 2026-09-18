@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import Link from "next/link";
 import { House } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -23,6 +23,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
   const pathname = usePathname();
   const user = useSession();
   const panelRef = useRef<HTMLDivElement>(null);
+  const idBase = useId();
 
   // Solo corre en mobile. Al abrir, mueve el foco al panel; Escape cierra; Tab/Shift+Tab quedan atrapados adentro para que no se pueda tabular al contenido de atrás, tapado por el backdrop.
   useEffect(() => {
@@ -78,19 +79,26 @@ export function Sidebar({ show, onClose }: SidebarProps) {
         </div>
 
         <div className="h-full flex flex-col overflow-auto">
-          <div className="h-full flex flex-col p-3 overflow-auto">
+          <nav aria-label="Principal" className="h-full flex flex-col p-3 overflow-auto">
             <ul className="flex flex-col gap-1 pb-3 mb-3 border-b border-zinc-500/15">
               <li className="list-none">
-                <Link href="/" onClick={onClose} className={CLASE_ITEM + " " + (pathname === "/" ? CLASE_ITEM_ACTIVO : CLASE_ITEM_INACTIVO)}>
+                <Link
+                  href="/"
+                  onClick={onClose}
+                  aria-current={pathname === "/" ? "page" : undefined}
+                  className={CLASE_ITEM + " " + (pathname === "/" ? CLASE_ITEM_ACTIVO : CLASE_ITEM_INACTIVO)}
+                >
                   <House size={15} aria-hidden />
                   Inicio
                 </Link>
               </li>
             </ul>
-            {grupos.map((group) => (
+            {grupos.map((group, i) => (
               <div key={group.label}>
-                <h6 className="uppercase text-base-content/70 text-xs font-bold px-2 mb-1 tracking-wide">{group.label}</h6>
-                <ul className="flex flex-col gap-1 mb-3">
+                <p id={`${idBase}-${i}`} className="uppercase text-base-content/70 text-xs font-bold px-2 mb-1 tracking-wide">
+                  {group.label}
+                </p>
+                <ul aria-labelledby={`${idBase}-${i}`} className="flex flex-col gap-1 mb-3">
                   {group.items.map((item) => {
                     const active = pathname === item.href || pathname.startsWith(item.href + "/");
                     return (
@@ -98,6 +106,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
                         <Link
                           href={item.href}
                           onClick={onClose}
+                          aria-current={active ? "page" : undefined}
                           className={CLASE_ITEM + " " + (active ? CLASE_ITEM_ACTIVO : CLASE_ITEM_INACTIVO)}
                         >
                           <item.icon size={15} aria-hidden />
@@ -109,7 +118,7 @@ export function Sidebar({ show, onClose }: SidebarProps) {
                 </ul>
               </div>
             ))}
-          </div>
+          </nav>
         </div>
       </div>
     </>
