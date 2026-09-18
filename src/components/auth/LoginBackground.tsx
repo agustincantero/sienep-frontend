@@ -8,9 +8,9 @@ const FOTOS = ["/login/campus-1.jpg", "/login/campus-2.jpg", "/login/campus-3.jp
 export function LoginBackground() {
   return (
     <div aria-hidden className="login-slideshow">
-      {FOTOS.map((src) => (
+      {FOTOS.map((src, i) => (
         <div key={src} className="login-slideshow__frame">
-          <Image src={src} alt="" fill priority sizes="100vw" />
+          <Image src={src} alt="" fill priority={i === 0} sizes="100vw" />
         </div>
       ))}
       <div className="login-wash" />
