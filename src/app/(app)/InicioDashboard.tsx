@@ -55,13 +55,13 @@ export function InicioDashboard() {
 
   return (
     <div className="grow overflow-auto">
-      <div className="max-w-[980px] mx-auto w-full px-4 py-5">
-        <h1 className="text-2xl font-bold mb-1">
+      <div className="max-w-[980px] mx-auto w-full px-4 py-5 flex flex-col gap-4">
+        <h1 className="text-2xl font-bold">
           {saludo}, {primerNombre}
         </h1>
 
         {user.tipo === "ESTUDIANTE" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {ESTUDIANTE_NAV.map((item) => (
               <TarjetaAcceso key={item.key} item={item} nivelTitulo="h2" />
             ))}
@@ -89,10 +89,10 @@ function ModulosFuncionario({ permisos }: { permisos: string[] }) {
     <>
       {grupos.map((group) => (
         <div key={group.label}>
-          <h2 className="uppercase text-base-content/70 text-xs font-bold mt-4 mb-2 tracking-wide">
+          <h2 className="uppercase text-base-content/70 text-xs font-bold mb-2 tracking-wide">
             {group.label}
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {group.items.map((item) => (
               <TarjetaAcceso key={item.key} item={item} nivelTitulo="h3" />
             ))}
