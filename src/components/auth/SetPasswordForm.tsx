@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { apiErrorMessage, ApiError } from "@/lib/api";
 import { setPassword } from "@/lib/auth";
@@ -26,6 +26,11 @@ export function SetPasswordForm({ user, contraseniaActual }: SetPasswordFormProp
   const [errorConfirmar, setErrorConfirmar] = useState("");
   const [errorForm, setErrorForm] = useState("");
   const [listo, setListo] = useState(false);
+  const avisoRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (listo) avisoRef.current?.focus();
+  }, [listo]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -65,10 +70,11 @@ export function SetPasswordForm({ user, contraseniaActual }: SetPasswordFormProp
     <AuthCard
       title="Elegí tu nueva contraseña"
       description="Iniciaste sesión con una contraseña temporal. Para continuar, establecé una contraseña propia."
+      focusOnMount
     >
       {listo ? (
         <div className="space-y-4">
-          <div role="status" className="alert alert-success alert-soft text-sm">
+          <div ref={avisoRef} tabIndex={-1} role="status" className="alert alert-success alert-soft text-sm focus:outline-none">
             <span>
               Tu contraseña fue actualizada. Iniciá sesión de nuevo con la contraseña nueva.
             </span>
