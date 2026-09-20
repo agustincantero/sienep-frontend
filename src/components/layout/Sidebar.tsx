@@ -66,8 +66,8 @@ export function Sidebar({ show, onClose }: SidebarProps) {
         aria-modal={show ? true : undefined}
         aria-label={show ? "Menú" : undefined}
         className={
-          "fixed md:static top-0 left-0 z-40 h-full md:h-auto w-[260px] shrink-0 bg-zinc-100 border-r border-zinc-200 transform transition-transform duration-200 md:translate-x-0 " +
-          (show ? "translate-x-0" : "-translate-x-full")
+          "fixed md:static top-0 left-0 z-40 h-full md:h-auto w-[260px] shrink-0 bg-zinc-100 border-r border-zinc-200 transform duration-200 md:translate-x-0 " +
+          (show ? "translate-x-0 transition-transform" : "-translate-x-full max-md:invisible transition-[transform,visibility]")
         }
         tabIndex={-1}
       >
