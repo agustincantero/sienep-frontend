@@ -114,6 +114,9 @@ export function StudentForm(props: StudentFormProps) {
   );
   const [grupos, setGrupos] = useState<Group[]>([]);
   const [itrs, setItrs] = useState<Itr[]>([]);
+  // Distingue "todavía no llegó /itrs" de "llegó vacío o falló": sin esto, la sección
+  // de grupos mostraría un instante la lista plana de respaldo antes de pasar al selector.
+  const [itrsListos, setItrsListos] = useState(false);
   const [filtroItr, setFiltroItr] = useState<number | "">("");
   const [filtroCarrera, setFiltroCarrera] = useState<number | "">("");
   const autoseleccionoFiltro = useRef(false);
@@ -126,9 +129,12 @@ export function StudentForm(props: StudentFormProps) {
     listGroups()
       .then(setGrupos)
       .catch(() => setGrupos([]));
+    // Si /itrs falla, la sección de grupos cae a la lista plana (ver más abajo) en vez de
+    // quedar sin forma de asignar: asignar un grupo solo debe depender de que /grupos responda.
     listItrs()
       .then(setItrs)
-      .catch(() => setItrs([]));
+      .catch(() => setItrs([]))
+      .finally(() => setItrsListos(true));
   }, []);
 
   // Las carreras no tienen catálogo propio acá: se derivan de los grupos ya
@@ -141,7 +147,10 @@ export function StudentForm(props: StudentFormProps) {
   }, [grupos]);
 
   // No todos los ITR tienen todas las carreras — ItrResponseDTO.carreras solo
-  // trae nombres (no ids), así que se cruza por nombre contra `carreras`.
+  // trae nombres (no ids), así que se cruza por nombre contra `carreras`. El cruce
+  // es seguro: proyecto.carreras.nom_carrera es UNIQUE y tanto /itrs (ItrMapper) como
+  // /grupos (GrupoMapper) devuelven esa misma columna, así que para una misma carrera
+  // el string es idéntico en ambos y no hay dos carreras con el mismo nombre.
   const carrerasDelItr = useMemo(() => {
     if (filtroItr === "") return [];
     const itr = itrs.find((i) => i.idItr === filtroItr);
@@ -555,98 +564,112 @@ export function StudentForm(props: StudentFormProps) {
             </button>
           </SeccionCard>
 
-          {itrs.length > 0 || grupos.length > 0 ? (
+          {/* La sección depende solo de /grupos, como antes del selector por ITR: sin grupos no hay
+              nada que asignar. /itrs solo decide CÓMO se elige (ver más abajo). */}
+          {grupos.length > 0 ? (
             <SeccionCard>
-              <SeccionLegend icon={Users}>Grupo</SeccionLegend>
+              <SeccionLegend icon={Users}>Grupos</SeccionLegend>
 
-              {gruposSeleccionados.length > 0 ? (
-                <div>
-                  <p className="text-xs font-medium text-base-content/60 mb-1">Asignados</p>
-                  {/* Se muestran siempre, sin importar el filtro ITR/carrera vigente —
-                      si no, cambiar el filtro para agregar otro grupo hace "desaparecer"
-                      de la vista uno ya elegido, aunque siga asignado. */}
-                  <div className="flex flex-wrap gap-2">
-                    {gruposSeleccionados.map((g) => (
-                      <span key={g.idGrupo} className="badge badge-primary gap-1.5 py-3">
-                        {g.nomGrupo} · {g.generacion} — {g.nomCarrera}
-                        <button
-                          type="button"
-                          className="hover:opacity-70"
-                          onClick={() => alternarGrupo(g.idGrupo)}
-                          disabled={guardando}
-                          aria-label={`Quitar ${g.nomGrupo}`}
-                        >
-                          <X size={12} aria-hidden />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
+              {!itrsListos ? (
+                <span className="loading loading-spinner loading-sm" role="status" aria-label="Cargando grupos" />
+              ) : itrs.length === 0 ? (
+                /* Respaldo: /itrs falló o no devolvió ningún ITR activo. Sin ITR no hay cascada
+                   posible, así que se ofrece la lista plana de todos los grupos, igual que antes
+                   del selector por ITR/carrera. */
+                <div className="flex flex-wrap gap-2">
+                  {grupos.map((g) => (
+                    <GrupoChip
+                      key={g.idGrupo}
+                      seleccionado={form.idGrupos.includes(g.idGrupo)}
+                      disabled={guardando}
+                      onToggle={() => alternarGrupo(g.idGrupo)}
+                    >
+                      {g.nomGrupo} — {g.nomCarrera}
+                    </GrupoChip>
+                  ))}
                 </div>
-              ) : null}
+              ) : (
+                <>
+                  {gruposSeleccionados.length > 0 ? (
+                    <div>
+                      <p className="text-xs font-medium text-base-content/60 mb-1">Asignados</p>
+                      {/* Se muestran siempre, sin importar el filtro ITR/carrera vigente —
+                          si no, cambiar el filtro para agregar otro grupo hace "desaparecer"
+                          de la vista uno ya elegido, aunque siga asignado. */}
+                      <div className="flex flex-wrap gap-2">
+                        {gruposSeleccionados.map((g) => (
+                          <span key={g.idGrupo} className="badge badge-primary gap-1.5 py-3">
+                            {g.nomGrupo} · {g.generacion} — {g.nomCarrera}
+                            <button
+                              type="button"
+                              className="hover:opacity-70"
+                              onClick={() => alternarGrupo(g.idGrupo)}
+                              disabled={guardando}
+                              aria-label={`Quitar ${g.nomGrupo}`}
+                            >
+                              <X size={12} aria-hidden />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="ITR" fieldKey="itr">
-                  <select
-                    className="select w-full"
-                    value={filtroItr}
-                    onChange={(e) => alternarFiltroItr(e.target.value)}
-                    disabled={guardando}
-                  >
-                    <option value="">Seleccioná un ITR</option>
-                    {itrs.map((i) => (
-                      <option key={i.idItr} value={i.idItr}>
-                        {i.nomItr}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="Carrera" fieldKey="carrera">
-                  <select
-                    className="select w-full"
-                    value={filtroCarrera}
-                    onChange={(e) => setFiltroCarrera(e.target.value ? Number(e.target.value) : "")}
-                    disabled={guardando || filtroItr === ""}
-                  >
-                    <option value="">
-                      {filtroItr === "" ? "Elegí un ITR primero" : "Seleccioná una carrera"}
-                    </option>
-                    {carrerasDelItr.map((c) => (
-                      <option key={c.idCarrera} value={c.idCarrera}>
-                        {c.nomCarrera}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-              </div>
-
-              {filtroCarrera !== "" ? (
-                gruposDeLaCarrera.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {gruposDeLaCarrera.map((g) => {
-                      const seleccionado = form.idGrupos.includes(g.idGrupo);
-                      return (
-                        <label
-                          key={g.idGrupo}
-                          className={`btn btn-sm rounded-full normal-case font-normal ${
-                            seleccionado ? "btn-primary" : "btn-outline"
-                          }${guardando ? " btn-disabled" : ""}`}
-                        >
-                          <input
-                            type="checkbox"
-                            className="hidden"
-                            checked={seleccionado}
-                            onChange={() => alternarGrupo(g.idGrupo)}
-                            disabled={guardando}
-                          />
-                          {g.nomGrupo} · {g.generacion}
-                        </label>
-                      );
-                    })}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Field label="ITR" fieldKey="itr">
+                      <select
+                        className="select w-full"
+                        value={filtroItr}
+                        onChange={(e) => alternarFiltroItr(e.target.value)}
+                        disabled={guardando}
+                      >
+                        <option value="">Seleccioná un ITR</option>
+                        {itrs.map((i) => (
+                          <option key={i.idItr} value={i.idItr}>
+                            {i.nomItr}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label="Carrera" fieldKey="carrera">
+                      <select
+                        className="select w-full"
+                        value={filtroCarrera}
+                        onChange={(e) => setFiltroCarrera(e.target.value ? Number(e.target.value) : "")}
+                        disabled={guardando || filtroItr === ""}
+                      >
+                        <option value="">
+                          {filtroItr === "" ? "Elegí un ITR primero" : "Seleccioná una carrera"}
+                        </option>
+                        {carrerasDelItr.map((c) => (
+                          <option key={c.idCarrera} value={c.idCarrera}>
+                            {c.nomCarrera}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
                   </div>
-                ) : (
-                  <p className="text-sm text-base-content/60">No hay grupos activos para esta carrera.</p>
-                )
-              ) : null}
+
+                  {filtroCarrera !== "" ? (
+                    gruposDeLaCarrera.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {gruposDeLaCarrera.map((g) => (
+                          <GrupoChip
+                            key={g.idGrupo}
+                            seleccionado={form.idGrupos.includes(g.idGrupo)}
+                            disabled={guardando}
+                            onToggle={() => alternarGrupo(g.idGrupo)}
+                          >
+                            {g.nomGrupo} · {g.generacion}
+                          </GrupoChip>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-base-content/60">No hay grupos activos para esta carrera.</p>
+                    )
+                  ) : null}
+                </>
+              )}
             </SeccionCard>
           ) : null}
 
@@ -745,5 +768,32 @@ function Field({
         </p>
       ) : null}
     </div>
+  );
+}
+
+// Chip seleccionable de un grupo. Es el mismo botón-checkbox que usaban la cascada ITR → carrera y
+// el respaldo de lista plana, extraído para no duplicarlo. Chips en vez de checkboxes con texto: el
+// estado seleccionado/no seleccionado se ve de un vistazo, mismo lenguaje que los badges de estado
+// del estudiante. El <input> real queda oculto pero maneja el estado accesible.
+function GrupoChip({
+  seleccionado,
+  disabled,
+  onToggle,
+  children,
+}: {
+  seleccionado: boolean;
+  disabled: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <label
+      className={`btn btn-sm rounded-full normal-case font-normal ${
+        seleccionado ? "btn-primary" : "btn-outline"
+      }${disabled ? " btn-disabled" : ""}`}
+    >
+      <input type="checkbox" className="hidden" checked={seleccionado} onChange={onToggle} disabled={disabled} />
+      {children}
+    </label>
   );
 }
