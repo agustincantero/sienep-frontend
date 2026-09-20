@@ -27,7 +27,7 @@ En construcción. Lo que ya funciona:
 
 - **Autenticación** — pantallas de login, "olvidé mi contraseña" y restablecimiento. El login con email/contraseña y con Google (Google Identity Services) está conectado a la API; el pedido y uso del enlace de recuperación todavía son presentacionales.
 - **Sesión** — el JWT del backend viaja en una cookie `httpOnly` que el JavaScript no puede leer. Un proxy propio (`src/app/api/**`) recibe las llamadas del cliente, saca el token de la cookie y lo reenvía a la API como `Authorization: Bearer`. El área autenticada se gatea contra `GET /auth/me`; sin sesión válida, redirige a `/login`.
-- **Inicio** (`/inicio`) — panel post-login con accesos a los módulos, filtrados según el `tipo` de usuario (funcionario/estudiante) y sus `permisos`.
+- **Inicio** (`/`) — panel post-login con accesos a los módulos, filtrados según el `tipo` de usuario (funcionario/estudiante) y sus `permisos`.
 - **Chrome** — `TopBar` en toda pantalla autenticada, `Sidebar` dentro de las secciones de funcionario, página 404 propia.
 
 Todavía **no hay páginas de módulo** (Estudiantes, Instancias, etc.): existe el prototipo de referencia y el chrome donde van a montarse.
@@ -49,7 +49,7 @@ src/
 ├─ app/
 │  ├─ (auth)/             # Login y recuperación de contraseña (sin sidebar)
 │  ├─ (app)/              # Área autenticada — portón de sesión + TopBar
-│  │  ├─ inicio/           # Panel post-login
+│  │  ├─ page.tsx          # Panel post-login en `/`, con InicioDashboard.tsx al lado
 │  │  └─ (secciones)/      # Chrome con Sidebar para los módulos (aún sin páginas)
 │  ├─ api/               # Proxy a la API del backend (route handlers)
 │  └─ not-found.tsx      # Página 404 propia
