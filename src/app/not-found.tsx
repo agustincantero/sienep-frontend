@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import AuthLayout from "./(auth)/layout";
+import { AuthLayout } from "@/components/auth/AuthLayout";
 
 export const metadata: Metadata = {
   title: "Página no encontrada · SIENEP",

@@ -9,7 +9,7 @@ type AuthCardProps = {
   children: React.ReactNode;
 };
 
-// Card blanca centrada de las pantallas de autenticación (login, recuperación). El chrome de alrededor (fondo primary, logo, footer) lo pone src/app/(auth)/layout.tsx. Ver docs/prototipo.html.
+// Card blanca centrada de las pantallas de autenticación (login, recuperación). El chrome de alrededor (fondo primary, logo, footer) lo pone AuthLayout.tsx. Ver docs/prototipo.html.
 export function AuthCard({ title, description, focusOnMount, children }: AuthCardProps) {
   const tituloRef = useRef<HTMLHeadingElement>(null);
 

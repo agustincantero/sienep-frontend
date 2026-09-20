@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import AuthLayout from "../(auth)/layout";
+import { AuthLayout } from "@/components/auth/AuthLayout";
 
 // Fallback cuando no se puede resolver GET /auth/me por un problema del servidor
 // (backend caído, endpoint no desplegado). No es lo mismo que "no hay sesión"
