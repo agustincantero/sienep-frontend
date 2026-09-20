@@ -41,7 +41,7 @@ type GoogleLoginButtonProps = {
   onError: (message: string) => void;
 };
 
-// Botón "Iniciar sesión con Google" con el diseño del prototipo (daisyUI
+// Botón "Google" con el diseño del prototipo (daisyUI
 // btn-outline + GoogleIcon). El flujo de ID token de Google Identity Services
 // obliga a usar el botón que renderiza su SDK, así que se lo superpone invisible
 // sobre el botón visual: el usuario ve el nuestro, el click cae en el de Google,
@@ -121,7 +121,7 @@ export function GoogleLoginButton({ onSuccess, onError }: GoogleLoginButtonProps
           disabled
         >
           <GoogleIcon />
-          Iniciar sesión con Google
+          Google
         </button>
         <p className="text-xs text-base-content/70 mt-1">
           Falta configurar <code>NEXT_PUBLIC_GOOGLE_CLIENT_ID</code>.
@@ -149,7 +149,7 @@ export function GoogleLoginButton({ onSuccess, onError }: GoogleLoginButtonProps
         className="btn btn-outline w-full gap-2 normal-case pointer-events-none transition-colors group-hover:bg-base-200"
       >
         <GoogleIcon />
-        {cargando ? "Conectando…" : "Iniciar sesión con Google"}
+        {cargando ? "Conectando…" : "Google"}
       </button>
       {/* Real: el botón de Google Identity Services, transparente, encima. */}
       <div

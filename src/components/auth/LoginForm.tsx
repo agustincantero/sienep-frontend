@@ -99,8 +99,12 @@ export function LoginForm() {
             ¿Olvidaste tu contraseña?
           </Link>
         </div>
-        <div className="divider text-sm text-base-content/70">o</div>
-        <GoogleLoginButton onSuccess={() => despuesDeLoguear()} onError={setError} />
+        <div id="login-alternativas" className="divider text-sm text-base-content/70">
+          o iniciar sesión con
+        </div>
+        <div role="group" aria-labelledby="login-alternativas">
+          <GoogleLoginButton onSuccess={() => despuesDeLoguear()} onError={setError} />
+        </div>
       </form>
     </AuthCard>
   );

@@ -1,4 +1,4 @@
-// Ícono multicolor de Google para el botón "Iniciar sesión con Google".
+// Ícono multicolor de Google para el botón "Google".
 // Va como SVG inline (no lucide): es la marca oficial de Google y las librerías
 // de íconos no la traen a color. Portado de docs/prototipo.html.
 export function GoogleIcon() {
