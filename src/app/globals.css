@@ -22,7 +22,7 @@
   /* Estados: rojo / verde / azul "de verdad" en vez de los tonos oklch de daisyUI, para que no choquen con el celeste de marca. Se usan siempre con la variante `alert-soft` (fondo tenue + texto del color). */
   --color-error: #dc2626; /* red-600 */
   --color-error-content: #ffffff;
-  --color-success: #16a34a; /* green-600 */
+  --color-success: #15803d; /* green-700 — texto blanco sobre green-600 (#16a34a) da 3.30:1, por debajo de AA; con green-700 da 5.02:1. También sube el texto de los alert-success alert-soft (3.06:1 → 4.65:1) */
   --color-success-content: #ffffff;
   --color-info: #0284c7; /* sky-600 */
   --color-info-content: #ffffff;
