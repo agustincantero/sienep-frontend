@@ -26,6 +26,7 @@ export function SesionExpiradaModal() {
       aria-describedby={descripcionId}
       className="modal"
       onCancel={(e) => e.preventDefault()}
+      onClose={(e) => e.currentTarget.showModal()}
     >
       <div className="modal-box">
         <h2 id={tituloId} className="text-lg font-bold">
