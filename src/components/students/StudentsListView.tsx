@@ -227,7 +227,11 @@ export function StudentsListView() {
                 >
                   <td className="font-semibold">
                     <div className="flex items-center gap-2">
-                      <StudentAvatar nombre={e.nombre} apellido={e.apellido} />
+                      <StudentAvatar
+                        nombre={e.nombre}
+                        apellido={e.apellido}
+                        urlFoto={e.urlFoto}
+                      />
                       {e.nombre} {e.apellido}
                     </div>
                   </td>

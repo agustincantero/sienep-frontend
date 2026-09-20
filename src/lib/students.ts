@@ -66,6 +66,9 @@ export type StudentSummary = {
   estado: string;
   grupos: string[];
   telefonos: string[];
+  // Ruta de la foto (/estudiantes/{id}/foto). null si no tiene foto cargada o si quien consulta no
+  // puede verla (VER_ESTUDIANTE): el backend ya decide eso en EstudianteResumenDTO.
+  urlFoto: string | null;
 };
 
 export type StudentListParams = {
