@@ -2,7 +2,7 @@
 // El nombre completo se oculta antes de sm: en una pantalla angosta partía en 2-3 líneas y quedaba desalineado contra el copyright (con sm+ hay lugar de sobra para las dos cosas en una fila).
 export function Footer() {
   return (
-    <footer className="footer sm:footer-horizontal justify-items-center text-center sm:justify-items-start sm:justify-between sm:text-left mt-auto bg-neutral px-4 py-4 text-sm text-neutral-content/80">
+    <footer className="footer sm:footer-horizontal justify-items-center text-center sm:justify-items-start sm:justify-between sm:text-left mt-auto bg-zinc-700 px-4 py-4 text-sm text-white/80">
       <span>Copyright © SIENEP {new Date().getFullYear()}</span>
       <span className="hidden sm:inline">
         Sistema Integral de Estudiantes con Necesidades Educativas Personalizadas

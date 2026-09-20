@@ -4,6 +4,8 @@
 
 import { shouldLogoutOn401 } from "./auth-paths";
 
+export const SESION_EXPIRADA = "sienep:sesion-expirada";
+
 export class ApiError extends Error {
   readonly status: number;
 
@@ -18,6 +20,27 @@ export function apiErrorMessage(err: unknown, fallback: string): string {
   return err instanceof ApiError ? err.message : fallback;
 }
 
+// Texto para cuando el error no trae `message` (respuesta de la plataforma, HTML de un proxy, cuerpo vacío).
+function mensajePorEstado(status: number): string {
+  if (status >= 500) return "El servidor no está disponible. Probá de nuevo en unos segundos.";
+  switch (status) {
+    case 400:
+      return "La solicitud no es válida.";
+    case 401:
+      return "No se pudo verificar tu identidad. Probá de nuevo.";
+    case 403:
+      return "No tenés permiso para hacer esto.";
+    case 404:
+      return "No se encontró lo que buscabas.";
+    case 413:
+      return "El archivo es demasiado grande.";
+    case 429:
+      return "Hiciste demasiados intentos. Esperá unos minutos.";
+    default:
+      return "Ocurrió un error inesperado.";
+  }
+}
+
 // Núcleo compartido por todos los verbos: maneja la conexión caída, la sesión
 // vencida (401 fuera de las rutas públicas de auth) y el parseo de error.
 async function request<T>(path: string, init: RequestInit): Promise<T> {
@@ -29,10 +52,13 @@ async function request<T>(path: string, init: RequestInit): Promise<T> {
   }
 
   if (res.status === 401 && shouldLogoutOn401(path)) {
-    // La sesión murió (token vencido o invalidado). Recarga completa a propósito: tira toda la memoria del cliente (el usuario viejo en useSession(), estado de pantallas). El router de next/navigation no se puede usar acá (este archivo no es un componente) y además haría una navegación SPA que dejaría ese estado sucio.
+    // La sesión murió (token vencido o invalidado). Avisa al SesionExpiradaModal del AppShell; si nadie lo maneja (preventDefault), cae a la recarga completa, que tira toda la memoria del cliente (el usuario viejo en useSession(), estado de pantallas). El router de next/navigation no se puede usar acá (este archivo no es un componente) y además haría una navegación SPA que dejaría ese estado sucio.
     if (typeof window !== "undefined") {
-      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- ver comentario de arriba
-      window.location.href = "/login";
+      const manejado = !window.dispatchEvent(new Event(SESION_EXPIRADA, { cancelable: true }));
+      if (!manejado) {
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- ver comentario de arriba
+        window.location.href = "/login";
+      }
     }
     throw new ApiError(401, "Tu sesión expiró. Volvé a iniciar sesión.");
   }
@@ -48,8 +74,8 @@ async function request<T>(path: string, init: RequestInit): Promise<T> {
   }
 
   if (!res.ok) {
-    const message = (data as { message?: string } | null)?.message ?? `Error ${res.status}`;
-    throw new ApiError(res.status, message);
+    const message = (data as { message?: string } | null)?.message;
+    throw new ApiError(res.status, message?.trim() ? message : mensajePorEstado(res.status));
   }
 
   return data as T;

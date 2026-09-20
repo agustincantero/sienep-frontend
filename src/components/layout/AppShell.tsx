@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { logout } from "@/lib/auth";
 import { useSession } from "@/lib/session-context";
+import { SesionExpiradaModal } from "./SesionExpiradaModal";
 import { TopBar } from "./TopBar";
 
 // Frame de toda pantalla autenticada: TopBar + contenido. El Sidebar NO va acá:
 // solo aparece dentro de las secciones (ver src/app/(app)/(secciones)/layout.tsx),
-// como el prototipo — /inicio no tiene sidebar.
+// como el prototipo — el dashboard en / no tiene sidebar.
 export function AppShell({ children }: { children: React.ReactNode }) {
   const user = useSession();
   const [saliendo, setSaliendo] = useState(false);
@@ -31,7 +32,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         userRole={user.rol}
         onLogout={handleLogout}
       />
-      {children}
+      <main className="flex grow min-h-0">{children}</main>
+      <SesionExpiradaModal />
     </div>
   );
 }

@@ -54,6 +54,17 @@ body {
   opacity: 1;
 }
 
+/* Autofill del navegador: solo tiñe el <input>, nunca el <div class="input"> que lo envuelve. En un input simple no se nota porque el input ocupa toda la caja, pero en PasswordInput (input + botón del ojito, hermanos dentro del wrapper) el tinte se corta donde termina el input y deja al botón con el fondo por defecto. Se fuerza un tinte propio (celeste de marca en vez del amarillo/azul que varía por navegador y sistema operativo) con el truco del box-shadow inset —es la única forma de cambiar el fondo de autofill—, y el mismo color en el wrapper vía :has() para que la caja completa quede pareja. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #f0f9ff inset; /* sky-50 */
+  -webkit-text-fill-color: var(--color-base-content);
+}
+.input:has(input:-webkit-autofill) {
+  background-color: #f0f9ff; /* sky-50 */
+}
+
 /* ── Chrome de las pantallas de auth: fondo con fotos del campus ───────────
    Fotos en cross-fade lento, con un filtro celeste encima (LoginBackground.tsx).
    Todo esto es decorativo (aria-hidden); el contenido va en una capa z-10 aparte. */
