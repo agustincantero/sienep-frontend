@@ -151,19 +151,22 @@ export function StudentsListView() {
   const filters: ToolbarFilter[] = puedeBuscar
     ? [
         {
-          label: "Grupo (todos)",
+          label: "Grupo",
+          emptyLabel: "Todos",
           options: grupos.map((g) => g.nomGrupo),
           value: nomGrupo,
           onChange: handleGrupoChange,
         },
         {
-          label: "Carrera (todas)",
+          label: "Carrera",
+          emptyLabel: "Todas",
           options: carreras.map((c) => c.nomCarrera),
           value: nomCarrera,
           onChange: handleCarreraChange,
         },
         {
-          label: "Estado (todos)",
+          label: "Estado",
+          emptyLabel: "Todos",
           options: ["Activo", "Inactivo", "Pendiente"],
           value: estadoLabel,
           onChange: handleEstadoChange,
@@ -211,7 +214,7 @@ export function StudentsListView() {
           <p className="text-base-content/60 py-6 text-center">No se encontraron estudiantes.</p>
         ) : (
           <>
-            <DataTable headers={["Estudiante", "Documento", "Grupo", "Estado", ""]}>
+            <DataTable headers={["Nombre", "Documento", "Grupo", "Estado", ""]}>
               {estudiantes.map((e) => (
                 <tr
                   key={e.idUsuario}
@@ -224,7 +227,11 @@ export function StudentsListView() {
                 >
                   <td className="font-semibold">
                     <div className="flex items-center gap-2">
-                      <StudentAvatar nombre={e.nombre} apellido={e.apellido} />
+                      <StudentAvatar
+                        nombre={e.nombre}
+                        apellido={e.apellido}
+                        urlFoto={e.urlFoto}
+                      />
                       {e.nombre} {e.apellido}
                     </div>
                   </td>

@@ -4,14 +4,18 @@ import { apiDelete, apiGet, apiPatch, apiPost, apiPut, apiPutForm } from "./api"
 // contraseña — no es lo mismo que "desactivado" (RF06), así que se etiqueta
 // distinto y no ofrece las acciones Desactivar/Activar (ver wireframe 05,
 // fila "Camila Rodríguez").
+//
+// El punto usa `bg-current` (el color del texto del badge) y no el color del estado: el badge ya
+// es sólido de ese color (badge-success / badge-warning), así que un punto del mismo color
+// quedaba verde sobre verde, invisible. Con currentColor siempre contrasta con el fondo.
 export function describeEstado(estado: string): { label: string; badgeClass: string; dotClass: string } {
   switch (estado) {
     case "ACTIVO":
-      return { label: "Activo", badgeClass: "badge-success", dotClass: "bg-success" };
+      return { label: "Activo", badgeClass: "badge-success", dotClass: "bg-current" };
     case "INACTIVO":
-      return { label: "Inactivo", badgeClass: "badge-ghost", dotClass: "bg-base-content/40" };
+      return { label: "Inactivo", badgeClass: "badge-ghost", dotClass: "bg-current opacity-60" };
     default:
-      return { label: "Pendiente", badgeClass: "badge-warning", dotClass: "bg-warning" };
+      return { label: "Pendiente", badgeClass: "badge-warning", dotClass: "bg-current" };
   }
 }
 
@@ -62,6 +66,9 @@ export type StudentSummary = {
   estado: string;
   grupos: string[];
   telefonos: string[];
+  // Ruta de la foto (/estudiantes/{id}/foto). null si no tiene foto cargada o si quien consulta no
+  // puede verla (VER_ESTUDIANTE): el backend ya decide eso en EstudianteResumenDTO.
+  urlFoto: string | null;
 };
 
 export type StudentListParams = {
