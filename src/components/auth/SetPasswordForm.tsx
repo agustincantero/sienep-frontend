@@ -79,9 +79,15 @@ export function SetPasswordForm({ user, contraseniaActual }: SetPasswordFormProp
               Tu contraseña fue actualizada. Iniciá sesión de nuevo con la contraseña nueva.
             </span>
           </div>
-          <Link href="/login" className="btn btn-primary w-full">
+          {/* Recarga completa a propósito, no <Link>: cuando este formulario se muestra inline en LoginForm ya estamos en /login, así que un Link a la misma URL no navega a ningún lado. El JWT viejo además quedó invalidado por el cambio de contraseña, así que igual hace falta tirar el estado en memoria (mismo criterio que AppShell/SesionExpiradaModal). */}
+          <button
+            type="button"
+            className="btn btn-primary w-full"
+            // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- ver comentario de arriba
+            onClick={() => (window.location.href = "/login")}
+          >
             Ir al inicio de sesión
-          </Link>
+          </button>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
