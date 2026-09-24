@@ -66,6 +66,7 @@ export function StudentsListView() {
   const [hasNext, setHasNext] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [exito, setExito] = useState("");
   const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
   const [idADesactivar, setIdADesactivar] = useState<number | null>(null);
 
@@ -126,6 +127,7 @@ export function StudentsListView() {
     const id = idADesactivar;
     setIdADesactivar(null);
     setAccionEnCursoId(id);
+    setExito("");
     try {
       await deactivateStudent(id);
       setEstudiantes((prev) => prev.map((e) => (e.idUsuario === id ? { ...e, estado: "INACTIVO" } : e)));
@@ -137,10 +139,17 @@ export function StudentsListView() {
   }
 
   async function handleReactivar(id: number) {
+    const estudiante = estudiantes.find((e) => e.idUsuario === id);
     setAccionEnCursoId(id);
+    setExito("");
     try {
       await reactivateStudent(id);
       setEstudiantes((prev) => prev.map((e) => (e.idUsuario === id ? { ...e, estado: "ACTIVO" } : e)));
+      setExito(
+        estudiante
+          ? `Estudiante activado: ${estudiante.nombre} ${estudiante.apellido}.`
+          : "Estudiante activado.",
+      );
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo reactivar el estudiante."));
     } finally {
@@ -198,6 +207,12 @@ export function StudentsListView() {
             onSearchChange={handleTextoChange}
             filters={filters}
           />
+        ) : null}
+
+        {exito ? (
+          <div role="status" className="alert alert-success alert-soft text-sm mb-3">
+            <span>{exito}</span>
+          </div>
         ) : null}
 
         {error ? (
