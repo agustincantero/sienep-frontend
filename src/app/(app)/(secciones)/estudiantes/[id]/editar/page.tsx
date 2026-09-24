@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BackendError, backendJson } from "@/lib/backend";
 import { StudentForm } from "@/components/students/StudentForm";
+import { SinPermiso } from "@/components/layout/SinPermiso";
+import { tienePermiso } from "@/lib/current-user";
 import type { Student } from "@/lib/students";
 
 export const metadata: Metadata = {
@@ -16,6 +18,10 @@ export default async function EditarEstudiantePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  if (!(await tienePermiso("EDITAR_ESTUDIANTE"))) {
+    return <SinPermiso volverHref="/estudiantes" volverLabel="Volver a estudiantes" />;
+  }
 
   let estudiante: Student;
   try {
