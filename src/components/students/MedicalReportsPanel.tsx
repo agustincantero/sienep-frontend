@@ -19,8 +19,17 @@ const NOMBRE_INFORME_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9 _-]{1,50}$
 const MAX_TAMANIO_BYTES = 5 * 1024 * 1024;
 
 // RF09 — adjuntar informes médicos a la ficha del estudiante.
-export function MedicalReportsPanel({ idEstudiante }: { idEstudiante: number }) {
+export function MedicalReportsPanel({
+  idEstudiante,
+  estadoEstudiante,
+}: {
+  idEstudiante: number;
+  estadoEstudiante: string;
+}) {
   const { permisos } = useSession();
+  // Mismo criterio que el backend (InformeAdjuntoService.adjuntar): a un estudiante dado de baja no se le cargan informes nuevos. PENDIENTE_DE_ACTIVACION sí, porque es el estado de todo alta hasta su primer login.
+  const estudianteAdmiteInformes =
+    estadoEstudiante === "ACTIVO" || estadoEstudiante === "PENDIENTE_DE_ACTIVACION";
   const puedeAdjuntar = permisos.includes("ADJUNTAR_INFORME");
   const puedeEliminar = permisos.includes("ELIMINAR_INFORME");
 
@@ -176,7 +185,11 @@ export function MedicalReportsPanel({ idEstudiante }: { idEstudiante: number }) 
       {/* noValidate: mismo motivo que en StudentForm — sin esto el required
           nativo del navegador corta el submit antes de correr las
           validaciones propias (patrón de nombre, tamaño de archivo). */}
-      {puedeAdjuntar ? (
+      {puedeAdjuntar && !estudianteAdmiteInformes ? (
+        <p className="text-base-content/60 text-sm pt-2 border-t border-base-300">
+          El estudiante está inactivo: no se le pueden adjuntar informes nuevos.
+        </p>
+      ) : puedeAdjuntar ? (
         <form
           onSubmit={handleAdjuntar}
           noValidate
