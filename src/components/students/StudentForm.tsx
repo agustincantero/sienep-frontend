@@ -478,15 +478,15 @@ export function StudentForm(props: StudentFormProps) {
                 </Field>
               </div>
               <Field label="Número" fieldKey="nroPuerta" error={errores.nroPuerta}>
+                {/* type="text" + inputMode="numeric" y no type="number": el navegador ignora maxLength en los number, así que dejaba escribir más de 4 dígitos y recién avisaba al validar. Así el tope se aplica mientras se escribe y se descarta todo lo que no sea dígito (también "e", "-", "." que un number acepta). */}
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   className={`input w-full${errores.nroPuerta ? " input-error" : ""}`}
                   placeholder="Número"
                   value={form.nroPuerta}
-                  min={1}
-                  max={9999}
-                  step={1}
-                  onChange={(e) => campo("nroPuerta", e.target.value)}
+                  maxLength={4}
+                  onChange={(e) => campo("nroPuerta", e.target.value.replace(/\D/g, ""))}
                   disabled={guardando}
                 />
               </Field>
