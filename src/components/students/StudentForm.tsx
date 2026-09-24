@@ -237,20 +237,29 @@ export function StudentForm(props: StudentFormProps) {
   // en que los campos aparecen en la pantalla.
   function validar(): Record<string, string> {
     const e: Record<string, string> = {};
-    if (!form.nombre.trim() || !TEXTO_REGEX.test(form.nombre)) {
+    // Vacío y formato inválido van por separado: con un solo if, un campo obligatorio vacío mostraba el mensaje de formato ("debe ser alfanumérico...") en vez de avisar que falta completarlo.
+    if (!form.nombre.trim()) {
+      e.nombre = "El nombre es obligatorio.";
+    } else if (!TEXTO_REGEX.test(form.nombre)) {
       e.nombre = "Ingresá un nombre válido (solo letras, números y espacios).";
     }
-    if (!form.apellido.trim() || !TEXTO_REGEX.test(form.apellido)) {
+    if (!form.apellido.trim()) {
+      e.apellido = "El apellido es obligatorio.";
+    } else if (!TEXTO_REGEX.test(form.apellido)) {
       e.apellido = "Ingresá un apellido válido (solo letras, números y espacios).";
     }
     if (!esEdicion) {
-      if (!form.documento.trim() || !DOCUMENTO_REGEX.test(form.documento)) {
+      if (!form.documento.trim()) {
+        e.documento = "El documento es obligatorio.";
+      } else if (!DOCUMENTO_REGEX.test(form.documento)) {
         e.documento = "El documento debe ser alfanumérico, sin espacios.";
       } else if (form.paisDocumento === "URY" && !isValidUruguayanCi(form.documento)) {
         e.documento = "La cédula uruguaya ingresada no es válida (dígito verificador incorrecto).";
       }
     }
-    if (!form.email.trim() || !/^\S+@\S+\.\S+$/.test(form.email)) {
+    if (!form.email.trim()) {
+      e.email = "El email es obligatorio.";
+    } else if (!/^\S+@\S+\.\S+$/.test(form.email)) {
       e.email = "Ingresá un email válido.";
     }
     if (!form.fechaNacimiento) {
