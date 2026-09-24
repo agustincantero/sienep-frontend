@@ -273,7 +273,7 @@ export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
               Se completa en el módulo de Instancias e Incidencias.
             </p>
           ) : tab === "informes" ? (
-            <MedicalReportsPanel idEstudiante={idEstudiante} />
+            <MedicalReportsPanel idEstudiante={idEstudiante} estadoEstudiante={estudiante.estado} />
           ) : (
             <StudentCommentsPanel idEstudiante={idEstudiante} />
           )}
