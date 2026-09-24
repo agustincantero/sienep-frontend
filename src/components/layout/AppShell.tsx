@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { logout } from "@/lib/auth";
 import { useSession } from "@/lib/session-context";
 import { SesionExpiradaModal } from "./SesionExpiradaModal";
@@ -12,6 +12,15 @@ import { TopBar } from "./TopBar";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const user = useSession();
   const [saliendo, setSaliendo] = useState(false);
+
+  // Con "atrás" el navegador puede restaurar la página desde el back/forward cache: una copia en memoria que no vuelve a pedirse al servidor, así que el layout de (app) no llega a verificar la sesión y tras un logout se seguían viendo (y usando) las pantallas anteriores. Si la página vino de ahí, se recarga: con sesión se ve igual que antes, sin sesión el layout redirige a /login.
+  useEffect(() => {
+    function alMostrar(e: PageTransitionEvent) {
+      if (e.persisted) window.location.reload();
+    }
+    window.addEventListener("pageshow", alMostrar);
+    return () => window.removeEventListener("pageshow", alMostrar);
+  }, []);
 
   async function handleLogout() {
     if (saliendo) return;
