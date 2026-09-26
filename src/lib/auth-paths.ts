@@ -4,6 +4,7 @@
 const BUSINESS_401_PATHS = [
   "/auth/login",
   "/auth/google",
+  "/auth/ad",
   "/auth/forgot-password",
   "/auth/reset-password",
 ];

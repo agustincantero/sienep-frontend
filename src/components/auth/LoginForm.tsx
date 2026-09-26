@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ApiError } from "@/lib/api";
 import { login, me } from "@/lib/auth";
@@ -10,8 +11,9 @@ import { AuthCard } from "./AuthCard";
 import { GoogleLoginButton } from "./GoogleLoginButton";
 import { PasswordInput } from "./PasswordInput";
 import { SetPasswordForm } from "./SetPasswordForm";
+import { UtecLoginForm } from "./UtecLoginForm";
 
-// Pantalla de login. Conectada a POST /api/auth/login y (vía GoogleLoginButton) a POST /api/auth/google. Esos Route Handlers guardan el JWT en una cookie httpOnly; acá no se maneja ningún token. Al entrar, se navega a / (el layout de (app) valida la sesión contra GET /auth/me y ahí mismo muestra el dashboard) — salvo que GET /auth/me diga que la cuenta quedó PENDIENTE_DE_ACTIVACION (contraseña temporal), en cuyo caso se muestra SetPasswordForm ahí mismo con la contraseña recién tipeada, en vez de navegar y pedírsela de nuevo.
+// Pantalla de login. Conectada a POST /api/auth/login, (vía GoogleLoginButton) a POST /api/auth/google y (vía UtecLoginForm) a POST /api/auth/ad. Esos Route Handlers guardan el JWT en una cookie httpOnly; acá no se maneja ningún token. Al entrar, se navega a / (el layout de (app) valida la sesión contra GET /auth/me y ahí mismo muestra el dashboard) — salvo que GET /auth/me diga que la cuenta quedó PENDIENTE_DE_ACTIVACION (contraseña temporal), en cuyo caso se muestra SetPasswordForm ahí mismo con la contraseña recién tipeada, en vez de navegar y pedírsela de nuevo.
 export function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -19,6 +21,7 @@ export function LoginForm() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const [porActivar, setPorActivar] = useState<{ user: AuthenticatedUser; contraseniaActual?: string } | null>(null);
+  const [modo, setModo] = useState<"local" | "utec">("local");
 
   function entrar() {
     setCargando(true); // se mantiene deshabilitado durante la navegación
@@ -57,6 +60,8 @@ export function LoginForm() {
   if (porActivar) {
     return <SetPasswordForm user={porActivar.user} contraseniaActual={porActivar.contraseniaActual} />;
   }
+
+  if (modo === "utec") return <UtecLoginForm onSuccess={() => despuesDeLoguear()} onVolver={() => setModo("local")} />;
 
   return (
     <AuthCard title="Iniciar sesión">
@@ -102,8 +107,12 @@ export function LoginForm() {
         <div id="login-alternativas" className="divider text-sm text-base-content/70">
           o iniciar sesión con
         </div>
-        <div role="group" aria-labelledby="login-alternativas">
+        <div role="group" aria-labelledby="login-alternativas" className="space-y-2">
           <GoogleLoginButton onSuccess={() => despuesDeLoguear()} onError={setError} />
+          <button type="button" onClick={() => setModo("utec")} className="btn btn-outline w-full gap-2 normal-case">
+            <Image src="/isotipo_utec.svg" alt="" width={1965} height={2021} className="h-5 w-auto" />
+            UTEC
+          </button>
         </div>
       </form>
     </AuthCard>
