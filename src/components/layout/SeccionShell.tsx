@@ -32,9 +32,9 @@ export function SeccionShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex grow min-h-0">
+    <div className="flex grow min-h-0 min-w-0">
       <Sidebar show={showSidebar} onClose={cerrarSidebar} />
-      <div className="grow overflow-auto flex flex-col">
+      <div className="grow overflow-auto flex flex-col min-w-0">
         <div className="md:hidden border-b border-zinc-200 p-2 flex items-center gap-2 bg-zinc-100 shrink-0">
           <button
             ref={botonMenuRef}
