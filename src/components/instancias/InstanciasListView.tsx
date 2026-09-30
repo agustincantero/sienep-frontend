@@ -246,7 +246,7 @@ export function InstanciasListView() {
                   }}
                 >
                   <td className="font-mono text-sm text-center">{i.idNegInstancia}</td>
-                  <td className="font-semibold">{i.nombreEstudiante}</td>
+                  <td className="font-semibold whitespace-nowrap">{i.nombreEstudiante}</td>
                   <td className="font-mono text-sm">{formatFechaHora(i.fechaHora)}</td>
                   <td>{i.nombreCategoria}</td>
                   <td>{i.nombreFuncionario}</td>
