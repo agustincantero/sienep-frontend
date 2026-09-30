@@ -149,8 +149,13 @@ export function InstanciasListView() {
   const filters: ToolbarFilter[] = useMemo(
     () => [
       {
-        label: "Estudiante (todos)",
+        label: "Estudiante",
         emptyLabel: "Todos",
+        // "search": no hay filtro de texto libre en el backend (ver más abajo),
+        // pero con muchos estudiantes un combo <select> se vuelve inmanejable
+        // para buscar uno — se tipea el nombre y se resuelve a idEstudiante
+        // igual que antes, solo cambia el control.
+        type: "search",
         options: estudiantes.map((e) => `${e.nombre} ${e.apellido}`),
         value: nomEstudiante,
         onChange: handleEstudianteChange,
