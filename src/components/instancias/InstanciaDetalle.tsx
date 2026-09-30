@@ -145,12 +145,12 @@ export function InstanciaDetalle({ codInstancia }: { codInstancia: number }) {
           </div>
         </div>
 
+        <Dl label="Identificador" value={instancia.idNegInstancia} />
         <Dl label="Estudiante" value={instancia.nombreEstudiante} />
         <Dl label="Categoría" value={instancia.nombreCategoria} />
         <Dl label="Fecha y hora" value={formatFechaHora(instancia.fechaHora)} />
         <Dl label="Canal" value={instancia.canal} />
         <Dl label="Responsable" value={instancia.nombreFuncionario} />
-        <Dl label="ID" value={instancia.idNegInstancia} />
 
         <InstanciaComentarios codInstancia={codInstancia} />
       </div>
