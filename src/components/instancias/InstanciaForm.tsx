@@ -90,7 +90,7 @@ export function InstanciaForm(props: InstanciaFormProps) {
     }
     if (!form.titulo.trim()) {
       e.titulo = "El título es obligatorio.";
-    } else if (form.titulo.length > TITULO_MAX) {
+    } else if (form.titulo.trim().length > TITULO_MAX) {
       e.titulo = `Máximo ${TITULO_MAX} caracteres.`;
     }
     if (!form.idCategoria) {
@@ -99,7 +99,7 @@ export function InstanciaForm(props: InstanciaFormProps) {
     if (!form.fechaHora) {
       e.fechaHora = "La fecha y hora son obligatorias.";
     }
-    if (form.canal.length > CANAL_MAX) {
+    if (form.canal.trim().length > CANAL_MAX) {
       e.canal = `Máximo ${CANAL_MAX} caracteres.`;
     }
     return e;
