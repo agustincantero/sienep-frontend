@@ -194,7 +194,7 @@ export function IncidenciasListView() {
           <>
             <DataTable
               headers={[
-                { label: "Identificador", align: "center" },
+                "Identificador",
                 "Estudiante",
                 "Fecha",
                 "Responsable",
@@ -212,7 +212,7 @@ export function IncidenciasListView() {
                     if (ev.key === "Enter") router.push(`/incidencias/${i.codInstancia}`);
                   }}
                 >
-                  <td className="text-sm text-center whitespace-nowrap">{i.idNegInstancia}</td>
+                  <td className="text-sm whitespace-nowrap">{i.idNegInstancia}</td>
                   <td className="font-semibold whitespace-nowrap">{i.nombreEstudiante}</td>
                   <td className="text-sm whitespace-nowrap">{formatFechaHora(i.fechaHora)}</td>
                   <td className="whitespace-nowrap">{i.nombreFuncionario}</td>
