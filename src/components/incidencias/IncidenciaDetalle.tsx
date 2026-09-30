@@ -147,12 +147,12 @@ export function IncidenciaDetalle({ codInstancia }: { codInstancia: number }) {
           </div>
         </div>
 
+        <Dl label="Identificador" value={incidencia.idNegInstancia} />
         <Dl label="Estudiante" value={incidencia.nombreEstudiante} />
         <Dl label="Lugar" value={incidencia.lugar} />
         <Dl label="Fecha y hora" value={formatFechaHora(incidencia.fechaHora)} />
         <Dl label="Canal" value={incidencia.canal} />
         <Dl label="Responsable" value={incidencia.nombreFuncionario} />
-        <Dl label="ID" value={incidencia.idNegInstancia} />
 
         <InvolucradosPanel codInstancia={codInstancia} />
         <InstanciaComentarios codInstancia={codInstancia} />
