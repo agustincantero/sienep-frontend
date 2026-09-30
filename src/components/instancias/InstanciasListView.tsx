@@ -245,11 +245,11 @@ export function InstanciasListView() {
                     if (ev.key === "Enter") router.push(`/instancias/${i.codInstancia}`);
                   }}
                 >
-                  <td className="font-mono text-sm text-center">{i.idNegInstancia}</td>
+                  <td className="font-mono text-sm text-center whitespace-nowrap">{i.idNegInstancia}</td>
                   <td className="font-semibold whitespace-nowrap">{i.nombreEstudiante}</td>
-                  <td className="font-mono text-sm">{formatFechaHora(i.fechaHora)}</td>
+                  <td className="font-mono text-sm whitespace-nowrap">{formatFechaHora(i.fechaHora)}</td>
                   <td>{i.nombreCategoria}</td>
-                  <td>{i.nombreFuncionario}</td>
+                  <td className="whitespace-nowrap">{i.nombreFuncionario}</td>
                   <td>
                     <EstadoBadge estado={i.estado} />
                   </td>
