@@ -1,5 +1,11 @@
+// Un header puede ser un string (default, alineado a la izquierda como
+// siempre) o un objeto con `align` para columnas como "Identificador" que
+// leen mejor centradas. Backward-compatible: todo el uso existente pasa
+// strings sueltos.
+export type DataTableHeader = string | { label: string; align?: "center" | "right" };
+
 type DataTableProps = {
-  headers: string[];
+  headers: DataTableHeader[];
   children: React.ReactNode;
 };
 
@@ -9,9 +15,20 @@ export function DataTable({ headers, children }: DataTableProps) {
       <table className="table align-middle [&_tbody_tr]:transition-colors [&_tbody_tr]:duration-150 [&_tbody_tr:hover]:bg-base-200">
         <thead>
           <tr>
-            {headers.map((hd) => (
-              <th key={hd}>{hd}</th>
-            ))}
+            {headers.map((hd) => {
+              const label = typeof hd === "string" ? hd : hd.label;
+              const align = typeof hd === "string" ? undefined : hd.align;
+              // Clases completas a mano (no `text-${align}`): Tailwind escanea el
+              // código en busca del nombre literal de la clase, un template
+              // literal armado en runtime no lo detecta y la clase queda afuera
+              // del CSS compilado.
+              const alignClass = align === "center" ? "text-center" : align === "right" ? "text-right" : undefined;
+              return (
+                <th key={label} className={alignClass}>
+                  {label}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>{children}</tbody>

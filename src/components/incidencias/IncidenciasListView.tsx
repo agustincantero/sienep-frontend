@@ -205,7 +205,16 @@ export function IncidenciasListView() {
         ) : (
           <>
             <DataTable
-              headers={["Identificador", "Estudiante", "Fecha", "Título", "Lugar", "Responsable", "Estado", ""]}
+              headers={[
+                { label: "Identificador", align: "center" },
+                "Estudiante",
+                "Fecha",
+                "Título",
+                "Lugar",
+                "Responsable",
+                "Estado",
+                "",
+              ]}
             >
               {incidencias.map((i) => (
                 <tr
@@ -217,7 +226,7 @@ export function IncidenciasListView() {
                     if (ev.key === "Enter") router.push(`/incidencias/${i.codInstancia}`);
                   }}
                 >
-                  <td className="font-mono text-sm">{i.idNegInstancia}</td>
+                  <td className="font-mono text-sm text-center">{i.idNegInstancia}</td>
                   <td className="font-semibold">{i.nombreEstudiante}</td>
                   <td className="font-mono text-sm">{formatFechaHora(i.fechaHora)}</td>
                   <td>{i.titulo}</td>
