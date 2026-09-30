@@ -204,7 +204,6 @@ export function IncidenciasListView() {
                 "Estudiante",
                 "Fecha",
                 "Título",
-                "Lugar",
                 "Responsable",
                 "Estado",
                 "",
@@ -229,7 +228,6 @@ export function IncidenciasListView() {
                   <td className="max-w-[180px] truncate" title={i.titulo}>
                     {i.titulo}
                   </td>
-                  <td>{i.lugar}</td>
                   <td className="whitespace-nowrap">{i.nombreFuncionario}</td>
                   <td>
                     <EstadoBadge estado={i.estado} />
