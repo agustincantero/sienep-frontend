@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { BackendError, backendJson } from "@/lib/backend";
 import { InstanciaForm } from "@/components/instancias/InstanciaForm";
 import { SinPermiso } from "@/components/layout/SinPermiso";
@@ -26,8 +27,22 @@ export default async function EditarInstanciaPage({
   try {
     instancia = await backendJson<InstanciaComun>(`/instancias/${id}`);
   } catch (err) {
-    if (err instanceof BackendError && err.status === 404) notFound();
-    throw err;
+    // Cualquier error del backend (404 no encontrada, 400 id con formato invalido, etc.) se
+    // muestra acá en vez de dejarlo sin capturar: mismo criterio que InstanciaDetalle, que
+    // ante un id invalido no rompe con un 500, sino que se queda dentro del layout de la app.
+    return (
+      <div className="grow overflow-auto">
+        <div className="max-w-[600px] mx-auto w-full px-4 py-5">
+          <Link href="/instancias" className="btn btn-link no-underline mb-3 gap-1">
+            <ArrowLeft size={16} aria-hidden />
+            Volver a instancias
+          </Link>
+          <div role="alert" className="alert alert-error alert-soft text-sm">
+            <span>{err instanceof BackendError ? err.message : "No se pudo cargar la instancia."}</span>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return <InstanciaForm mode="editar" codInstancia={Number(id)} instancia={instancia} />;
