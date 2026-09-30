@@ -203,7 +203,6 @@ export function IncidenciasListView() {
                 { label: "Identificador", align: "center" },
                 "Estudiante",
                 "Fecha",
-                "Título",
                 "Responsable",
                 "Estado",
                 "",
@@ -222,12 +221,6 @@ export function IncidenciasListView() {
                   <td className="font-mono text-sm text-center whitespace-nowrap">{i.idNegInstancia}</td>
                   <td className="font-semibold whitespace-nowrap">{i.nombreEstudiante}</td>
                   <td className="font-mono text-sm whitespace-nowrap">{formatFechaHora(i.fechaHora)}</td>
-                  {/* max-w + truncate: un titulo largo (sin espacios para cortar bien)
-                      hacia crecer la fila entera envolviendo letra por letra. El
-                      texto completo sigue disponible al pasar el mouse (title=). */}
-                  <td className="max-w-[180px] truncate" title={i.titulo}>
-                    {i.titulo}
-                  </td>
                   <td className="whitespace-nowrap">{i.nombreFuncionario}</td>
                   <td>
                     <EstadoBadge estado={i.estado} />
