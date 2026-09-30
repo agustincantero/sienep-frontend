@@ -20,6 +20,8 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // Next 16 bloquea por defecto las requests a `next dev` que no vengan de localhost (para probar desde otro dispositivo en la LAN). Override personal, no un valor del equipo, se define en .env.local (gitignoreado), nunca acá.
+  allowedDevOrigins: process.env.ALLOWED_DEV_ORIGIN ? [process.env.ALLOWED_DEV_ORIGIN] : undefined,
   async headers() {
     return [
       {
