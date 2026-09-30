@@ -12,7 +12,7 @@ import {
   reactivateIncidencia,
   type Incidencia,
 } from "@/lib/incidencias";
-import { listStudents, type StudentSummary } from "@/lib/students";
+import { listStudents, type Page, type StudentSummary } from "@/lib/students";
 import { useSession } from "@/lib/session-context";
 import { DataTable } from "@/components/ui/DataTable";
 import { EstadoBadge } from "@/components/instancias/EstadoBadge";
@@ -66,12 +66,31 @@ export function IncidenciasListView() {
     const idEstudiante = estudiantes.find(
       (e) => `${e.nombre} ${e.apellido}` === nomEstudiante,
     )?.idUsuario;
+    const estadoParam = estadoLabel ? ESTADO_A_VALOR[estadoLabel] : undefined;
 
-    listIncidencias({
-      idEstudiante,
-      estado: estadoLabel ? ESTADO_A_VALOR[estadoLabel] : undefined,
-      page,
-    })
+    // Sin ?estado=, el backend devuelve solo las ACTIVAS (no "todas" — no hay
+    // un valor de estado que signifique eso). Para que el filtro "Estado:
+    // Todos" muestre activas E inactivas, se piden las dos por separado y se
+    // combinan acá. La paginación queda aproximada en ese caso (cada mitad
+    // pagina de forma independiente), aceptable a esta escala.
+    const peticion = estadoParam
+      ? listIncidencias({ idEstudiante, estado: estadoParam, page })
+      : Promise.all([
+          listIncidencias({ idEstudiante, estado: "ACTIVO", page }),
+          listIncidencias({ idEstudiante, estado: "INACTIVO", page }),
+        ]).then(
+          ([activas, inactivas]): Page<Incidencia> => ({
+            content: [...activas.content, ...inactivas.content],
+            totalElements: activas.totalElements + inactivas.totalElements,
+            totalPages: Math.max(activas.totalPages, inactivas.totalPages),
+            number: page,
+            size: activas.size,
+            first: activas.first && inactivas.first,
+            last: activas.last && inactivas.last,
+          }),
+        );
+
+    peticion
       .then((res) => {
         if (cancelado) return;
         setIncidencias(res.content);
