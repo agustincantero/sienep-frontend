@@ -229,7 +229,12 @@ export function IncidenciasListView() {
                   <td className="font-mono text-sm text-center">{i.idNegInstancia}</td>
                   <td className="font-semibold">{i.nombreEstudiante}</td>
                   <td className="font-mono text-sm">{formatFechaHora(i.fechaHora)}</td>
-                  <td>{i.titulo}</td>
+                  {/* max-w + truncate: un titulo largo (sin espacios para cortar bien)
+                      hacia crecer la fila entera envolviendo letra por letra. El
+                      texto completo sigue disponible al pasar el mouse (title=). */}
+                  <td className="max-w-[180px] truncate" title={i.titulo}>
+                    {i.titulo}
+                  </td>
                   <td>{i.lugar}</td>
                   <td>{i.nombreFuncionario}</td>
                   <td>
