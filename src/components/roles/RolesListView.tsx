@@ -164,7 +164,7 @@ export function RolesListView() {
               const protegido = esRolProtegido(r.nombre);
               return (
                 <tr key={r.idRol}>
-                  <td className="font-semibold font-mono text-sm">{r.nombre}</td>
+                  <td className="font-semibold text-sm">{r.nombre}</td>
                   <td className="text-base-content/60 text-sm">{r.descripcion || "—"}</td>
                   <td>
                     <span className="badge badge-outline whitespace-nowrap">

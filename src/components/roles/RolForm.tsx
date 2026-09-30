@@ -181,7 +181,7 @@ export function RolForm(props: RolFormProps) {
                   </p>
                 ) : mostrarPreviewNombre ? (
                   <p id="nombre-preview" className="mt-1 text-xs text-base-content/60">
-                    Se va a guardar como <span className="font-mono">{nombreNormalizado}</span>.
+                    Se va a guardar como <span className="font-semibold">{nombreNormalizado}</span>.
                   </p>
                 ) : null}
               </div>
@@ -274,7 +274,7 @@ export function RolForm(props: RolFormProps) {
                           />
                           <label
                             htmlFor={inputId}
-                            className={`text-sm leading-tight font-mono break-all${
+                            className={`text-sm leading-tight break-all${
                               !habilitado ? " text-base-content/60" : enRiesgo ? " text-amber-700 font-semibold" : ""
                             }`}
                             title={titulo}
