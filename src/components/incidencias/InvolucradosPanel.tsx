@@ -49,6 +49,11 @@ export function InvolucradosPanel({ codInstancia }: { codInstancia: number }) {
     ev.preventDefault();
     const nombreTrim = nombre.trim();
     if (!nombreTrim) return;
+    // maxLength del input no alcanza para bloquear un pegado (paste) de texto mas largo.
+    if (nombreTrim.length > NOMBRE_MAX) {
+      setError(`Máximo ${NOMBRE_MAX} caracteres.`);
+      return;
+    }
     setEnviando(true);
     setError("");
     try {
