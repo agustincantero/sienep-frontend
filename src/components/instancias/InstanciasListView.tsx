@@ -231,7 +231,15 @@ export function InstanciasListView() {
         ) : (
           <>
             <DataTable
-              headers={["Identificador", "Estudiante", "Fecha", "Categoría", "Responsable", "Estado", ""]}
+              headers={[
+                { label: "Identificador", align: "center" },
+                "Estudiante",
+                "Fecha",
+                "Categoría",
+                "Responsable",
+                "Estado",
+                "",
+              ]}
             >
               {instancias.map((i) => (
                 <tr
@@ -243,7 +251,7 @@ export function InstanciasListView() {
                     if (ev.key === "Enter") router.push(`/instancias/${i.codInstancia}`);
                   }}
                 >
-                  <td className="font-mono text-sm">{i.idNegInstancia}</td>
+                  <td className="font-mono text-sm text-center">{i.idNegInstancia}</td>
                   <td className="font-semibold">{i.nombreEstudiante}</td>
                   <td className="font-mono text-sm">{formatFechaHora(i.fechaHora)}</td>
                   <td>{i.nombreCategoria}</td>
