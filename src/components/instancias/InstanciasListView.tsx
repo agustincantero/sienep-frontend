@@ -229,7 +229,6 @@ export function InstanciasListView() {
                 { label: "Identificador", align: "center" },
                 "Estudiante",
                 "Fecha",
-                "Categoría",
                 "Responsable",
                 "Estado",
                 "",
@@ -248,7 +247,6 @@ export function InstanciasListView() {
                   <td className="font-mono text-sm text-center whitespace-nowrap">{i.idNegInstancia}</td>
                   <td className="font-semibold whitespace-nowrap">{i.nombreEstudiante}</td>
                   <td className="font-mono text-sm whitespace-nowrap">{formatFechaHora(i.fechaHora)}</td>
-                  <td>{i.nombreCategoria}</td>
                   <td className="whitespace-nowrap">{i.nombreFuncionario}</td>
                   <td>
                     <EstadoBadge estado={i.estado} />
