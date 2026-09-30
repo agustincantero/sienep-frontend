@@ -53,13 +53,9 @@ function DetalleEvento({ evento }: { evento: AuditEvent }) {
           const cambio = textoAnterior !== textoNuevo;
           return (
             <tr key={campo}>
-              <td className="font-mono text-sm">{campo}</td>
-              <td className={`font-mono text-sm ${cambio && valorAnterior ? "text-error" : "text-base-content/60"}`}>
-                {textoAnterior}
-              </td>
-              <td className={`font-mono text-sm ${cambio && valorNuevo ? "text-success font-semibold" : ""}`}>
-                {textoNuevo}
-              </td>
+              <td>{campo}</td>
+              <td className={cambio && valorAnterior ? "text-error" : "text-base-content/60"}>{textoAnterior}</td>
+              <td className={cambio && valorNuevo ? "text-success font-semibold" : ""}>{textoNuevo}</td>
             </tr>
           );
         })}
@@ -172,7 +168,7 @@ export function AuditListView() {
                 return (
                   <Fragment key={evento.idAuditoria}>
                     <tr>
-                      <td className="font-mono text-sm whitespace-nowrap">{formatFechaHora(evento.fechaHora)}</td>
+                      <td className="whitespace-nowrap">{formatFechaHora(evento.fechaHora)}</td>
                       <td>
                         {evento.nombreAutor ? (
                           <div className="flex flex-col">
@@ -190,9 +186,9 @@ export function AuditListView() {
                           {evento.accion}
                         </span>
                       </td>
-                      <td className="font-mono text-sm">{evento.entidad}</td>
-                      <td className="font-mono text-sm text-base-content/60">{evento.usuarioBd ?? "—"}</td>
-                      <td className="font-mono text-sm text-base-content/60">{evento.ip ?? "—"}</td>
+                      <td>{evento.entidad}</td>
+                      <td className="text-base-content/60">{evento.usuarioBd ?? "—"}</td>
+                      <td className="text-base-content/60">{evento.ip ?? "—"}</td>
                       <td className="whitespace-nowrap">
                         <button
                           type="button"
