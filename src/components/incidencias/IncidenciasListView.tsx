@@ -220,9 +220,9 @@ export function IncidenciasListView() {
                     if (ev.key === "Enter") router.push(`/incidencias/${i.codInstancia}`);
                   }}
                 >
-                  <td className="font-mono text-sm text-center">{i.idNegInstancia}</td>
+                  <td className="font-mono text-sm text-center whitespace-nowrap">{i.idNegInstancia}</td>
                   <td className="font-semibold whitespace-nowrap">{i.nombreEstudiante}</td>
-                  <td className="font-mono text-sm">{formatFechaHora(i.fechaHora)}</td>
+                  <td className="font-mono text-sm whitespace-nowrap">{formatFechaHora(i.fechaHora)}</td>
                   {/* max-w + truncate: un titulo largo (sin espacios para cortar bien)
                       hacia crecer la fila entera envolviendo letra por letra. El
                       texto completo sigue disponible al pasar el mouse (title=). */}
@@ -230,7 +230,7 @@ export function IncidenciasListView() {
                     {i.titulo}
                   </td>
                   <td>{i.lugar}</td>
-                  <td>{i.nombreFuncionario}</td>
+                  <td className="whitespace-nowrap">{i.nombreFuncionario}</td>
                   <td>
                     <EstadoBadge estado={i.estado} />
                   </td>
