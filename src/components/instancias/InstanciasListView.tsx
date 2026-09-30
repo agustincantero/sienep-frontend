@@ -13,7 +13,7 @@ import {
   reactivateInstancia,
   type InstanciaComun,
 } from "@/lib/instancias";
-import { listStudents, type StudentSummary } from "@/lib/students";
+import { listStudents, type Page, type StudentSummary } from "@/lib/students";
 import { useSession } from "@/lib/session-context";
 import { DataTable } from "@/components/ui/DataTable";
 import { PaginationFooter } from "@/components/ui/PaginationFooter";
@@ -80,13 +80,31 @@ export function InstanciasListView() {
       (e) => `${e.nombre} ${e.apellido}` === nomEstudiante,
     )?.idUsuario;
     const idCategoria = categorias.find((c) => c.nomCategoria === nomCategoria)?.idCategoria;
+    const estadoParam = estadoLabel ? ESTADO_A_VALOR[estadoLabel] : undefined;
 
-    listInstancias({
-      idEstudiante,
-      idCategoria,
-      estado: estadoLabel ? ESTADO_A_VALOR[estadoLabel] : undefined,
-      page,
-    })
+    // Sin ?estado=, el backend devuelve solo las ACTIVAS (no "todas" — no hay
+    // un valor de estado que signifique eso). Para que el filtro "Estado:
+    // Todos" muestre activas E inactivas, se piden las dos por separado y se
+    // combinan acá. La paginación queda aproximada en ese caso (cada mitad
+    // pagina de forma independiente), aceptable a esta escala.
+    const peticion = estadoParam
+      ? listInstancias({ idEstudiante, idCategoria, estado: estadoParam, page })
+      : Promise.all([
+          listInstancias({ idEstudiante, idCategoria, estado: "ACTIVO", page }),
+          listInstancias({ idEstudiante, idCategoria, estado: "INACTIVO", page }),
+        ]).then(
+          ([activas, inactivas]): Page<InstanciaComun> => ({
+            content: [...activas.content, ...inactivas.content],
+            totalElements: activas.totalElements + inactivas.totalElements,
+            totalPages: Math.max(activas.totalPages, inactivas.totalPages),
+            number: page,
+            size: activas.size,
+            first: activas.first && inactivas.first,
+            last: activas.last && inactivas.last,
+          }),
+        );
+
+    peticion
       .then((res) => {
         if (cancelado) return;
         setInstancias(res.content);
