@@ -73,18 +73,18 @@ export function IncidenciaForm(props: IncidenciaFormProps) {
     }
     if (!form.titulo.trim()) {
       e.titulo = "El título es obligatorio.";
-    } else if (form.titulo.length > TITULO_MAX) {
+    } else if (form.titulo.trim().length > TITULO_MAX) {
       e.titulo = `Máximo ${TITULO_MAX} caracteres.`;
     }
     if (!form.lugar.trim()) {
       e.lugar = "El lugar es obligatorio.";
-    } else if (form.lugar.length > LUGAR_MAX) {
+    } else if (form.lugar.trim().length > LUGAR_MAX) {
       e.lugar = `Máximo ${LUGAR_MAX} caracteres.`;
     }
     if (!form.fechaHora) {
       e.fechaHora = "La fecha y hora son obligatorias.";
     }
-    if (form.canal.length > CANAL_MAX) {
+    if (form.canal.trim().length > CANAL_MAX) {
       e.canal = `Máximo ${CANAL_MAX} caracteres.`;
     }
     return e;
