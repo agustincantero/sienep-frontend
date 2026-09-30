@@ -230,7 +230,9 @@ export function InstanciasListView() {
           <p className="text-base-content/60 py-6 text-center">No se encontraron instancias.</p>
         ) : (
           <>
-            <DataTable headers={["Estudiante", "Fecha", "Categoría", "Responsable", "Estado", ""]}>
+            <DataTable
+              headers={["Identificador", "Estudiante", "Fecha", "Categoría", "Responsable", "Estado", ""]}
+            >
               {instancias.map((i) => (
                 <tr
                   key={i.codInstancia}
@@ -241,6 +243,7 @@ export function InstanciasListView() {
                     if (ev.key === "Enter") router.push(`/instancias/${i.codInstancia}`);
                   }}
                 >
+                  <td className="font-mono text-sm">{i.idNegInstancia}</td>
                   <td className="font-semibold">{i.nombreEstudiante}</td>
                   <td className="font-mono text-sm">{formatFechaHora(i.fechaHora)}</td>
                   <td>{i.nombreCategoria}</td>
