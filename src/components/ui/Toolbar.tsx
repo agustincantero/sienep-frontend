@@ -1,13 +1,19 @@
 import { Search, X } from "lucide-react";
 
 export type ToolbarFilter = {
-  // Etiqueta flotante del filtro (ej. "Grupo"): es el nombre accesible del <select>.
+  // Etiqueta flotante del filtro (ej. "Grupo"): es el nombre accesible del control.
   label: string;
   // Texto de la opción vacía (ej. "Todos"): lo que se ve cuando no hay nada elegido.
+  // Sin efecto si type es "search" (ahí "vacío" es simplemente borrar el texto).
   emptyLabel: string;
   options: string[];
   value?: string;
   onChange?: (value: string) => void;
+  // "select" (default) = <select> con las opciones fijas. "search" = <input> con
+  // autocompletado (<datalist>) sobre las mismas opciones — para filtros con muchas
+  // opciones (ej. Estudiante) donde tipear es más rápido que scrollear un combo largo.
+  // En ambos casos `value`/`onChange` siguen siendo el texto exacto de una opción.
+  type?: "select" | "search";
 };
 
 type ToolbarProps = {
@@ -59,25 +65,45 @@ export function Toolbar({ placeholder, searchValue, onSearchChange, filters }: T
           </div>
         </div>
       ) : null}
-      {(filters ?? []).map((f) => (
-        <div className="col-span-6 md:col-span-2" key={f.label}>
-          <label className="floating-label">
-            <select
-              className="select w-full border-neutral-800/30"
-              value={f.value}
-              onChange={(e) => f.onChange?.(e.target.value)}
-            >
-              <option value="">{f.emptyLabel}</option>
-              {f.options.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-            <span>{f.label}</span>
-          </label>
-        </div>
-      ))}
+      {(filters ?? []).map((f) => {
+        const datalistId = `toolbar-filter-${f.label.toLowerCase().replace(/\s+/g, "-")}`;
+        return (
+          <div className="col-span-6 md:col-span-2" key={f.label}>
+            <label className="floating-label">
+              {f.type === "search" ? (
+                <>
+                  <input
+                    className="input w-full border-neutral-800/30"
+                    list={datalistId}
+                    value={f.value ?? ""}
+                    onChange={(e) => f.onChange?.(e.target.value)}
+                    placeholder={f.label}
+                  />
+                  <datalist id={datalistId}>
+                    {f.options.map((opt) => (
+                      <option key={opt} value={opt} />
+                    ))}
+                  </datalist>
+                </>
+              ) : (
+                <select
+                  className="select w-full border-neutral-800/30"
+                  value={f.value}
+                  onChange={(e) => f.onChange?.(e.target.value)}
+                >
+                  <option value="">{f.emptyLabel}</option>
+                  {f.options.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <span>{f.label}</span>
+            </label>
+          </div>
+        );
+      })}
     </div>
   );
 }
