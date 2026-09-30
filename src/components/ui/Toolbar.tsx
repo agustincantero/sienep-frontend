@@ -48,7 +48,12 @@ export function Toolbar({ placeholder, searchValue, onSearchChange, searchOption
               />
               <span>{placeholder}</span>
             </label>
-            {datalistId ? (
+            {/* Sin opciones mientras el input está vacío: un <input list> con datalist
+                le muestra al navegador TODAS las opciones al hacer foco/click, incluso
+                sin texto — a diferencia del buscador de texto libre de Estudiantes, que
+                al no tener `list` no despliega nada. Se evita vaciando el datalist hasta
+                que haya algo tipeado. */}
+            {datalistId && searchValue ? (
               <datalist id={datalistId}>
                 {searchOptions!.map((opt) => (
                   <option key={opt} value={opt} />
