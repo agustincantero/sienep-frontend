@@ -212,7 +212,7 @@ export function InstanciasListView() {
           <>
             <DataTable
               headers={[
-                { label: "Identificador", align: "center" },
+                "Identificador",
                 "Estudiante",
                 "Fecha",
                 "Responsable",
@@ -230,7 +230,7 @@ export function InstanciasListView() {
                     if (ev.key === "Enter") router.push(`/instancias/${i.codInstancia}`);
                   }}
                 >
-                  <td className="text-sm text-center whitespace-nowrap">{i.idNegInstancia}</td>
+                  <td className="text-sm whitespace-nowrap">{i.idNegInstancia}</td>
                   <td className="font-semibold whitespace-nowrap">{i.nombreEstudiante}</td>
                   <td className="text-sm whitespace-nowrap">{formatFechaHora(i.fechaHora)}</td>
                   <td className="whitespace-nowrap">{i.nombreFuncionario}</td>
