@@ -1,12 +1,7 @@
 import { apiGet, apiPost } from "./api";
 import type { Page } from "./students";
 
-// Comentarios sobre una Instancia (normal o confidencial) — el backend los
-// expone sobre /instancias/{codInstancia}/comentarios-*, y funciona igual
-// para InstanciaComun e Incidencia (ambas son "instancias" para este
-// sub-recurso, el service resuelve contra el repositorio base). Por eso vive
-// en su propio archivo en vez de en lib/instancias.ts o lib/incidencias.ts:
-// lo usan las dos fichas.
+// Comentarios sobre una Instancia (normal o confidencial) — el backend los expone sobre /instancias/{codInstancia}/comentarios-*, y funciona igual para InstanciaComun e Incidencia. Vive en su propio archivo porque lo usan las dos fichas.
 export type ComentarioInstancia = {
   codInstancia: number;
   contenido: string;

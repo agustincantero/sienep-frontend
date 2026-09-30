@@ -15,9 +15,7 @@ import { useSession } from "@/lib/session-context";
 
 const CONTENIDO_MAX = 1000;
 
-// Compartido entre InstanciaDetalle e IncidenciaDetalle: el backend expone
-// comentarios normales/confidenciales sobre /instancias/{codInstancia}/...
-// para ambos subtipos (ver lib/instancia-comentarios.ts).
+// Compartido entre InstanciaDetalle e IncidenciaDetalle: el backend expone comentarios normales/confidenciales sobre /instancias/{codInstancia}/... para ambos subtipos.
 export function InstanciaComentarios({ codInstancia }: { codInstancia: number }) {
   const { permisos } = useSession();
   const puedeVerConfidencial = permisos.includes("VER_COMENTARIO_CONFIDENCIAL_INSTANCIA");
@@ -32,10 +30,7 @@ export function InstanciaComentarios({ codInstancia }: { codInstancia: number })
         crear={crearComentarioNormal}
       />
 
-      {/* Igual criterio que SaludConfidencial en StudentProfile: sin el
-          permiso, ni se intenta la llamada (el backend igual la rechazaría
-          con 403 — acá no hay un patrón de "nulificar" como en Estudiante,
-          es un endpoint aparte que se bloquea entero). */}
+      {/* Sin el permiso, ni se intenta la llamada: es un endpoint aparte que se bloquea entero, el backend igual la rechazaría con 403. */}
       {puedeVerConfidencial ? (
         <ComentarioBox
           titulo="Comentarios confidenciales"

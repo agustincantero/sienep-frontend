@@ -42,10 +42,7 @@ type IncidenciaFormProps =
   | { mode: "crear" }
   | { mode: "editar"; codInstancia: number; incidencia: Incidencia };
 
-// A diferencia de InstanciaForm, acá el Estudiante SÍ es editable en ambos
-// modos: el backend reusa IncidenciaRequestDTO para alta y edición, y
-// IncidenciaService.editar() re-resuelve/re-valida idEstudiante (no lo deja
-// afuera como InstanciaComunUpdateDTO).
+// A diferencia de InstanciaForm, acá el Estudiante SÍ es editable en ambos modos: el backend reusa IncidenciaRequestDTO para alta y edición.
 export function IncidenciaForm(props: IncidenciaFormProps) {
   const router = useRouter();
   const esEdicion = props.mode === "editar";
@@ -204,10 +201,7 @@ export function IncidenciaForm(props: IncidenciaFormProps) {
                   disabled={guardando}
                 />
               </Field>
-              {/* datetime-local y no date: el mock de baja fidelidad solo pide
-                  fecha para incidencias, pero IncidenciaRequestDTO.fechaHora es
-                  un LocalDateTime @NotNull — se necesita la hora igual que en
-                  instancia, o se perdería ese dato al guardar. */}
+              {/* datetime-local y no date: IncidenciaRequestDTO.fechaHora es un LocalDateTime @NotNull, se necesita la hora o se perdería ese dato al guardar. */}
               <Field label="Fecha y hora" fieldKey="fechaHora" error={errores.fechaHora}>
                 <input
                   type="datetime-local"

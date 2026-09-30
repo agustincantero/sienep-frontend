@@ -8,13 +8,7 @@ import { useSession } from "@/lib/session-context";
 
 const NOMBRE_MAX = 30;
 
-// El backend no expone un permiso propio de "involucrados": agregar usa
-// EDITAR_INCIDENCIA y quitar usa DESACTIVAR_INCIDENCIA (ver
-// InvolucradoController). Sin ConfirmDialog al quitar (a diferencia de
-// MedicalReportsPanel.eliminarInforme): acá no hay nada que se pierda de
-// verdad — re-agregar el mismo nombre reactiva el registro en vez de
-// duplicarlo (POST es idempotente para un nombre ya usado), y así lo
-// muestra el mock (un link "Quitar" directo, sin diálogo).
+// El backend no expone un permiso propio de "involucrados": agregar usa EDITAR_INCIDENCIA y quitar usa DESACTIVAR_INCIDENCIA. Sin ConfirmDialog al quitar (a diferencia de MedicalReportsPanel.eliminarInforme): re-agregar el mismo nombre reactiva el registro en vez de duplicarlo, no hay nada que se pierda de verdad.
 export function InvolucradosPanel({ codInstancia }: { codInstancia: number }) {
   const { permisos } = useSession();
   const puedeAgregar = permisos.includes("EDITAR_INCIDENCIA");
@@ -36,8 +30,7 @@ export function InvolucradosPanel({ codInstancia }: { codInstancia: number }) {
     listInvolucrados(idAlPedir)
       .then((res) => {
         if (codInstanciaRef.current !== idAlPedir) return;
-        // El backend no filtra por estado en el GET: se listan solo los ACTIVOS acá,
-        // los INACTIVOS (ya quitados) no tienen que reaparecer.
+        // El backend no filtra por estado en el GET: se listan solo los ACTIVOS acá, los INACTIVOS (ya quitados) no tienen que reaparecer.
         setInvolucrados(res.filter((inv) => inv.estado === "ACTIVO"));
         setError("");
       })

@@ -22,9 +22,7 @@ import { Toolbar, type ToolbarFilter } from "@/components/ui/Toolbar";
 
 const ESTADO_A_VALOR: Record<string, string> = { Activo: "ACTIVO", Inactivo: "INACTIVO" };
 
-// Mismo patrón que InstanciasListView — sin filtro de Categoría (las
-// incidencias no tienen) ni de Responsable (mismo motivo que en instancias:
-// no hay lib/funcionarios.ts todavía, ver decisiones.md).
+// Sin filtro de Categoría (las incidencias no tienen) ni de Responsable (no hay lib/funcionarios.ts todavía).
 export function IncidenciasListView() {
   const router = useRouter();
   const { permisos } = useSession();
@@ -68,11 +66,7 @@ export function IncidenciasListView() {
     )?.idUsuario;
     const estadoParam = estadoLabel ? ESTADO_A_VALOR[estadoLabel] : undefined;
 
-    // Sin ?estado=, el backend devuelve solo las ACTIVAS (no "todas" — no hay
-    // un valor de estado que signifique eso). Para que el filtro "Estado:
-    // Todos" muestre activas E inactivas, se piden las dos por separado y se
-    // combinan acá. La paginación queda aproximada en ese caso (cada mitad
-    // pagina de forma independiente), aceptable a esta escala.
+    // Sin ?estado=, el backend devuelve solo las ACTIVAS; para que "Estado: Todos" muestre activas e inactivas se piden las dos por separado y se combinan acá (la paginación queda aproximada en ese caso).
     const peticion = estadoParam
       ? listIncidencias({ idEstudiante, estado: estadoParam, page })
       : Promise.all([
@@ -218,9 +212,9 @@ export function IncidenciasListView() {
                     if (ev.key === "Enter") router.push(`/incidencias/${i.codInstancia}`);
                   }}
                 >
-                  <td className="font-mono text-sm text-center whitespace-nowrap">{i.idNegInstancia}</td>
+                  <td className="text-sm text-center whitespace-nowrap">{i.idNegInstancia}</td>
                   <td className="font-semibold whitespace-nowrap">{i.nombreEstudiante}</td>
-                  <td className="font-mono text-sm whitespace-nowrap">{formatFechaHora(i.fechaHora)}</td>
+                  <td className="text-sm whitespace-nowrap">{formatFechaHora(i.fechaHora)}</td>
                   <td className="whitespace-nowrap">{i.nombreFuncionario}</td>
                   <td>
                     <EstadoBadge estado={i.estado} />

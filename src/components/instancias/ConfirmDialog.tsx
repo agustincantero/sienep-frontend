@@ -12,11 +12,7 @@ type ConfirmDialogProps = {
   onCancel: () => void;
 };
 
-// Idéntico a components/students/ConfirmDialog.tsx (mismo componente 100%
-// genérico) — se crea acá una sola vez y components/incidencias/ lo importa
-// desde este archivo en vez de duplicarlo de nuevo: Instancias e Incidencias
-// nacen en la misma rama/feature, así que no aplica el criterio de "cada
-// feature-top-level duplica lo suyo" que sí separa a esto de Estudiantes.
+// Componente 100% genérico, compartido entre Instancias e Incidencias (components/incidencias/ lo importa desde acá en vez de duplicarlo).
 export function ConfirmDialog({
   open,
   title,

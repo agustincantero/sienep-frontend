@@ -12,9 +12,7 @@ import { EstadoBadge } from "@/components/instancias/EstadoBadge";
 import { InstanciaComentarios } from "@/components/instancias/InstanciaComentarios";
 import { InvolucradosPanel } from "./InvolucradosPanel";
 
-// Mismo esqueleto que InstanciaDetalle (sin tabs), más lugar e Involucrados.
-// Los comentarios se reusan de components/instancias/ tal cual — ver esa
-// carpeta para el porqué del componente compartido.
+// Mismo esqueleto que InstanciaDetalle (sin tabs), más lugar e Involucrados; los comentarios se reusan de components/instancias/ tal cual.
 export function IncidenciaDetalle({ codInstancia }: { codInstancia: number }) {
   const { permisos } = useSession();
   const puedeEditar = permisos.includes("EDITAR_INCIDENCIA");
