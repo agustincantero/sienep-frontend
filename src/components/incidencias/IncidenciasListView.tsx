@@ -221,7 +221,7 @@ export function IncidenciasListView() {
                   }}
                 >
                   <td className="font-mono text-sm text-center">{i.idNegInstancia}</td>
-                  <td className="font-semibold">{i.nombreEstudiante}</td>
+                  <td className="font-semibold whitespace-nowrap">{i.nombreEstudiante}</td>
                   <td className="font-mono text-sm">{formatFechaHora(i.fechaHora)}</td>
                   {/* max-w + truncate: un titulo largo (sin espacios para cortar bien)
                       hacia crecer la fila entera envolviendo letra por letra. El
