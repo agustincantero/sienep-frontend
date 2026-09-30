@@ -46,15 +46,9 @@ export function InstanciasListView() {
   const handleCategoriaChange = conResetDePagina(setNomCategoria);
   const handleEstadoChange = conResetDePagina(setEstadoLabel);
 
-  // Tope alto en vez de paginar el propio combo: a esta escala (una cohorte
-  // técnica, no una universidad entera) alcanza para poblar el filtro y el
-  // combo de "Nueva instancia" con todos los estudiantes activos de una.
+  // Tope alto en vez de paginar el propio combo: alcanza para poblar el filtro y el combo de "Nueva instancia" con todos los estudiantes activos de una.
   const [estudiantes, setEstudiantes] = useState<StudentSummary[]>([]);
-  // listCategoriasInstancia requiere VER_CATEGORIAS_INSTANCIA, que en el seed
-  // actual (proyecto_schema.sql) solo tiene ADMINISTRADOR — Psicopedagogo/
-  // Tutor (que sí pueden crear instancias) van a ver este filtro vacío hasta
-  // que se corrija del lado del backend. Se documentó en decisiones.md; acá
-  // solo hace falta no romper la pantalla si la llamada 403.
+  // listCategoriasInstancia requiere VER_CATEGORIAS_INSTANCIA, que en el seed actual solo tiene ADMINISTRADOR: Psicopedagogo/Tutor van a ver este filtro vacío hasta que se corrija del lado del backend, acá solo hace falta no romper la pantalla si la llamada 403.
   const [categorias, setCategorias] = useState<CategoriaInstancia[]>([]);
   const [instancias, setInstancias] = useState<InstanciaComun[]>([]);
   const [totalElements, setTotalElements] = useState(0);
@@ -82,11 +76,7 @@ export function InstanciasListView() {
     const idCategoria = categorias.find((c) => c.nomCategoria === nomCategoria)?.idCategoria;
     const estadoParam = estadoLabel ? ESTADO_A_VALOR[estadoLabel] : undefined;
 
-    // Sin ?estado=, el backend devuelve solo las ACTIVAS (no "todas" — no hay
-    // un valor de estado que signifique eso). Para que el filtro "Estado:
-    // Todos" muestre activas E inactivas, se piden las dos por separado y se
-    // combinan acá. La paginación queda aproximada en ese caso (cada mitad
-    // pagina de forma independiente), aceptable a esta escala.
+    // Sin ?estado=, el backend devuelve solo las ACTIVAS; para que "Estado: Todos" muestre activas e inactivas se piden las dos por separado y se combinan acá (la paginación queda aproximada en ese caso).
     const peticion = estadoParam
       ? listInstancias({ idEstudiante, idCategoria, estado: estadoParam, page })
       : Promise.all([
@@ -159,11 +149,7 @@ export function InstanciasListView() {
     }
   }
 
-  // Sin filtro de "Responsable" (funcionario): requeriría un lib/funcionarios.ts
-  // propio que todavía no existe (módulo de Funcionarios sin construir) — queda
-  // fuera de esta rama, igual criterio que las categorías CRUD y el
-  // recordatorio inline (ver decisiones.md). La columna "Responsable" de la
-  // tabla sí se muestra: ese dato ya viene en la propia respuesta de /instancias.
+  // Sin filtro de "Responsable" (funcionario): requeriría un lib/funcionarios.ts propio que todavía no existe. La columna "Responsable" de la tabla sí se muestra, ese dato ya viene en la propia respuesta de /instancias.
   const filters: ToolbarFilter[] = useMemo(
     () => [
       {
@@ -244,9 +230,9 @@ export function InstanciasListView() {
                     if (ev.key === "Enter") router.push(`/instancias/${i.codInstancia}`);
                   }}
                 >
-                  <td className="font-mono text-sm text-center whitespace-nowrap">{i.idNegInstancia}</td>
+                  <td className="text-sm text-center whitespace-nowrap">{i.idNegInstancia}</td>
                   <td className="font-semibold whitespace-nowrap">{i.nombreEstudiante}</td>
-                  <td className="font-mono text-sm whitespace-nowrap">{formatFechaHora(i.fechaHora)}</td>
+                  <td className="text-sm whitespace-nowrap">{formatFechaHora(i.fechaHora)}</td>
                   <td className="whitespace-nowrap">{i.nombreFuncionario}</td>
                   <td>
                     <EstadoBadge estado={i.estado} />

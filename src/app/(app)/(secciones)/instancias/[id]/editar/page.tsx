@@ -10,8 +10,7 @@ export const metadata: Metadata = {
   title: "Editar instancia · SIENEP",
 };
 
-// Prefetch server-side, mismo criterio que estudiantes/[id]/editar: el form
-// arranca con los datos ya listos, sin spinner inicial.
+// Prefetch server-side, mismo criterio que estudiantes/[id]/editar: el form arranca con los datos ya listos, sin spinner inicial.
 export default async function EditarInstanciaPage({
   params,
 }: {

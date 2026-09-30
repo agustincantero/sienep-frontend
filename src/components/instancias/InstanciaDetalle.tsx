@@ -11,8 +11,7 @@ import { ConfirmDialog } from "./ConfirmDialog";
 import { EstadoBadge } from "./EstadoBadge";
 import { InstanciaComentarios } from "./InstanciaComentarios";
 
-// Sin tabs, a diferencia de la ficha de Estudiante (StudentProfile): acá es
-// un único panel de datos + comentarios, siguiendo el mock (InstanciaDetalle).
+// Sin tabs, a diferencia de la ficha de Estudiante (StudentProfile): acá es un único panel de datos + comentarios.
 export function InstanciaDetalle({ codInstancia }: { codInstancia: number }) {
   const { permisos } = useSession();
   const puedeEditar = permisos.includes("EDITAR_INSTANCIA");
@@ -168,8 +167,7 @@ export function InstanciaDetalle({ codInstancia }: { codInstancia: number }) {
   );
 }
 
-// Mismo componente de campo etiqueta/valor que StudentProfile.Dato, con otro
-// nombre (Dl, como en el mock) para no importar algo privado de components/students.
+// Mismo componente de campo etiqueta/valor que StudentProfile.Dato, con otro nombre (Dl) para no importar algo privado de components/students.
 function Dl({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="py-2 border-b border-base-300 flex flex-wrap gap-x-4 select-none cursor-default">

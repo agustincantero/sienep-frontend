@@ -30,15 +30,13 @@ function estadoInicial(instancia?: InstanciaComun): FormState {
     idEstudiante: instancia ? String(instancia.idEstudiante) : "",
     titulo: instancia?.titulo ?? "",
     idCategoria: instancia ? String(instancia.idCategoria) : "",
-    // El backend manda "yyyy-MM-ddTHH:mm:ss"; datetime-local solo entiende
-    // hasta los minutos, así que se recorta.
+    // El backend manda "yyyy-MM-ddTHH:mm:ss"; datetime-local solo entiende hasta los minutos, así que se recorta.
     fechaHora: instancia?.fechaHora.slice(0, 16) ?? "",
     canal: instancia?.canal ?? "",
   };
 }
 
-// Mismo patrón que SeccionLegend/SeccionCard de StudentForm — un solo
-// fieldset alcanza acá, el form es corto.
+// Mismo patrón que SeccionLegend/SeccionCard de StudentForm — un solo fieldset alcanza acá, el form es corto.
 function SeccionLegend({ icon: Icon, children }: { icon: typeof User; children: React.ReactNode }) {
   return (
     <legend className="fieldset-legend text-sm font-semibold text-base-content mb-1 gap-1.5">
@@ -66,17 +64,13 @@ export function InstanciaForm(props: InstanciaFormProps) {
   const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
-    // Estudiante inmutable en edición (ver abajo), así que solo hace falta
-    // la lista para el combo del alta.
+    // Estudiante inmutable en edición (ver abajo), así que solo hace falta la lista para el combo del alta.
     if (!esEdicion) {
       listStudents({ size: 1000 })
         .then((res) => setEstudiantes(res.content))
         .catch(() => setEstudiantes([]));
     }
-    // La categoría requiere VER_CATEGORIAS_INSTANCIA — si el rol no lo tiene
-    // (ver decisiones.md), el combo queda vacío y el usuario no puede
-    // guardar hasta que se corrija del lado del backend. No se rompe la
-    // pantalla por eso.
+    // La categoría requiere VER_CATEGORIAS_INSTANCIA — si el rol no lo tiene, el combo queda vacío y el usuario no puede guardar hasta que se corrija del lado del backend. No se rompe la pantalla por eso.
     listCategoriasInstancia()
       .then(setCategorias)
       .catch(() => setCategorias([]));
@@ -88,8 +82,7 @@ export function InstanciaForm(props: InstanciaFormProps) {
     if (errores[key]) setErrores((e) => ({ ...e, [key]: "" }));
   }
 
-  // Mismo criterio de orden que StudentForm.validar(): define qué campo se
-  // enfoca si falla, sigue el orden en pantalla.
+  // Mismo criterio de orden que StudentForm.validar(): define qué campo se enfoca si falla, sigue el orden en pantalla.
   function validar(): Record<string, string> {
     const e: Record<string, string> = {};
     if (!esEdicion && !form.idEstudiante) {
@@ -177,10 +170,7 @@ export function InstanciaForm(props: InstanciaFormProps) {
 
             {esEdicion ? (
               <Field label="Estudiante" fieldKey="estudianteReadOnly">
-                {/* Inmutable después de creada: InstanciaComunUpdateDTO no acepta
-                    idEstudiante. Se muestra deshabilitado (no oculto) para no
-                    perder el contexto de a quién pertenece la instancia — mismo
-                    criterio que Documento/País en StudentForm al editar. */}
+                {/* Inmutable después de creada: InstanciaComunUpdateDTO no acepta idEstudiante. Se muestra deshabilitado (no oculto) para no perder el contexto de a quién pertenece la instancia. */}
                 <input className="input w-full" value={props.instancia.nombreEstudiante} disabled />
               </Field>
             ) : (
@@ -270,9 +260,7 @@ export function InstanciaForm(props: InstanciaFormProps) {
   );
 }
 
-// Idéntico al Field de StudentForm.tsx — se duplica acá por el mismo motivo
-// que ConfirmDialog/EstadoBadge (ver comentario en components/instancias/ConfirmDialog.tsx),
-// salvo que Field vive dentro de cada form porque StudentForm no lo exporta.
+// Idéntico al Field de StudentForm.tsx — se duplica acá porque StudentForm no lo exporta.
 function Field({
   label,
   error,

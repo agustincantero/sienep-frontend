@@ -1,9 +1,6 @@
 import { describeEstadoLogico } from "@/lib/estado-logico";
 
-// Igual que components/students/EstadoBadge.tsx pero sin la rama "Pendiente"
-// (con su pulse): Instancia/Incidencia nunca tienen ese estado, así que acá
-// no hace falta. Compartido entre Instancias e Incidencias — ver nota de
-// "piezas compartidas" en el plan de esta rama.
+// Igual que components/students/EstadoBadge.tsx pero sin la rama "Pendiente" (con su pulse): Instancia/Incidencia nunca tienen ese estado. Compartido entre Instancias e Incidencias.
 export function EstadoBadge({ estado }: { estado: string }) {
   const { label, badgeClass, dotClass } = describeEstadoLogico(estado);
 

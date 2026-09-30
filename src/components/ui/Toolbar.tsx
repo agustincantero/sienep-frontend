@@ -12,15 +12,10 @@ export type ToolbarFilter = {
 
 type ToolbarProps = {
   // Etiqueta flotante del buscador; también hace de placeholder mientras está vacío y sin foco.
-  // Sin onSearchChange no se renderiza el buscador en absoluto (ver Instancias/Incidencias: esos
-  // endpoints no tienen un filtro de texto libre en el backend, solo filtros por id vía `filters`).
   placeholder?: string;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
-  // Convierte el buscador en un autocompletado (<datalist>) en vez de texto libre: para
-  // filtros que en realidad resuelven a un id (ej. "Estudiante" en Instancias/Incidencias,
-  // que no tienen ?texto= en el backend) pero deben verse y ocupar el mismo lugar que el
-  // buscador de texto real de Estudiantes, no un <select> angosto metido entre los filtros.
+  // Convierte el buscador en un autocompletado (<datalist>) en vez de texto libre: para filtros que en realidad resuelven a un id, pero deben ocupar el mismo lugar que un buscador de texto real.
   searchOptions?: string[];
   filters?: ToolbarFilter[];
 };
@@ -35,6 +30,7 @@ export function Toolbar({ placeholder, searchValue, onSearchChange, searchOption
     <div className="grid grid-cols-12 gap-2 mb-3">
       {/* md:col-span-5 (no 4): con la etiqueta flotante el control pasa a tamaño normal y el placeholder
           "Buscar por nombre, apellido o documento" quedaba cortado en 4 columnas. */}
+      {/* Sin onSearchChange no se renderiza el buscador en absoluto. */}
       {onSearchChange ? (
         <div className="col-span-12 md:col-span-5">
           <div className="relative">
@@ -48,11 +44,7 @@ export function Toolbar({ placeholder, searchValue, onSearchChange, searchOption
               />
               <span>{placeholder}</span>
             </label>
-            {/* Sin opciones mientras el input está vacío: un <input list> con datalist
-                le muestra al navegador TODAS las opciones al hacer foco/click, incluso
-                sin texto — a diferencia del buscador de texto libre de Estudiantes, que
-                al no tener `list` no despliega nada. Se evita vaciando el datalist hasta
-                que haya algo tipeado. */}
+            {/* Sin opciones mientras el input está vacío: un <input list> con datalist le muestra al navegador TODAS las opciones al hacer foco/click, incluso sin texto. Se evita vaciando el datalist hasta que haya algo tipeado. */}
             {datalistId && searchValue ? (
               <datalist id={datalistId}>
                 {searchOptions!.map((opt) => (
