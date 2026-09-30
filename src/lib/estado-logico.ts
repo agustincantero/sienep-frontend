@@ -9,7 +9,11 @@ export function describeEstadoLogico(estado: string): {
   badgeClass: string;
   dotClass: string;
 } {
+  // dotClass usa bg-current (color del texto del badge), no el color del
+  // estado: un punto bg-success sobre un badge-success (fondo verde sólido,
+  // texto blanco) queda verde sobre verde, invisible. Mismo criterio que
+  // describeEstado() en lib/students.ts.
   return estado === "ACTIVO"
-    ? { label: "Activo", badgeClass: "badge-success", dotClass: "bg-success" }
-    : { label: "Inactivo", badgeClass: "badge-ghost", dotClass: "bg-base-content/40" };
+    ? { label: "Activo", badgeClass: "badge-success", dotClass: "bg-current" }
+    : { label: "Inactivo", badgeClass: "badge-ghost", dotClass: "bg-current opacity-60" };
 }
