@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, Pencil, Plus, UserCheck, UserX } from "lucide-react";
+import { Plus } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { listCategoriasInstancia, type CategoriaInstancia } from "@/lib/categorias-instancia";
-import { formatFechaHora } from "@/lib/format";
 import {
   deactivateInstancia,
   listInstancias,
@@ -15,11 +13,10 @@ import {
 } from "@/lib/instancias";
 import { listStudents, type Page, type StudentSummary } from "@/lib/students";
 import { useSession } from "@/lib/session-context";
-import { DataTable } from "@/components/ui/DataTable";
 import { PaginationFooter } from "@/components/ui/PaginationFooter";
+import { InstanciasTabla } from "./InstanciasTabla";
 import { Toolbar, type ToolbarFilter } from "@/components/ui/Toolbar";
 import { ConfirmDialog } from "./ConfirmDialog";
-import { EstadoBadge } from "./EstadoBadge";
 
 const ESTADO_A_VALOR: Record<string, string> = { Activo: "ACTIVO", Inactivo: "INACTIVO" };
 
@@ -210,75 +207,16 @@ export function InstanciasListView() {
           <p className="text-base-content/60 py-6 text-center">No se encontraron instancias.</p>
         ) : (
           <>
-            <DataTable
-              headers={[
-                "Identificador",
-                "Estudiante",
-                "Fecha",
-                "Responsable",
-                "Estado",
-                "",
-              ]}
-            >
-              {instancias.map((i) => (
-                <tr
-                  key={i.codInstancia}
-                  className="cursor-pointer select-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
-                  tabIndex={0}
-                  onClick={() => router.push(`/instancias/${i.codInstancia}`)}
-                  onKeyDown={(ev) => {
-                    if (ev.key === "Enter") router.push(`/instancias/${i.codInstancia}`);
-                  }}
-                >
-                  <td className="text-sm whitespace-nowrap">{i.idNegInstancia}</td>
-                  <td className="font-semibold whitespace-nowrap">{i.nombreEstudiante}</td>
-                  <td className="text-sm whitespace-nowrap">{formatFechaHora(i.fechaHora)}</td>
-                  <td className="whitespace-nowrap">{i.nombreFuncionario}</td>
-                  <td>
-                    <EstadoBadge estado={i.estado} />
-                  </td>
-                  <td className="whitespace-nowrap" onClick={(ev) => ev.stopPropagation()}>
-                    <div className="inline-flex gap-1">
-                      <Link href={`/instancias/${i.codInstancia}`} className="btn btn-ghost btn-xs gap-1">
-                        <Eye size={13} aria-hidden />
-                        Ver detalle
-                      </Link>
-                      {puedeEditar ? (
-                        <Link
-                          href={`/instancias/${i.codInstancia}/editar`}
-                          className="btn btn-ghost btn-xs gap-1"
-                        >
-                          <Pencil size={13} aria-hidden />
-                          Editar
-                        </Link>
-                      ) : null}
-                      {i.estado === "ACTIVO" && puedeDesactivar ? (
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-xs gap-1 text-error"
-                          disabled={accionEnCursoId === i.codInstancia}
-                          onClick={() => setIdADesactivar(i.codInstancia)}
-                        >
-                          <UserX size={13} aria-hidden />
-                          Desactivar
-                        </button>
-                      ) : null}
-                      {i.estado === "INACTIVO" && puedeReactivar ? (
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-xs gap-1"
-                          disabled={accionEnCursoId === i.codInstancia}
-                          onClick={() => handleReactivar(i.codInstancia)}
-                        >
-                          <UserCheck size={13} aria-hidden />
-                          Activar
-                        </button>
-                      ) : null}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </DataTable>
+            <InstanciasTabla
+              filas={instancias}
+              basePath="/instancias"
+              puedeEditar={puedeEditar}
+              puedeDesactivar={puedeDesactivar}
+              puedeReactivar={puedeReactivar}
+              accionEnCursoId={accionEnCursoId}
+              onDesactivar={setIdADesactivar}
+              onReactivar={handleReactivar}
+            />
 
             <PaginationFooter
               shown={instancias.length}

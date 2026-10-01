@@ -13,7 +13,7 @@ import { InstanciaComentarios } from "@/components/instancias/InstanciaComentari
 import { InvolucradosPanel } from "./InvolucradosPanel";
 
 // Mismo esqueleto que InstanciaDetalle (sin tabs), más lugar e Involucrados; los comentarios se reusan de components/instancias/ tal cual.
-// volverAEstudiante: se llegó desde la ficha del estudiante (ver StudentInstanciasPanel), así que "Volver" regresa a esa ficha, en la pestaña de instancias, en vez de al listado general.
+// volverAEstudiante: se llegó desde la ficha del estudiante (ver StudentInstanciasPanel), así que "Volver" regresa a esa ficha, en la pestaña de incidencias, en vez de al listado general.
 export function IncidenciaDetalle({
   codInstancia,
   volverAEstudiante = false,
@@ -108,7 +108,7 @@ export function IncidenciaDetalle({
     <div className="grow overflow-auto">
       <div className="max-w-[700px] mx-auto w-full px-4 py-5">
         <Link
-          href={volverAEstudiante ? `/estudiantes/${incidencia.idEstudiante}?tab=instancias` : "/incidencias"}
+          href={volverAEstudiante ? `/estudiantes/${incidencia.idEstudiante}?tab=incidencias` : "/incidencias"}
           className="btn btn-link no-underline mb-3 gap-1"
         >
           <ArrowLeft size={16} aria-hidden />

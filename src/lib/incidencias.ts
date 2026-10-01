@@ -25,6 +25,8 @@ export type IncidenciaListParams = {
   page?: number;
   // Formato de Spring Data, mismo criterio que InstanciaListParams.sort.
   sort?: string;
+  // Tamaño de página (el backend usa 20 por defecto).
+  size?: number;
 };
 
 export function listIncidencias(params: IncidenciaListParams = {}): Promise<Page<Incidencia>> {

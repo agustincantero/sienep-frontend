@@ -1,62 +1,99 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ClipboardList, Eye, TriangleAlert } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
-import { formatFechaHora } from "@/lib/format";
-import { listIncidencias, type Incidencia } from "@/lib/incidencias";
-import { listInstancias, type InstanciaComun } from "@/lib/instancias";
+import { deactivateIncidencia, listIncidencias, reactivateIncidencia } from "@/lib/incidencias";
+import { deactivateInstancia, listInstancias, reactivateInstancia } from "@/lib/instancias";
 import { useSession } from "@/lib/session-context";
 import type { Page } from "@/lib/students";
-import { DataTable } from "@/components/ui/DataTable";
+import { ConfirmDialog } from "@/components/instancias/ConfirmDialog";
+import { InstanciasTabla } from "@/components/instancias/InstanciasTabla";
 import { PaginationFooter } from "@/components/ui/PaginationFooter";
 
-// Pestaña "Instancias e incidencias" de la ficha del estudiante: lista las de ese estudiante y cada fila lleva a su pantalla de detalle. Solo las ACTIVAS (default del backend sin ?estado=): GET /instancias/{id} y GET /incidencias/{id} responden 404 para una inactiva, así que listarlas acá llevaría a un detalle que no abre.
-export function StudentInstanciasPanel({ idEstudiante }: { idEstudiante: number }) {
+type Tipo = "instancias" | "incidencias";
+
+// Lo que cambia entre las dos pestañas; la tabla (InstanciasTabla) es la misma que la de los listados generales.
+const CONFIG = {
+  instancias: {
+    basePath: "/instancias",
+    permisoVer: "VER_INSTANCIAS",
+    permisoEditar: "EDITAR_INSTANCIA",
+    permisoDesactivar: "DESACTIVAR_INSTANCIA",
+    permisoReactivar: "REACTIVAR_INSTANCIA",
+    listar: listInstancias,
+    desactivar: deactivateInstancia,
+    reactivar: reactivateInstancia,
+    singular: "instancia",
+    titulo: "Instancias",
+  },
+  incidencias: {
+    basePath: "/incidencias",
+    permisoVer: "VER_INCIDENCIAS",
+    permisoEditar: "EDITAR_INCIDENCIA",
+    permisoDesactivar: "DESACTIVAR_INCIDENCIA",
+    permisoReactivar: "REACTIVAR_INCIDENCIA",
+    listar: listIncidencias,
+    desactivar: deactivateIncidencia,
+    reactivar: reactivateIncidencia,
+    singular: "incidencia",
+    titulo: "Incidencias",
+  },
+} as const;
+
+// Fila común a InstanciaComun e Incidencia (lo que necesitan la tabla y el diálogo de baja).
+type Fila = {
+  codInstancia: number;
+  idNegInstancia: string | null;
+  titulo: string;
+  nombreEstudiante: string;
+  fechaHora: string;
+  nombreFuncionario: string;
+  estado: string;
+};
+
+// Más recientes primero: es lo primero que se busca al revisar el historial de un estudiante.
+const ORDEN = "fechaHora,desc";
+
+// El backend no tiene ?estado=TODOS: se piden activas e inactivas por separado, con una página grande cada una (un estudiante tiene pocas), y se juntan acá. Así el orden por fecha es exacto entre las dos, y la paginación se hace en el cliente.
+const MAX_POR_ESTADO = 200;
+const TAMANIO_PAGINA = 20;
+
+// Pestañas "Instancias" e "Incidencias" de la ficha del estudiante: mismas columnas y acciones que los listados generales (InstanciasTabla), filtradas por el estudiante. Muestra el historial completo, activas e inactivas; las inactivas no se pueden abrir (GET /{id} da 404 para ellas, ver InstanciasTabla). Los links llevan ?desde=estudiante para que "Volver" regrese a esta pestaña.
+export function StudentInstanciasPanel({ idEstudiante, tipo }: { idEstudiante: number; tipo: Tipo }) {
+  const config = CONFIG[tipo];
   const { permisos } = useSession();
-  const puedeVerInstancias = permisos.includes("VER_INSTANCIAS");
-  const puedeVerIncidencias = permisos.includes("VER_INCIDENCIAS");
+  const puedeVer = permisos.includes(config.permisoVer);
 
-  if (!puedeVerInstancias && !puedeVerIncidencias) {
-    return (
-      <p className="text-base-content/60 text-sm">
-        No tenés permiso para ver las instancias ni las incidencias de este estudiante.
-      </p>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {puedeVerInstancias ? <InstanciasDelEstudiante idEstudiante={idEstudiante} /> : null}
-      {puedeVerIncidencias ? <IncidenciasDelEstudiante idEstudiante={idEstudiante} /> : null}
-    </div>
-  );
-}
-
-// Carga paginada atada a un estudiante. cancelado: si cambia el estudiante o la página mientras un pedido sigue en vuelo, la respuesta vieja no pisa la nueva (mismo criterio que StudentProfile).
-function usePaginaDelEstudiante<T>(
-  idEstudiante: number,
-  cargar: (idEstudiante: number, page: number) => Promise<Page<T>>,
-  mensajeError: string,
-) {
   const [page, setPage] = useState(0);
-  const [resultado, setResultado] = useState<Page<T> | null>(null);
-  const [cargando, setCargando] = useState(true);
+  // Historial completo (activas + inactivas), ya ordenado; null mientras carga la primera vez.
+  const [todas, setTodas] = useState<Fila[] | null>(null);
+  // true si el estudiante tiene más de MAX_POR_ESTADO en algún estado y no se trajeron todas.
+  const [truncado, setTruncado] = useState(false);
+  const [cargando, setCargando] = useState(puedeVer);
   const [error, setError] = useState("");
+  const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
+  const [idADesactivar, setIdADesactivar] = useState<number | null>(null);
 
+  // cancelado: si cambia el estudiante mientras un pedido sigue en vuelo, la respuesta vieja no pisa la nueva (mismo criterio que StudentProfile).
   useEffect(() => {
+    if (!puedeVer) return;
     let cancelado = false;
-    cargar(idEstudiante, page)
-      .then((res) => {
+    const pedir = (estado: string): Promise<Page<Fila>> =>
+      config.listar({ idEstudiante, estado, size: MAX_POR_ESTADO, sort: ORDEN });
+    Promise.all([pedir("ACTIVO"), pedir("INACTIVO")])
+      .then(([activas, inactivas]) => {
         if (cancelado) return;
-        setResultado(res);
+        const juntas = [...activas.content, ...inactivas.content].sort((a, b) =>
+          b.fechaHora.localeCompare(a.fechaHora),
+        );
+        setTodas(juntas);
+        setTruncado(!activas.last || !inactivas.last);
+        setPage(0);
         setError("");
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         if (cancelado) return;
-        setError(apiErrorMessage(err, mensajeError));
+        setError(apiErrorMessage(err, `No se pudieron cargar las ${tipo} del estudiante.`));
       })
       .finally(() => {
         if (!cancelado) setCargando(false);
@@ -64,166 +101,119 @@ function usePaginaDelEstudiante<T>(
     return () => {
       cancelado = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- cargar/mensajeError son constantes de cada sección, no deben re-disparar el fetch
-  }, [idEstudiante, page]);
+  }, [config, tipo, idEstudiante, puedeVer]);
 
-  return { page, setPage, resultado, cargando, error };
-}
+  // Baja/alta lógica igual que en los listados generales: se actualiza el estado de la fila en el lugar.
+  function cambiarEstado(id: number, estado: string) {
+    setTodas((prev) => (prev ? prev.map((f) => (f.codInstancia === id ? { ...f, estado } : f)) : prev));
+  }
 
-// Más recientes primero: es lo primero que se busca al revisar el historial de un estudiante.
-const ORDEN = "fechaHora,desc";
+  async function confirmarDesactivar() {
+    if (idADesactivar == null) return;
+    const id = idADesactivar;
+    setIdADesactivar(null);
+    setAccionEnCursoId(id);
+    try {
+      await config.desactivar(id);
+      cambiarEstado(id, "INACTIVO");
+    } catch (err) {
+      setError(apiErrorMessage(err, `No se pudo desactivar la ${config.singular}.`));
+    } finally {
+      setAccionEnCursoId(null);
+    }
+  }
 
-function cargarInstancias(idEstudiante: number, page: number) {
-  return listInstancias({ idEstudiante, page, sort: ORDEN });
-}
+  async function handleReactivar(id: number) {
+    setAccionEnCursoId(id);
+    try {
+      await config.reactivar(id);
+      cambiarEstado(id, "ACTIVO");
+    } catch (err) {
+      setError(apiErrorMessage(err, `No se pudo reactivar la ${config.singular}.`));
+    } finally {
+      setAccionEnCursoId(null);
+    }
+  }
 
-function cargarIncidencias(idEstudiante: number, page: number) {
-  return listIncidencias({ idEstudiante, page, sort: ORDEN });
-}
+  if (!puedeVer) {
+    return <p className="text-base-content/60 text-sm">No tenés permiso para ver las {tipo} de este estudiante.</p>;
+  }
 
-function InstanciasDelEstudiante({ idEstudiante }: { idEstudiante: number }) {
-  const pagina = usePaginaDelEstudiante<InstanciaComun>(
-    idEstudiante,
-    cargarInstancias,
-    "No se pudieron cargar las instancias del estudiante.",
-  );
+  const total = todas?.length ?? 0;
+  const filas = (todas ?? []).slice(page * TAMANIO_PAGINA, (page + 1) * TAMANIO_PAGINA);
+  const aDesactivar = filas.find((f) => f.codInstancia === idADesactivar);
 
+  // Mismo estilo que la primera versión de esta pestaña: card de daisyUI con el título y la cantidad arriba (card-body) y la tabla a todo el ancho de la card. Las columnas son las de InstanciasTabla, iguales a los listados generales.
   return (
-    <Seccion
-      titulo="Instancias"
-      icono={<ClipboardList size={15} aria-hidden className="text-primary" />}
-      noun="instancias"
-      vacio="Este estudiante no tiene instancias activas."
-      columnaExtra="Categoría"
-      pagina={pagina}
-      fila={(i) => ({
-        id: i.codInstancia,
-        href: `/instancias/${i.codInstancia}?desde=estudiante`,
-        identificador: i.idNegInstancia,
-        titulo: i.titulo,
-        extra: i.nombreCategoria,
-        fechaHora: i.fechaHora,
-        responsable: i.nombreFuncionario,
-      })}
-    />
-  );
-}
-
-function IncidenciasDelEstudiante({ idEstudiante }: { idEstudiante: number }) {
-  const pagina = usePaginaDelEstudiante<Incidencia>(
-    idEstudiante,
-    cargarIncidencias,
-    "No se pudieron cargar las incidencias del estudiante.",
-  );
-
-  return (
-    <Seccion
-      titulo="Incidencias"
-      icono={<TriangleAlert size={15} aria-hidden className="text-primary" />}
-      noun="incidencias"
-      vacio="Este estudiante no tiene incidencias activas."
-      columnaExtra="Lugar"
-      pagina={pagina}
-      fila={(i) => ({
-        id: i.codInstancia,
-        href: `/incidencias/${i.codInstancia}?desde=estudiante`,
-        identificador: i.idNegInstancia,
-        titulo: i.titulo,
-        extra: i.lugar,
-        fechaHora: i.fechaHora,
-        responsable: i.nombreFuncionario,
-      })}
-    />
-  );
-}
-
-type Fila = {
-  id: number;
-  href: string;
-  identificador: string | null;
-  titulo: string;
-  extra: string | null;
-  fechaHora: string;
-  responsable: string;
-};
-
-type SeccionProps<T> = {
-  titulo: string;
-  icono: React.ReactNode;
-  noun: string;
-  vacio: string;
-  // Única columna que difiere entre instancias (Categoría) e incidencias (Lugar).
-  columnaExtra: string;
-  pagina: ReturnType<typeof usePaginaDelEstudiante<T>>;
-  fila: (item: T) => Fila;
-};
-
-function Seccion<T>({ titulo, icono, noun, vacio, columnaExtra, pagina, fila }: SeccionProps<T>) {
-  const router = useRouter();
-  const { page, setPage, resultado, cargando, error } = pagina;
-  const filas = resultado?.content.map(fila) ?? [];
-
-  return (
-    <section>
-      <h2 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-        {icono}
-        {titulo}
-        {resultado ? <span className="text-base-content/60 font-normal">({resultado.totalElements})</span> : null}
-      </h2>
-
-      {error ? (
-        <div role="alert" className="alert alert-error alert-soft text-sm mb-3">
-          <span>{error}</span>
+    <div>
+      <section className="card card-border bg-base-100">
+        <div className="card-body p-4 pb-2">
+          <h2 className="card-title text-base">
+            {config.titulo}
+            {todas ? <span className="badge badge-ghost badge-sm">{total}</span> : null}
+          </h2>
+          {error ? (
+            <div role="alert" className="alert alert-error alert-soft text-sm">
+              <span>{error}</span>
+            </div>
+          ) : null}
+          {cargando ? (
+            <div className="flex justify-center py-6">
+              <span className="loading loading-spinner loading-md" />
+            </div>
+          ) : filas.length === 0 && !error ? (
+            <p className="text-base-content/60 text-sm py-2">Este estudiante no tiene {tipo} registradas.</p>
+          ) : null}
+          {truncado ? (
+            <p className="text-sm text-base-content/60">
+              Se muestran las {MAX_POR_ESTADO} más recientes de cada estado. Para ver las anteriores, usá el listado general.
+            </p>
+          ) : null}
         </div>
-      ) : null}
 
-      {cargando ? (
-        <div className="flex justify-center py-6">
-          <span className="loading loading-spinner loading-md" />
-        </div>
-      ) : filas.length === 0 ? (
-        error ? null : <p className="text-base-content/60 text-sm py-2">{vacio}</p>
-      ) : (
-        <>
-          <DataTable headers={["Identificador", "Título", columnaExtra, "Fecha", "Responsable", ""]}>
-            {filas.map((f) => (
-              <tr
-                key={f.id}
-                className="cursor-pointer select-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
-                tabIndex={0}
-                onClick={() => router.push(f.href)}
-                onKeyDown={(ev) => {
-                  if (ev.key === "Enter") router.push(f.href);
-                }}
-              >
-                <td className="text-sm whitespace-nowrap">{f.identificador ?? "—"}</td>
-                <td className="font-semibold">{f.titulo}</td>
-                <td>{f.extra || "—"}</td>
-                <td className="text-sm whitespace-nowrap">{formatFechaHora(f.fechaHora)}</td>
-                <td className="whitespace-nowrap">{f.responsable}</td>
-                <td className="whitespace-nowrap" onClick={(ev) => ev.stopPropagation()}>
-                  <Link href={f.href} className="btn btn-ghost btn-xs gap-1">
-                    <Eye size={13} aria-hidden />
-                    Ver detalle
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </DataTable>
+        {!cargando && filas.length > 0 ? (
+          <>
+            <InstanciasTabla
+              filas={filas}
+              basePath={config.basePath}
+              query="?desde=estudiante"
+              puedeEditar={permisos.includes(config.permisoEditar)}
+              puedeDesactivar={permisos.includes(config.permisoDesactivar)}
+              puedeReactivar={permisos.includes(config.permisoReactivar)}
+              accionEnCursoId={accionEnCursoId}
+              onDesactivar={setIdADesactivar}
+              onReactivar={handleReactivar}
+            />
+            <div className="px-4 pb-3">
+              <PaginationFooter
+                shown={filas.length}
+                total={total}
+                noun={tipo}
+                page={page}
+                pageSize={TAMANIO_PAGINA}
+                hasPrevious={page > 0}
+                hasNext={(page + 1) * TAMANIO_PAGINA < total}
+                onPrevious={() => setPage((p) => Math.max(0, p - 1))}
+                onNext={() => setPage((p) => p + 1)}
+              />
+            </div>
+          </>
+        ) : null}
+      </section>
 
-          <PaginationFooter
-            shown={filas.length}
-            total={resultado?.totalElements ?? 0}
-            noun={noun}
-            page={page}
-            pageSize={resultado?.size}
-            hasPrevious={page > 0}
-            hasNext={resultado ? !resultado.last : false}
-            onPrevious={() => setPage((p) => Math.max(0, p - 1))}
-            onNext={() => setPage((p) => p + 1)}
-          />
-        </>
-      )}
-    </section>
+      <ConfirmDialog
+        open={idADesactivar != null}
+        title={`Desactivar ${config.singular}`}
+        message={
+          aDesactivar
+            ? `¿Desactivar "${aDesactivar.titulo}"? Va a dejar de aparecer en las búsquedas activas, pero se conserva.`
+            : ""
+        }
+        confirmLabel="Desactivar"
+        destructive
+        onConfirm={confirmarDesactivar}
+        onCancel={() => setIdADesactivar(null)}
+      />
+    </div>
   );
 }

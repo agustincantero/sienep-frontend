@@ -27,6 +27,8 @@ export type InstanciaListParams = {
   page?: number;
   // Formato de Spring Data: "campo,asc|desc" (ej. "fechaHora,desc"). Sin esto, el orden lo decide la BD.
   sort?: string;
+  // Tamaño de página (el backend usa 20 por defecto).
+  size?: number;
 };
 
 // Sin ?estado=, el backend devuelve solo las ACTIVAS (igual que /estudiantes sin filtro de estado).

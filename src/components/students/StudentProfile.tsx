@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ClipboardList, FileText, HeartPulse, MessageSquare, User } from "lucide-react";
+import { ArrowLeft, Calendar, FileText, HeartPulse, MessageSquare, TriangleAlert, User } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFecha } from "@/lib/format";
 import { getStudent, resendStudentPassword, uploadStudentPhoto, type Student } from "@/lib/students";
@@ -14,12 +14,13 @@ import { StudentAvatar } from "./StudentAvatar";
 import { StudentCommentsPanel } from "./StudentCommentsPanel";
 import { StudentInstanciasPanel } from "./StudentInstanciasPanel";
 
-type Tab = "datos" | "salud" | "instancias" | "informes" | "comentarios";
+type Tab = "datos" | "salud" | "instancias" | "incidencias" | "informes" | "comentarios";
 
 const TABS: { id: Tab; label: string; icon: typeof User }[] = [
   { id: "datos", label: "Datos generales", icon: User },
   { id: "salud", label: "Salud (confidencial)", icon: HeartPulse },
-  { id: "instancias", label: "Instancias e incidencias", icon: ClipboardList },
+  { id: "instancias", label: "Instancias", icon: Calendar },
+  { id: "incidencias", label: "Incidencias", icon: TriangleAlert },
   { id: "informes", label: "Informes médicos", icon: FileText },
   { id: "comentarios", label: "Comentarios", icon: MessageSquare },
 ];
@@ -273,8 +274,8 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
                 No tenés permiso para ver la información de salud de este estudiante.
               </p>
             )
-          ) : tab === "instancias" ? (
-            <StudentInstanciasPanel idEstudiante={idEstudiante} />
+          ) : tab === "instancias" || tab === "incidencias" ? (
+            <StudentInstanciasPanel idEstudiante={idEstudiante} tipo={tab} />
           ) : tab === "informes" ? (
             <MedicalReportsPanel idEstudiante={idEstudiante} estadoEstudiante={estudiante.estado} />
           ) : (
