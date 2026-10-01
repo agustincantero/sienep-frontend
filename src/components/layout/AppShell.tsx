@@ -32,7 +32,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         userRole={user.rol}
         onLogout={handleLogout}
       />
-      <main className="flex grow min-h-0">{children}</main>
+      <main className="flex grow min-h-0 min-w-0">{children}</main>
       <SesionExpiradaModal />
     </div>
   );
