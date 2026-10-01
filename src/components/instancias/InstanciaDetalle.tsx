@@ -12,7 +12,14 @@ import { EstadoBadge } from "./EstadoBadge";
 import { InstanciaComentarios } from "./InstanciaComentarios";
 
 // Sin tabs, a diferencia de la ficha de Estudiante (StudentProfile): acá es un único panel de datos + comentarios.
-export function InstanciaDetalle({ codInstancia }: { codInstancia: number }) {
+// volverAEstudiante: se llegó desde la ficha del estudiante (ver StudentInstanciasPanel), así que "Volver" regresa a esa ficha, en la pestaña de instancias, en vez de al listado general.
+export function InstanciaDetalle({
+  codInstancia,
+  volverAEstudiante = false,
+}: {
+  codInstancia: number;
+  volverAEstudiante?: boolean;
+}) {
   const { permisos } = useSession();
   const puedeEditar = permisos.includes("EDITAR_INSTANCIA");
   const puedeDesactivar = permisos.includes("DESACTIVAR_INSTANCIA");
@@ -99,9 +106,12 @@ export function InstanciaDetalle({ codInstancia }: { codInstancia: number }) {
   return (
     <div className="grow overflow-auto">
       <div className="max-w-[700px] mx-auto w-full px-4 py-5">
-        <Link href="/instancias" className="btn btn-link no-underline mb-3 gap-1">
+        <Link
+          href={volverAEstudiante ? `/estudiantes/${instancia.idEstudiante}?tab=instancias` : "/instancias"}
+          className="btn btn-link no-underline mb-3 gap-1"
+        >
           <ArrowLeft size={16} aria-hidden />
-          Volver a instancias
+          {volverAEstudiante ? "Volver al estudiante" : "Volver a instancias"}
         </Link>
 
         {error ? (

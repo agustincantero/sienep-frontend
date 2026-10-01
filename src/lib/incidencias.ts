@@ -23,6 +23,8 @@ export type IncidenciaListParams = {
   idFuncionario?: number;
   estado?: string;
   page?: number;
+  // Formato de Spring Data, mismo criterio que InstanciaListParams.sort.
+  sort?: string;
 };
 
 export function listIncidencias(params: IncidenciaListParams = {}): Promise<Page<Incidencia>> {

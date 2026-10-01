@@ -12,6 +12,7 @@ import { EstadoBadge } from "./EstadoBadge";
 import { MedicalReportsPanel } from "./MedicalReportsPanel";
 import { StudentAvatar } from "./StudentAvatar";
 import { StudentCommentsPanel } from "./StudentCommentsPanel";
+import { StudentInstanciasPanel } from "./StudentInstanciasPanel";
 
 type Tab = "datos" | "salud" | "instancias" | "informes" | "comentarios";
 
@@ -43,7 +44,11 @@ function accionPassword(estudiante: Student) {
   };
 }
 
-export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
+function esTab(valor: string | undefined): valor is Tab {
+  return TABS.some((t) => t.id === valor);
+}
+
+export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: number; tabInicial?: string }) {
   const { permisos } = useSession();
   const puedeVerSalud = permisos.includes("VER_BLOQUE_CONFIDENCIAL");
   const puedeEditar = permisos.includes("EDITAR_ESTUDIANTE");
@@ -55,7 +60,7 @@ export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
   // contraseña) — se muestra junto a los datos ya cargados, no los tapa.
   const [errorCarga, setErrorCarga] = useState("");
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<Tab>("datos");
+  const [tab, setTab] = useState<Tab>(esTab(tabInicial) ? tabInicial : "datos");
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [aviso, setAviso] = useState("");
   const [exito, setExito] = useState("");
@@ -269,9 +274,7 @@ export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
               </p>
             )
           ) : tab === "instancias" ? (
-            <p className="text-base-content/60 text-sm">
-              Se completa en el módulo de Instancias e Incidencias.
-            </p>
+            <StudentInstanciasPanel idEstudiante={idEstudiante} />
           ) : tab === "informes" ? (
             <MedicalReportsPanel idEstudiante={idEstudiante} estadoEstudiante={estudiante.estado} />
           ) : (

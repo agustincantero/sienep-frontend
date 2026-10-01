@@ -13,7 +13,14 @@ import { InstanciaComentarios } from "@/components/instancias/InstanciaComentari
 import { InvolucradosPanel } from "./InvolucradosPanel";
 
 // Mismo esqueleto que InstanciaDetalle (sin tabs), más lugar e Involucrados; los comentarios se reusan de components/instancias/ tal cual.
-export function IncidenciaDetalle({ codInstancia }: { codInstancia: number }) {
+// volverAEstudiante: se llegó desde la ficha del estudiante (ver StudentInstanciasPanel), así que "Volver" regresa a esa ficha, en la pestaña de instancias, en vez de al listado general.
+export function IncidenciaDetalle({
+  codInstancia,
+  volverAEstudiante = false,
+}: {
+  codInstancia: number;
+  volverAEstudiante?: boolean;
+}) {
   const { permisos } = useSession();
   const puedeEditar = permisos.includes("EDITAR_INCIDENCIA");
   const puedeDesactivar = permisos.includes("DESACTIVAR_INCIDENCIA");
@@ -100,9 +107,12 @@ export function IncidenciaDetalle({ codInstancia }: { codInstancia: number }) {
   return (
     <div className="grow overflow-auto">
       <div className="max-w-[700px] mx-auto w-full px-4 py-5">
-        <Link href="/incidencias" className="btn btn-link no-underline mb-3 gap-1">
+        <Link
+          href={volverAEstudiante ? `/estudiantes/${incidencia.idEstudiante}?tab=instancias` : "/incidencias"}
+          className="btn btn-link no-underline mb-3 gap-1"
+        >
           <ArrowLeft size={16} aria-hidden />
-          Volver a incidencias
+          {volverAEstudiante ? "Volver al estudiante" : "Volver a incidencias"}
         </Link>
 
         {error ? (
