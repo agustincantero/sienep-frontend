@@ -80,3 +80,8 @@ export function addInvolucrado(codInstancia: number, nomInvolucrado: string): Pr
 export function removeInvolucrado(codInstancia: number, nomInvolucrado: string): Promise<void> {
   return apiDelete<void>(`/incidencias/${codInstancia}/involucrados/${encodeURIComponent(nomInvolucrado)}`);
 }
+
+// GET /incidencias/mis-incidencias — incidencias ACTIVAS del estudiante autenticado (solo ROLE_ESTUDIANTE), mismo criterio que listMisInstancias.
+export function listMisIncidencias(params: { page?: number; sort?: string } = {}): Promise<Page<Incidencia>> {
+  return apiGet<Page<Incidencia>>("/incidencias/mis-incidencias", params);
+}

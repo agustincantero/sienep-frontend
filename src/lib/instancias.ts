@@ -69,3 +69,8 @@ export function deactivateInstancia(codInstancia: number): Promise<void> {
 export function reactivateInstancia(codInstancia: number): Promise<InstanciaComun> {
   return apiPatch<InstanciaComun>(`/instancias/${codInstancia}/reactivar`);
 }
+
+// GET /instancias/mis-instancias — instancias ACTIVAS del estudiante autenticado (solo ROLE_ESTUDIANTE). El estudiante no tiene VER_INSTANCIAS, así que no puede abrir GET /instancias/{id}: este listado es todo lo que ve de ellas.
+export function listMisInstancias(params: { page?: number; sort?: string } = {}): Promise<Page<InstanciaComun>> {
+  return apiGet<Page<InstanciaComun>>("/instancias/mis-instancias", params);
+}
