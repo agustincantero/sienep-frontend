@@ -128,7 +128,10 @@ export function IncidenciaDetalle({
           </div>
           <div className="flex gap-2">
             {puedeEditar ? (
-              <Link href={`/incidencias/${codInstancia}/editar`} className="btn btn-outline btn-sm">
+              <Link
+                href={`/incidencias/${codInstancia}/editar${volverAEstudiante ? "?desde=estudiante" : ""}`}
+                className="btn btn-outline btn-sm"
+              >
                 Editar
               </Link>
             ) : null}

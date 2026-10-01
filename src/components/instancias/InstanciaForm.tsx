@@ -48,7 +48,7 @@ function SeccionLegend({ icon: Icon, children }: { icon: typeof User; children: 
 
 type InstanciaFormProps =
   | { mode: "crear" }
-  | { mode: "editar"; codInstancia: number; instancia: InstanciaComun };
+  | { mode: "editar"; codInstancia: number; instancia: InstanciaComun; volverAEstudiante?: boolean };
 
 export function InstanciaForm(props: InstanciaFormProps) {
   const router = useRouter();
@@ -128,7 +128,7 @@ export function InstanciaForm(props: InstanciaFormProps) {
     try {
       if (esEdicion) {
         await updateInstancia(props.codInstancia, datosComunes);
-        router.push(`/instancias/${props.codInstancia}`);
+        router.push(`/instancias/${props.codInstancia}${props.volverAEstudiante ? "?desde=estudiante" : ""}`);
       } else {
         const dto: InstanciaComunCreateInput = {
           ...datosComunes,

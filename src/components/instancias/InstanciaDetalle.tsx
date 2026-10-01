@@ -127,7 +127,10 @@ export function InstanciaDetalle({
           </div>
           <div className="flex gap-2">
             {puedeEditar ? (
-              <Link href={`/instancias/${codInstancia}/editar`} className="btn btn-outline btn-sm">
+              <Link
+                href={`/instancias/${codInstancia}/editar${volverAEstudiante ? "?desde=estudiante" : ""}`}
+                className="btn btn-outline btn-sm"
+              >
                 Editar
               </Link>
             ) : null}

@@ -40,7 +40,7 @@ function SeccionLegend({ icon: Icon, children }: { icon: typeof User; children: 
 
 type IncidenciaFormProps =
   | { mode: "crear" }
-  | { mode: "editar"; codInstancia: number; incidencia: Incidencia };
+  | { mode: "editar"; codInstancia: number; incidencia: Incidencia; volverAEstudiante?: boolean };
 
 // A diferencia de InstanciaForm, acá el Estudiante SÍ es editable en ambos modos: el backend reusa IncidenciaRequestDTO para alta y edición.
 export function IncidenciaForm(props: IncidenciaFormProps) {
@@ -114,7 +114,7 @@ export function IncidenciaForm(props: IncidenciaFormProps) {
     try {
       if (esEdicion) {
         await updateIncidencia(props.codInstancia, dto);
-        router.push(`/incidencias/${props.codInstancia}`);
+        router.push(`/incidencias/${props.codInstancia}${props.volverAEstudiante ? "?desde=estudiante" : ""}`);
       } else {
         const creada = await createIncidencia(dto);
         router.push(`/incidencias/${creada.codInstancia}`);

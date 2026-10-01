@@ -14,10 +14,14 @@ export const metadata: Metadata = {
 // Prefetch server-side, mismo criterio que estudiantes/[id]/editar: el form arranca con los datos ya listos, sin spinner inicial.
 export default async function EditarInstanciaPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ desde?: string }>;
 }) {
   const { id } = await params;
+  // ?desde=estudiante: viene del detalle abierto desde la ficha del estudiante; al guardar, el form vuelve a ese detalle conservando el parámetro (ver StudentInstanciasPanel).
+  const { desde } = await searchParams;
 
   if (!(await tienePermiso("EDITAR_INSTANCIA"))) {
     return <SinPermiso volverHref="/instancias" volverLabel="Volver a instancias" />;
@@ -45,5 +49,12 @@ export default async function EditarInstanciaPage({
     );
   }
 
-  return <InstanciaForm mode="editar" codInstancia={Number(id)} instancia={instancia} />;
+  return (
+    <InstanciaForm
+      mode="editar"
+      codInstancia={Number(id)}
+      instancia={instancia}
+      volverAEstudiante={desde === "estudiante"}
+    />
+  );
 }
