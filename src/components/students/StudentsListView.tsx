@@ -1,10 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, Pencil, Plus, UserCheck, UserX } from "lucide-react";
+import { Eye, FilterX, Pencil, Plus, UserCheck, UserX } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
+import {
+  ESTADOS,
+  FILTROS_POR_DEFECTO,
+  ORDENES,
+  aQuery,
+  hayFiltrosActivos,
+  leerFiltros,
+  type FiltrosEstudiantes,
+  type OrdenEstudiantes,
+} from "@/lib/estudiantes-filtros";
 import { listGroups, type Group } from "@/lib/groups";
 import { useSession } from "@/lib/session-context";
 import { deactivateStudent, listStudents, reactivateStudent, type StudentSummary } from "@/lib/students";
@@ -15,24 +25,30 @@ import { ConfirmDialog } from "./ConfirmDialog";
 import { EstadoBadge } from "./EstadoBadge";
 import { StudentAvatar } from "./StudentAvatar";
 
-const ESTADO_A_VALOR: Record<string, string> = {
-  Activo: "ACTIVO",
-  Inactivo: "INACTIVO",
-  Pendiente: "PENDIENTE_DE_ACTIVACION",
-};
+// Últimos filtros usados en la sesión: al volver a /estudiantes sin filtros en la URL (desde la ficha o el
+// menú) se restauran. sessionStorage y no localStorage: no tienen por qué sobrevivir a cerrar el navegador.
+const CLAVE_FILTROS = "sienep:estudiantes:filtros";
 
-// Espera a que el usuario termine de tipear antes de pegarle a la API —
-// evita un request por tecla en el buscador.
-function useDebounced<T>(valor: T, ms: number): T {
-  const [debounced, setDebounced] = useState(valor);
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(valor), ms);
-    return () => clearTimeout(id);
-  }, [valor, ms]);
-  return debounced;
+function leerFiltrosGuardados(): string | null {
+  try {
+    return window.sessionStorage.getItem(CLAVE_FILTROS);
+  } catch {
+    return null;
+  }
 }
 
-export function StudentsListView() {
+function guardarFiltros(query: string) {
+  try {
+    if (query) window.sessionStorage.setItem(CLAVE_FILTROS, query);
+    else window.sessionStorage.removeItem(CLAVE_FILTROS);
+  } catch {
+    // Sin sessionStorage (modo privado, bloqueado): los filtros siguen funcionando, solo no se recuerdan.
+  }
+}
+
+// RF08: búsqueda y filtros combinables, con orden y paginación. Los filtros, el orden y la página viven en la
+// URL (filtrosIniciales viene de la page), así sobreviven a recargar, al "atrás" y a compartir el link.
+export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: FiltrosEstudiantes }) {
   const router = useRouter();
   const { permisos } = useSession();
   const puedeBuscar = permisos.includes("BUSCAR_ESTUDIANTE");
@@ -41,11 +57,19 @@ export function StudentsListView() {
   const puedeDesactivar = permisos.includes("DESACTIVAR_ESTUDIANTE");
   const puedeReactivar = permisos.includes("REACTIVAR_ESTUDIANTE");
 
-  const [texto, setTexto] = useState("");
-  const [nomGrupo, setNomGrupo] = useState("");
-  const [nomCarrera, setNomCarrera] = useState("");
-  const [estadoLabel, setEstadoLabel] = useState("");
-  const [page, setPage] = useState(0);
+  const [texto, setTexto] = useState(filtrosIniciales.texto);
+  // Lo que efectivamente se busca: sigue a `texto` con 300 ms de demora (evita un pedido por tecla). Se setea
+  // directo, sin demora, al restaurar o limpiar los filtros.
+  const [textoDebounced, setTextoDebounced] = useState(filtrosIniciales.texto);
+  const [nomGrupo, setNomGrupo] = useState(filtrosIniciales.grupo);
+  const [nomCarrera, setNomCarrera] = useState(filtrosIniciales.carrera);
+  const [estadoLabel, setEstadoLabel] = useState(filtrosIniciales.estado);
+  const [orden, setOrden] = useState<OrdenEstudiantes>(filtrosIniciales.orden);
+  const [page, setPage] = useState(filtrosIniciales.pagina);
+  // false hasta decidir si hay filtros guardados para restaurar: así la primera búsqueda ya sale con ellos,
+  // en vez de buscar sin filtros y repetir.
+  const [listo, setListo] = useState(false);
+  const restauracionHecha = useRef(false);
 
   // Cualquier cambio de búsqueda/filtro vuelve a la primera página — se
   // resuelve acá mismo (evento del usuario) en vez de con un efecto aparte.
@@ -59,6 +83,54 @@ export function StudentsListView() {
   const handleGrupoChange = conResetDePagina(setNomGrupo);
   const handleCarreraChange = conResetDePagina(setNomCarrera);
   const handleEstadoChange = conResetDePagina(setEstadoLabel);
+  const handleOrdenChange = conResetDePagina(setOrden);
+
+  function aplicarFiltros(f: FiltrosEstudiantes) {
+    setTexto(f.texto);
+    setTextoDebounced(f.texto);
+    setNomGrupo(f.grupo);
+    setNomCarrera(f.carrera);
+    setEstadoLabel(f.estado);
+    setOrden(f.orden);
+    setPage(f.pagina);
+  }
+
+  useEffect(() => {
+    const id = setTimeout(() => setTextoDebounced(texto), 300);
+    return () => clearTimeout(id);
+  }, [texto]);
+
+  // Si la URL no trae filtros, se restauran los últimos usados en la sesión. Corre una sola vez, al montar.
+  useEffect(() => {
+    if (restauracionHecha.current) return;
+    restauracionHecha.current = true;
+    const guardados = hayFiltrosActivos(filtrosIniciales) ? null : leerFiltrosGuardados();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- lectura única de un sistema externo (sessionStorage), no se puede derivar en el render sin romper la hidratación
+    if (guardados) aplicarFiltros(leerFiltros(new URLSearchParams(guardados)));
+    setListo(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al montar
+  }, []);
+
+  const filtrosActuales: FiltrosEstudiantes = {
+    texto: textoDebounced,
+    grupo: nomGrupo,
+    carrera: nomCarrera,
+    estado: estadoLabel,
+    orden,
+    pagina: page,
+  };
+  const queryActual = aQuery(filtrosActuales);
+
+  // URL y sesión siguen a los filtros aplicados. replaceState (no router.replace): solo actualiza la URL, sin
+  // pedirle nada al servidor ni sumar una entrada al historial por cada tecla.
+  useEffect(() => {
+    if (!listo) return;
+    const url = queryActual ? `/estudiantes?${queryActual}` : "/estudiantes";
+    if (url !== `${window.location.pathname}${window.location.search}`) {
+      window.history.replaceState(null, "", url);
+    }
+    guardarFiltros(queryActual);
+  }, [listo, queryActual]);
 
   const [grupos, setGrupos] = useState<Group[]>([]);
   const [estudiantes, setEstudiantes] = useState<StudentSummary[]>([]);
@@ -69,8 +141,6 @@ export function StudentsListView() {
   const [exito, setExito] = useState("");
   const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
   const [idADesactivar, setIdADesactivar] = useState<number | null>(null);
-
-  const textoDebounced = useDebounced(texto, 300);
 
   useEffect(() => {
     listGroups()
@@ -87,6 +157,7 @@ export function StudentsListView() {
   }, [grupos]);
 
   useEffect(() => {
+    if (!listo) return;
     let cancelado = false;
 
     const idGrupo = grupos.find((g) => g.nomGrupo === nomGrupo)?.idGrupo;
@@ -96,7 +167,8 @@ export function StudentsListView() {
       texto: puedeBuscar ? textoDebounced || undefined : undefined,
       grupo: puedeBuscar ? idGrupo : undefined,
       carrera: puedeBuscar ? idCarrera : undefined,
-      estado: estadoLabel ? ESTADO_A_VALOR[estadoLabel] : undefined,
+      estado: estadoLabel ? ESTADOS[estadoLabel] : undefined,
+      sort: ORDENES[orden].sort,
       page,
     })
       .then((res) => {
@@ -118,7 +190,7 @@ export function StudentsListView() {
       cancelado = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- grupos/carreras solo se usan para resolver el id, no deben re-disparar el fetch por sí solos
-  }, [textoDebounced, nomGrupo, nomCarrera, estadoLabel, page, puedeBuscar]);
+  }, [listo, textoDebounced, nomGrupo, nomCarrera, estadoLabel, orden, page, puedeBuscar]);
 
   const estudianteADesactivar = estudiantes.find((e) => e.idUsuario === idADesactivar);
 
@@ -176,7 +248,7 @@ export function StudentsListView() {
         {
           label: "Estado",
           emptyLabel: "Todos",
-          options: ["Activo", "Inactivo", "Pendiente"],
+          options: Object.keys(ESTADOS),
           value: estadoLabel,
           onChange: handleEstadoChange,
         },
@@ -208,6 +280,36 @@ export function StudentsListView() {
             filters={filters}
           />
         ) : null}
+
+        {/* Orden: para todos (no es un filtro, no exige BUSCAR_ESTUDIANTE). "Limpiar filtros" solo si hay algo distinto del listado por defecto. */}
+        <div className="flex items-end justify-between gap-2 mb-3 flex-wrap">
+          {hayFiltrosActivos({ ...filtrosActuales, texto }) ? (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm gap-1"
+              onClick={() => aplicarFiltros(FILTROS_POR_DEFECTO)}
+            >
+              <FilterX size={14} aria-hidden />
+              Limpiar filtros
+            </button>
+          ) : (
+            <span />
+          )}
+          <label className="floating-label w-48">
+            <select
+              className="select select-sm w-full border-neutral-800/30"
+              value={orden}
+              onChange={(e) => handleOrdenChange(e.target.value as OrdenEstudiantes)}
+            >
+              {(Object.keys(ORDENES) as OrdenEstudiantes[]).map((clave) => (
+                <option key={clave} value={clave}>
+                  {ORDENES[clave].label}
+                </option>
+              ))}
+            </select>
+            <span>Ordenar por</span>
+          </label>
+        </div>
 
         {exito ? (
           <div role="status" className="alert alert-success alert-soft text-sm mb-3">
@@ -304,6 +406,8 @@ export function StudentsListView() {
               shown={estudiantes.length}
               total={totalElements}
               noun="estudiantes"
+              page={page}
+              pageSize={20}
               hasPrevious={page > 0}
               hasNext={hasNext}
               onPrevious={() => setPage((p) => Math.max(0, p - 1))}
