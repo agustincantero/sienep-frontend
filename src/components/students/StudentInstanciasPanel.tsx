@@ -19,6 +19,7 @@ const CONFIG = {
   instancias: {
     basePath: "/instancias",
     permisoVer: "VER_INSTANCIAS",
+    permisoCrear: "CREAR_INSTANCIA",
     permisoEditar: "EDITAR_INSTANCIA",
     permisoDesactivar: "DESACTIVAR_INSTANCIA",
     permisoReactivar: "REACTIVAR_INSTANCIA",
@@ -26,11 +27,13 @@ const CONFIG = {
     desactivar: deactivateInstancia,
     reactivar: reactivateInstancia,
     singular: "instancia",
+    botonCrear: "Nueva instancia",
     titulo: "Instancias",
   },
   incidencias: {
     basePath: "/incidencias",
     permisoVer: "VER_INCIDENCIAS",
+    permisoCrear: "CREAR_INCIDENCIA",
     permisoEditar: "EDITAR_INCIDENCIA",
     permisoDesactivar: "DESACTIVAR_INCIDENCIA",
     permisoReactivar: "REACTIVAR_INCIDENCIA",
@@ -38,6 +41,7 @@ const CONFIG = {
     desactivar: deactivateIncidencia,
     reactivar: reactivateIncidencia,
     singular: "incidencia",
+    botonCrear: "Nueva incidencia",
     titulo: "Incidencias",
   },
 } as const;
@@ -163,11 +167,11 @@ export function StudentInstanciasPanel({
               {config.titulo}
               {todas ? <span className="badge badge-ghost badge-sm">{total}</span> : null}
             </h2>
-            {/* RF18 — crear una instancia desde la ficha. Solo para un estudiante ACTIVO: el backend (InstanciaComunService.crear) rechaza cualquier otro estado. */}
-            {tipo === "instancias" && estadoEstudiante === "ACTIVO" && permisos.includes("CREAR_INSTANCIA") ? (
-              <Link href={`/instancias/nuevo?estudiante=${idEstudiante}`} className="btn btn-primary btn-sm gap-1">
+            {/* RF18 — crear una instancia (o incidencia) desde la ficha. Solo para un estudiante ACTIVO: el backend (InstanciaComunService.crear / IncidenciaService.crear) rechaza cualquier otro estado. */}
+            {estadoEstudiante === "ACTIVO" && permisos.includes(config.permisoCrear) ? (
+              <Link href={`${config.basePath}/nuevo?estudiante=${idEstudiante}`} className="btn btn-primary btn-sm gap-1">
                 <Plus size={14} aria-hidden />
-                Nueva instancia
+                {config.botonCrear}
               </Link>
             ) : null}
           </div>

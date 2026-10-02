@@ -19,9 +19,9 @@ type FormState = {
   canal: string;
 };
 
-function estadoInicial(incidencia?: Incidencia): FormState {
+function estadoInicial(incidencia?: Incidencia, idEstudianteFijo?: number): FormState {
   return {
-    idEstudiante: incidencia ? String(incidencia.idEstudiante) : "",
+    idEstudiante: incidencia ? String(incidencia.idEstudiante) : idEstudianteFijo ? String(idEstudianteFijo) : "",
     titulo: incidencia?.titulo ?? "",
     lugar: incidencia?.lugar ?? "",
     fechaHora: incidencia?.fechaHora.slice(0, 16) ?? "",
@@ -39,7 +39,8 @@ function SeccionLegend({ icon: Icon, children }: { icon: typeof User; children: 
 }
 
 type IncidenciaFormProps =
-  | { mode: "crear" }
+  // idEstudianteFijo: alta desde la ficha del estudiante, con el estudiante preseleccionado y bloqueado (en la edición sigue siendo editable, como siempre).
+  | { mode: "crear"; idEstudianteFijo?: number }
   | { mode: "editar"; codInstancia: number; incidencia: Incidencia; volverAEstudiante?: boolean };
 
 // A diferencia de InstanciaForm, acá el Estudiante SÍ es editable en ambos modos: el backend reusa IncidenciaRequestDTO para alta y edición.
@@ -47,8 +48,9 @@ export function IncidenciaForm(props: IncidenciaFormProps) {
   const router = useRouter();
   const esEdicion = props.mode === "editar";
 
+  const idEstudianteFijo = props.mode === "crear" ? props.idEstudianteFijo : undefined;
   const [form, setForm] = useState<FormState>(() =>
-    estadoInicial(esEdicion ? props.incidencia : undefined),
+    estadoInicial(esEdicion ? props.incidencia : undefined, idEstudianteFijo),
   );
   const [estudiantes, setEstudiantes] = useState<StudentSummary[]>([]);
   const [errores, setErrores] = useState<Record<string, string>>({});
@@ -117,7 +119,8 @@ export function IncidenciaForm(props: IncidenciaFormProps) {
         router.push(`/incidencias/${props.codInstancia}${props.volverAEstudiante ? "?desde=estudiante" : ""}`);
       } else {
         const creada = await createIncidencia(dto);
-        router.push(`/incidencias/${creada.codInstancia}`);
+        // Desde la ficha, el detalle muestra "Volver al estudiante" (mismo ?desde=estudiante que usan sus pestañas).
+        router.push(`/incidencias/${creada.codInstancia}${idEstudianteFijo ? "?desde=estudiante" : ""}`);
       }
     } catch (err) {
       setErrorGeneral(apiErrorMessage(err, "No se pudo guardar la incidencia. Probá de nuevo."));
@@ -155,7 +158,7 @@ export function IncidenciaForm(props: IncidenciaFormProps) {
                 className={`select w-full${errores.idEstudiante ? " select-error" : ""}`}
                 value={form.idEstudiante}
                 onChange={(e) => campo("idEstudiante", e.target.value)}
-                disabled={guardando}
+                disabled={guardando || idEstudianteFijo !== undefined}
                 required
               >
                 <option value="">Seleccioná un estudiante</option>
