@@ -275,7 +275,7 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
               </p>
             )
           ) : tab === "instancias" || tab === "incidencias" ? (
-            <StudentInstanciasPanel idEstudiante={idEstudiante} tipo={tab} />
+            <StudentInstanciasPanel idEstudiante={idEstudiante} tipo={tab} estadoEstudiante={estudiante.estado} />
           ) : tab === "informes" ? (
             <MedicalReportsPanel idEstudiante={idEstudiante} estadoEstudiante={estudiante.estado} />
           ) : (

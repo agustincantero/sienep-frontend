@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { deactivateIncidencia, listIncidencias, reactivateIncidencia } from "@/lib/incidencias";
 import { deactivateInstancia, listInstancias, reactivateInstancia } from "@/lib/instancias";
@@ -59,7 +61,15 @@ const MAX_POR_ESTADO = 200;
 const TAMANIO_PAGINA = 20;
 
 // Pestañas "Instancias" e "Incidencias" de la ficha del estudiante: mismas columnas y acciones que los listados generales (InstanciasTabla), filtradas por el estudiante. Muestra el historial completo, activas e inactivas; las inactivas no se pueden abrir (GET /{id} da 404 para ellas, ver InstanciasTabla). Los links llevan ?desde=estudiante para que "Volver" regrese a esta pestaña.
-export function StudentInstanciasPanel({ idEstudiante, tipo }: { idEstudiante: number; tipo: Tipo }) {
+export function StudentInstanciasPanel({
+  idEstudiante,
+  tipo,
+  estadoEstudiante,
+}: {
+  idEstudiante: number;
+  tipo: Tipo;
+  estadoEstudiante: string;
+}) {
   const config = CONFIG[tipo];
   const { permisos } = useSession();
   const puedeVer = permisos.includes(config.permisoVer);
@@ -148,10 +158,19 @@ export function StudentInstanciasPanel({ idEstudiante, tipo }: { idEstudiante: n
     <div>
       <section className="card card-border bg-base-100">
         <div className="card-body p-4 pb-2">
-          <h2 className="card-title text-base">
-            {config.titulo}
-            {todas ? <span className="badge badge-ghost badge-sm">{total}</span> : null}
-          </h2>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <h2 className="card-title text-base">
+              {config.titulo}
+              {todas ? <span className="badge badge-ghost badge-sm">{total}</span> : null}
+            </h2>
+            {/* RF18 — crear una instancia desde la ficha. Solo para un estudiante ACTIVO: el backend (InstanciaComunService.crear) rechaza cualquier otro estado. */}
+            {tipo === "instancias" && estadoEstudiante === "ACTIVO" && permisos.includes("CREAR_INSTANCIA") ? (
+              <Link href={`/instancias/nuevo?estudiante=${idEstudiante}`} className="btn btn-primary btn-sm gap-1">
+                <Plus size={14} aria-hidden />
+                Nueva instancia
+              </Link>
+            ) : null}
+          </div>
           {error ? (
             <div role="alert" className="alert alert-error alert-soft text-sm">
               <span>{error}</span>

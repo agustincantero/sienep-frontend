@@ -25,9 +25,9 @@ type FormState = {
   canal: string;
 };
 
-function estadoInicial(instancia?: InstanciaComun): FormState {
+function estadoInicial(instancia?: InstanciaComun, idEstudianteFijo?: number): FormState {
   return {
-    idEstudiante: instancia ? String(instancia.idEstudiante) : "",
+    idEstudiante: instancia ? String(instancia.idEstudiante) : idEstudianteFijo ? String(idEstudianteFijo) : "",
     titulo: instancia?.titulo ?? "",
     idCategoria: instancia ? String(instancia.idCategoria) : "",
     // El backend manda "yyyy-MM-ddTHH:mm:ss"; datetime-local solo entiende hasta los minutos, así que se recorta.
@@ -47,15 +47,17 @@ function SeccionLegend({ icon: Icon, children }: { icon: typeof User; children: 
 }
 
 type InstanciaFormProps =
-  | { mode: "crear" }
+  // idEstudianteFijo: alta desde la ficha del estudiante (RF18), con el estudiante preseleccionado y bloqueado.
+  | { mode: "crear"; idEstudianteFijo?: number }
   | { mode: "editar"; codInstancia: number; instancia: InstanciaComun; volverAEstudiante?: boolean };
 
 export function InstanciaForm(props: InstanciaFormProps) {
   const router = useRouter();
   const esEdicion = props.mode === "editar";
 
+  const idEstudianteFijo = props.mode === "crear" ? props.idEstudianteFijo : undefined;
   const [form, setForm] = useState<FormState>(() =>
-    estadoInicial(esEdicion ? props.instancia : undefined),
+    estadoInicial(esEdicion ? props.instancia : undefined, idEstudianteFijo),
   );
   const [estudiantes, setEstudiantes] = useState<StudentSummary[]>([]);
   const [categorias, setCategorias] = useState<CategoriaInstancia[]>([]);
@@ -135,7 +137,8 @@ export function InstanciaForm(props: InstanciaFormProps) {
           idEstudiante: Number(form.idEstudiante),
         };
         const creada = await createInstancia(dto);
-        router.push(`/instancias/${creada.codInstancia}`);
+        // Desde la ficha, el detalle muestra "Volver al estudiante" (mismo ?desde=estudiante que usan sus pestañas).
+        router.push(`/instancias/${creada.codInstancia}${idEstudianteFijo ? "?desde=estudiante" : ""}`);
       }
     } catch (err) {
       setErrorGeneral(apiErrorMessage(err, "No se pudo guardar la instancia. Probá de nuevo."));
@@ -175,11 +178,12 @@ export function InstanciaForm(props: InstanciaFormProps) {
               </Field>
             ) : (
               <Field label="Estudiante" fieldKey="idEstudiante" error={errores.idEstudiante}>
+                {/* Con idEstudianteFijo (alta desde la ficha) el combo queda bloqueado en ese estudiante: se muestra igual, para que se vea a quién se le crea. */}
                 <select
                   className={`select w-full${errores.idEstudiante ? " select-error" : ""}`}
                   value={form.idEstudiante}
                   onChange={(e) => campo("idEstudiante", e.target.value)}
-                  disabled={guardando}
+                  disabled={guardando || idEstudianteFijo !== undefined}
                   required
                 >
                   <option value="">Seleccioná un estudiante</option>
