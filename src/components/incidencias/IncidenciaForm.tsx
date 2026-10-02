@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, TriangleAlert, User } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { createIncidencia, updateIncidencia, type Incidencia, type IncidenciaInput } from "@/lib/incidencias";
-import { listStudents, type StudentSummary } from "@/lib/students";
+import { getStudent } from "@/lib/students";
+import { EstudianteSelector, type EstudianteElegido } from "@/components/instancias/EstudianteSelector";
 
 const TITULO_MAX = 150;
 const LUGAR_MAX = 50;
@@ -52,16 +53,29 @@ export function IncidenciaForm(props: IncidenciaFormProps) {
   const [form, setForm] = useState<FormState>(() =>
     estadoInicial(esEdicion ? props.incidencia : undefined, idEstudianteFijo),
   );
-  const [estudiantes, setEstudiantes] = useState<StudentSummary[]>([]);
+  // Estudiante elegido en el selector. En la edición arranca con el de la incidencia (y se puede cambiar).
+  const [estudiante, setEstudiante] = useState<EstudianteElegido | null>(
+    props.mode === "editar" ? { id: props.incidencia.idEstudiante, nombre: props.incidencia.nombreEstudiante } : null,
+  );
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState("");
   const [guardando, setGuardando] = useState(false);
 
+  // Con estudiante fijo (alta desde la ficha) hay que resolver su nombre para mostrarlo; si el rol no puede leer la ficha, queda el número.
   useEffect(() => {
-    listStudents({ size: 1000 })
-      .then((res) => setEstudiantes(res.content))
-      .catch(() => setEstudiantes([]));
-  }, []);
+    if (idEstudianteFijo === undefined) return;
+    let cancelado = false;
+    getStudent(idEstudianteFijo)
+      .then((s) => {
+        if (!cancelado) setEstudiante({ id: s.idUsuario, nombre: `${s.nombre} ${s.apellido}`, documento: s.documento });
+      })
+      .catch(() => {
+        if (!cancelado) setEstudiante({ id: idEstudianteFijo, nombre: `Estudiante #${idEstudianteFijo}` });
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [idEstudianteFijo]);
 
   function campo<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -153,22 +167,17 @@ export function IncidenciaForm(props: IncidenciaFormProps) {
           <fieldset className="fieldset space-y-3 p-4 rounded-box border border-base-300">
             <SeccionLegend icon={TriangleAlert}>Datos de la incidencia</SeccionLegend>
 
-            <Field label="Estudiante" fieldKey="idEstudiante" error={errores.idEstudiante}>
-              <select
-                className={`select w-full${errores.idEstudiante ? " select-error" : ""}`}
-                value={form.idEstudiante}
-                onChange={(e) => campo("idEstudiante", e.target.value)}
-                disabled={guardando || idEstudianteFijo !== undefined}
-                required
-              >
-                <option value="">Seleccioná un estudiante</option>
-                {estudiantes.map((est) => (
-                  <option key={est.idUsuario} value={est.idUsuario}>
-                    {est.nombre} {est.apellido}
-                  </option>
-                ))}
-              </select>
-            </Field>
+            <EstudianteSelector
+              label="Estudiante"
+              fieldKey="idEstudiante"
+              value={estudiante}
+              onChange={(e) => {
+                setEstudiante(e);
+                campo("idEstudiante", e ? String(e.id) : "");
+              }}
+              error={errores.idEstudiante}
+              disabled={guardando || idEstudianteFijo !== undefined}
+            />
 
             <Field label="Título" fieldKey="titulo" error={errores.titulo}>
               <input
