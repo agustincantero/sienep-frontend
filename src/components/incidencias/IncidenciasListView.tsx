@@ -44,6 +44,8 @@ export function IncidenciasListView() {
   const [estudiantes, setEstudiantes] = useState<StudentSummary[]>([]);
   const [incidencias, setIncidencias] = useState<Incidencia[]>([]);
   const [totalElements, setTotalElements] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
+  const [offsetPrevio, setOffsetPrevio] = useState<number | undefined>(undefined);
   const [hasNext, setHasNext] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
@@ -64,13 +66,14 @@ export function IncidenciasListView() {
     const estadoParam = estadoLabel ? ESTADO_A_VALOR[estadoLabel] : undefined;
 
     // Sin ?estado=, el backend devuelve solo las ACTIVAS; para que "Estado: Todos" muestre activas e inactivas se piden las dos por separado y se combinan acá (la paginación queda aproximada en ese caso).
-    const peticion = estadoParam
-      ? listIncidencias({ idEstudiante, estado: estadoParam, page })
+    // offsetPrevio: solo en "Todos", donde cada mitad pagina por su cuenta y las filas de las páginas anteriores son (activas ya vistas) + (inactivas ya vistas); en un estado puntual alcanza con page * pageSize.
+    const peticion: Promise<{ pagina: Page<Incidencia>; offsetPrevio?: number }> = estadoParam
+      ? listIncidencias({ idEstudiante, estado: estadoParam, page }).then((pagina) => ({ pagina }))
       : Promise.all([
           listIncidencias({ idEstudiante, estado: "ACTIVO", page }),
           listIncidencias({ idEstudiante, estado: "INACTIVO", page }),
-        ]).then(
-          ([activas, inactivas]): Page<Incidencia> => ({
+        ]).then(([activas, inactivas]) => ({
+          pagina: {
             content: [...activas.content, ...inactivas.content],
             totalElements: activas.totalElements + inactivas.totalElements,
             totalPages: Math.max(activas.totalPages, inactivas.totalPages),
@@ -78,15 +81,20 @@ export function IncidenciasListView() {
             size: activas.size,
             first: activas.first && inactivas.first,
             last: activas.last && inactivas.last,
-          }),
-        );
+          },
+          offsetPrevio:
+            Math.min(page * activas.size, activas.totalElements) +
+            Math.min(page * inactivas.size, inactivas.totalElements),
+        }));
 
     peticion
-      .then((res) => {
+      .then(({ pagina, offsetPrevio: previo }) => {
         if (cancelado) return;
-        setIncidencias(res.content);
-        setTotalElements(res.totalElements);
-        setHasNext(!res.last);
+        setIncidencias(pagina.content);
+        setTotalElements(pagina.totalElements);
+        setPageSize(pagina.size);
+        setOffsetPrevio(previo);
+        setHasNext(!pagina.last);
         setError("");
       })
       .catch((err) => {
@@ -204,6 +212,9 @@ export function IncidenciasListView() {
               shown={incidencias.length}
               total={totalElements}
               noun="incidencias"
+              page={page}
+              pageSize={pageSize}
+              offset={offsetPrevio}
               hasPrevious={page > 0}
               hasNext={hasNext}
               onPrevious={() => setPage((p) => Math.max(0, p - 1))}

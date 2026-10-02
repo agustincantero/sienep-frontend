@@ -7,6 +7,8 @@ type PaginationFooterProps = {
   // Página actual (base 0) y tamaño de página, opcionales: si se pasan los dos, se muestra el rango real (ej. "21-40") en vez de repetir el mismo "20 de N" en todas las páginas salvo la última.
   page?: number;
   pageSize?: number;
+  // Filas de las páginas anteriores, para las listas cuyas páginas no tienen tamaño fijo (ej. dos listas paginadas por separado y combinadas): tiene prioridad sobre page/pageSize.
+  offset?: number;
   hasPrevious?: boolean;
   hasNext?: boolean;
   onPrevious?: () => void;
@@ -19,15 +21,17 @@ export function PaginationFooter({
   noun,
   page,
   pageSize,
+  offset,
   hasPrevious = false,
   hasNext = false,
   onPrevious,
   onNext,
 }: PaginationFooterProps) {
   let rango = `${shown}`;
-  if (page !== undefined && pageSize !== undefined) {
-    const desde = page * pageSize + 1;
-    const hasta = page * pageSize + shown;
+  const previas = offset ?? (page !== undefined && pageSize !== undefined ? page * pageSize : undefined);
+  if (previas !== undefined) {
+    const desde = previas + 1;
+    const hasta = previas + shown;
     rango = desde === hasta ? `${desde}` : `${desde}-${hasta}`;
   }
 
