@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ShieldAlert } from "lucide-react";
+import { ArrowLeft, ShieldAlert } from "lucide-react";
 import { BackendError, backendJson } from "@/lib/backend";
 import { SinPermiso } from "@/components/layout/SinPermiso";
 import { RolForm } from "@/components/roles/RolForm";
@@ -23,8 +22,20 @@ export default async function EditarRolPage({ params }: { params: Promise<{ id: 
   try {
     rol = await backendJson<Rol>(`/roles/${id}`);
   } catch (err) {
-    if (err instanceof BackendError && err.status === 404) notFound();
-    throw err;
+    // Cualquier error del backend (404 no encontrado, 400 id con formato inválido, etc.) se muestra dentro del layout en vez de romper con un 500.
+    return (
+      <div className="grow overflow-auto">
+        <div className="max-w-[720px] mx-auto w-full px-4 py-5">
+          <Link href="/roles" className="btn btn-link no-underline mb-3 gap-1">
+            <ArrowLeft size={16} aria-hidden />
+            Volver a roles
+          </Link>
+          <div role="alert" className="alert alert-error alert-soft text-sm">
+            <span>{err instanceof BackendError ? err.message : "No se pudo cargar el rol."}</span>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // RolService.editar() rechaza ADMINISTRADOR/ESTUDIANTE con 403 (son la base del sistema, ver ValidadorDePermisosDeRol): se corta acá para no mostrar un formulario que nunca va a poder guardar.

@@ -294,7 +294,7 @@ export function RolForm(props: RolFormProps) {
             <button type="button" className="btn btn-ghost" onClick={() => router.back()} disabled={guardando}>
               Cancelar
             </button>
-            <button type="submit" className="btn btn-primary" disabled={guardando}>
+            <button type="submit" className="btn btn-primary" disabled={guardando || permisosSinTenencia.length > 0}>
               {guardando ? <span className="loading loading-spinner loading-sm" /> : null}
               {esEdicion ? "Guardar cambios" : "Crear rol"}
             </button>
