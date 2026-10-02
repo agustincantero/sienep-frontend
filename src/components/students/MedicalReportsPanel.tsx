@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Paperclip, Trash2, Upload } from "lucide-react";
+import { Download, Paperclip, Trash2, Upload } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import {
   attachMedicalReport,
@@ -153,30 +153,46 @@ export function MedicalReportsPanel({
               key={inf.idInforme}
               className="px-2 -mx-2 rounded-field flex items-center justify-between gap-3 transition-colors hover:bg-base-200"
             >
+              {/* RF09 — vista previa: ?inline=true hace que el backend responda inline y el navegador lo muestre
+                  (visor de PDF o imagen) en una pestaña nueva. Pestaña y no modal: la CSP no permite embeber
+                  PDFs (object-src 'none', frame-src solo Google), y así no hace falta aflojarla. */}
               <a
-                href={`/api${inf.urlDescarga}`}
+                href={`/api${inf.urlDescarga}?inline=true`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="link link-hover text-sm truncate flex items-center gap-2 py-2"
+                title="Ver (se abre en una pestaña nueva)"
               >
                 <Paperclip size={14} aria-hidden className="text-base-content/50 shrink-0" />
                 {inf.nombre}
               </a>
-              {puedeEliminar ? (
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-xs btn-circle text-error shrink-0"
-                  disabled={eliminandoId === inf.idInforme}
-                  onClick={() => setInformeAEliminar(inf)}
-                  aria-label={`Eliminar informe "${inf.nombre}"`}
+              {/* Acciones juntas a la derecha: el <li> usa justify-between. */}
+              <div className="flex items-center gap-1 shrink-0">
+                <a
+                  href={`/api${inf.urlDescarga}`}
+                  download
+                  className="btn btn-ghost btn-xs btn-circle"
+                  aria-label={`Descargar informe "${inf.nombre}"`}
+                  title="Descargar"
                 >
-                  {eliminandoId === inf.idInforme ? (
-                    <span className="loading loading-spinner loading-xs" />
-                  ) : (
-                    <Trash2 size={14} aria-hidden />
-                  )}
-                </button>
-              ) : null}
+                  <Download size={14} aria-hidden />
+                </a>
+                {puedeEliminar ? (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-xs btn-circle text-error"
+                    disabled={eliminandoId === inf.idInforme}
+                    onClick={() => setInformeAEliminar(inf)}
+                    aria-label={`Eliminar informe "${inf.nombre}"`}
+                  >
+                    {eliminandoId === inf.idInforme ? (
+                      <span className="loading loading-spinner loading-xs" />
+                    ) : (
+                      <Trash2 size={14} aria-hidden />
+                    )}
+                  </button>
+                ) : null}
+              </div>
             </li>
           ))}
         </ul>
