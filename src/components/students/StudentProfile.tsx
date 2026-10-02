@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ClipboardList, FileText, HeartPulse, MessageSquare, User } from "lucide-react";
+import { ArrowLeft, Calendar, FileText, HeartPulse, MessageSquare, TriangleAlert, User } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFecha } from "@/lib/format";
 import { getStudent, resendStudentPassword, uploadStudentPhoto, type Student } from "@/lib/students";
@@ -12,13 +12,15 @@ import { EstadoBadge } from "./EstadoBadge";
 import { MedicalReportsPanel } from "./MedicalReportsPanel";
 import { StudentAvatar } from "./StudentAvatar";
 import { StudentCommentsPanel } from "./StudentCommentsPanel";
+import { StudentInstanciasPanel } from "./StudentInstanciasPanel";
 
-type Tab = "datos" | "salud" | "instancias" | "informes" | "comentarios";
+type Tab = "datos" | "salud" | "instancias" | "incidencias" | "informes" | "comentarios";
 
 const TABS: { id: Tab; label: string; icon: typeof User }[] = [
   { id: "datos", label: "Datos generales", icon: User },
   { id: "salud", label: "Salud (confidencial)", icon: HeartPulse },
-  { id: "instancias", label: "Instancias e incidencias", icon: ClipboardList },
+  { id: "instancias", label: "Instancias", icon: Calendar },
+  { id: "incidencias", label: "Incidencias", icon: TriangleAlert },
   { id: "informes", label: "Informes médicos", icon: FileText },
   { id: "comentarios", label: "Comentarios", icon: MessageSquare },
 ];
@@ -43,7 +45,11 @@ function accionPassword(estudiante: Student) {
   };
 }
 
-export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
+function esTab(valor: string | undefined): valor is Tab {
+  return TABS.some((t) => t.id === valor);
+}
+
+export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: number; tabInicial?: string }) {
   const { permisos } = useSession();
   const puedeVerSalud = permisos.includes("VER_BLOQUE_CONFIDENCIAL");
   const puedeEditar = permisos.includes("EDITAR_ESTUDIANTE");
@@ -55,7 +61,7 @@ export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
   // contraseña) — se muestra junto a los datos ya cargados, no los tapa.
   const [errorCarga, setErrorCarga] = useState("");
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<Tab>("datos");
+  const [tab, setTab] = useState<Tab>(esTab(tabInicial) ? tabInicial : "datos");
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [aviso, setAviso] = useState("");
   const [exito, setExito] = useState("");
@@ -268,10 +274,8 @@ export function StudentProfile({ idEstudiante }: { idEstudiante: number }) {
                 No tenés permiso para ver la información de salud de este estudiante.
               </p>
             )
-          ) : tab === "instancias" ? (
-            <p className="text-base-content/60 text-sm">
-              Se completa en el módulo de Instancias e Incidencias.
-            </p>
+          ) : tab === "instancias" || tab === "incidencias" ? (
+            <StudentInstanciasPanel idEstudiante={idEstudiante} tipo={tab} estadoEstudiante={estudiante.estado} />
           ) : tab === "informes" ? (
             <MedicalReportsPanel idEstudiante={idEstudiante} estadoEstudiante={estudiante.estado} />
           ) : (

@@ -13,10 +13,14 @@ export const metadata: Metadata = {
 
 export default async function EditarIncidenciaPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ desde?: string }>;
 }) {
   const { id } = await params;
+  // ?desde=estudiante: viene del detalle abierto desde la ficha del estudiante; al guardar, el form vuelve a ese detalle conservando el parámetro (ver StudentInstanciasPanel).
+  const { desde } = await searchParams;
 
   if (!(await tienePermiso("EDITAR_INCIDENCIA"))) {
     return <SinPermiso volverHref="/incidencias" volverLabel="Volver a incidencias" />;
@@ -44,5 +48,12 @@ export default async function EditarIncidenciaPage({
     );
   }
 
-  return <IncidenciaForm mode="editar" codInstancia={Number(id)} incidencia={incidencia} />;
+  return (
+    <IncidenciaForm
+      mode="editar"
+      codInstancia={Number(id)}
+      incidencia={incidencia}
+      volverAEstudiante={desde === "estudiante"}
+    />
+  );
 }
