@@ -111,7 +111,8 @@ function Listado({
   const filas = resultado?.content ?? [];
 
   return (
-    <div className="text-sm">
+    // id: destino de las tarjetas "Mis instancias" / "Mis incidencias" del inicio (/perfil#mis-...). scroll-mt deja aire arriba al saltar.
+    <div id={`mis-${noun}`} className="text-sm scroll-mt-4">
       <h3 className="font-semibold text-base-content mb-1">
         {titulo}
         {resultado ? <span className="text-base-content/60 font-normal"> ({resultado.totalElements})</span> : null}

@@ -11,7 +11,6 @@ import { EstadoBadge } from "@/components/students/EstadoBadge";
 import { StudentAvatar } from "@/components/students/StudentAvatar";
 import { CambiarContraseniaForm } from "./CambiarContraseniaForm";
 import { MisInstanciasCard } from "./MisInstanciasCard";
-import { MisPermisosCard } from "./MisPermisosCard";
 import { SeccionCard } from "./SeccionCard";
 
 const EXTENSIONES_FOTO = [".jpg", ".jpeg", ".png"];
@@ -28,7 +27,7 @@ export function MiPerfil() {
         <h1 className="text-xl font-bold mb-4">Mi perfil</h1>
         <div className="space-y-6">
           {esEstudiante ? <PerfilEstudiante /> : <PerfilFuncionario />}
-          {esEstudiante ? <MisInstanciasCard /> : <MisPermisosCard />}
+          {esEstudiante ? <MisInstanciasCard /> : null}
           <CambiarContraseniaForm user={user} />
         </div>
       </div>
