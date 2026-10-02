@@ -7,7 +7,14 @@ import { Eye, Pencil, Plus, UserCheck, UserX } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { listGroups, type Group } from "@/lib/groups";
 import { useSession } from "@/lib/session-context";
-import { deactivateStudent, listStudents, reactivateStudent, type StudentSummary } from "@/lib/students";
+import {
+  deactivateStudent,
+  describirProcesosAbiertos,
+  getProcesosAbiertos,
+  listStudents,
+  reactivateStudent,
+  type StudentSummary,
+} from "@/lib/students";
 import { DataTable } from "@/components/ui/DataTable";
 import { PaginationFooter } from "@/components/ui/PaginationFooter";
 import { Toolbar, type ToolbarFilter } from "@/components/ui/Toolbar";
@@ -69,6 +76,8 @@ export function StudentsListView() {
   const [exito, setExito] = useState("");
   const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
   const [idADesactivar, setIdADesactivar] = useState<number | null>(null);
+  // RF06 — procesos abiertos del estudiante a desactivar ("2 instancias agendadas y ..."), o null si no tiene.
+  const [procesosABaja, setProcesosABaja] = useState<string | null>(null);
 
   const textoDebounced = useDebounced(texto, 300);
 
@@ -122,14 +131,32 @@ export function StudentsListView() {
 
   const estudianteADesactivar = estudiantes.find((e) => e.idUsuario === idADesactivar);
 
+  // Antes de abrir la confirmación se consultan los procesos abiertos, para avisarlos en el mismo diálogo. Si la
+  // consulta falla, el diálogo se abre igual: el backend vuelve a verificar y responde 409 si hacía falta avisar.
+  async function iniciarBaja(id: number) {
+    setAccionEnCursoId(id);
+    setError("");
+    try {
+      setProcesosABaja(describirProcesosAbiertos(await getProcesosAbiertos(id)));
+    } catch {
+      setProcesosABaja(null);
+    } finally {
+      setAccionEnCursoId(null);
+    }
+    setIdADesactivar(id);
+  }
+
   async function confirmarDesactivar() {
     if (idADesactivar == null) return;
     const id = idADesactivar;
+    const confirmar = procesosABaja !== null;
     setIdADesactivar(null);
     setAccionEnCursoId(id);
     setExito("");
     try {
-      await deactivateStudent(id);
+      // confirmar=true solo si se le mostraron los procesos abiertos: si aparecieron otros entre la consulta y
+      // la confirmación, el backend responde 409 y su mensaje se muestra como error.
+      await deactivateStudent(id, confirmar);
       setEstudiantes((prev) => prev.map((e) => (e.idUsuario === id ? { ...e, estado: "INACTIVO" } : e)));
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo desactivar el estudiante."));
@@ -277,7 +304,7 @@ export function StudentsListView() {
                           type="button"
                           className="btn btn-ghost btn-xs gap-1 text-error"
                           disabled={accionEnCursoId === e.idUsuario}
-                          onClick={() => setIdADesactivar(e.idUsuario)}
+                          onClick={() => iniciarBaja(e.idUsuario)}
                         >
                           <UserX size={13} aria-hidden />
                           Desactivar
@@ -320,6 +347,11 @@ export function StudentsListView() {
           estudianteADesactivar
             ? `¿Desactivar a ${estudianteADesactivar.nombre} ${estudianteADesactivar.apellido}? Va a dejar de aparecer en las búsquedas activas, pero su historial se conserva.`
             : ""
+        }
+        aviso={
+          procesosABaja
+            ? `Tiene ${procesosABaja}. No se cancelan con la baja: quedan en su historial. Revisalos si hace falta antes de continuar.`
+            : null
         }
         confirmLabel="Desactivar"
         destructive

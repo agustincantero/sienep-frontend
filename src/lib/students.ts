@@ -120,10 +120,37 @@ export function updateStudent(id: number, dto: StudentUpdateInput): Promise<Stud
   return apiPut<Student>(`/estudiantes/${id}`, dto);
 }
 
+// GET /estudiantes/{id}/procesos-abiertos (RF06): lo que conviene revisar antes de la baja.
+export type ProcesosAbiertos = {
+  // Instancias activas agendadas a futuro.
+  instanciasFuturas: number;
+  // Recordatorios activos, no cumplidos y desde hoy en adelante.
+  recordatoriosPendientes: number;
+};
+
+export function getProcesosAbiertos(id: number): Promise<ProcesosAbiertos> {
+  return apiGet<ProcesosAbiertos>(`/estudiantes/${id}/procesos-abiertos`);
+}
+
+// "2 instancias agendadas y 1 recordatorio pendiente", o null si no hay nada abierto.
+export function describirProcesosAbiertos(p: ProcesosAbiertos): string | null {
+  const partes: string[] = [];
+  if (p.instanciasFuturas > 0) {
+    partes.push(`${p.instanciasFuturas} ${p.instanciasFuturas === 1 ? "instancia agendada" : "instancias agendadas"}`);
+  }
+  if (p.recordatoriosPendientes > 0) {
+    partes.push(
+      `${p.recordatoriosPendientes} ${p.recordatoriosPendientes === 1 ? "recordatorio pendiente" : "recordatorios pendientes"}`,
+    );
+  }
+  return partes.length > 0 ? partes.join(" y ") : null;
+}
+
 // Baja lógica (RF06): el backend nunca borra al estudiante, solo cambia el
-// estado a INACTIVO.
-export function deactivateStudent(id: number): Promise<void> {
-  return apiDelete<void>(`/estudiantes/${id}`);
+// estado a INACTIVO. Si tiene procesos abiertos, el backend exige confirmar=true
+// (si no, 409): se manda recién después de mostrarle esos procesos al usuario.
+export function deactivateStudent(id: number, confirmar = false): Promise<void> {
+  return apiDelete<void>(`/estudiantes/${id}${confirmar ? "?confirmar=true" : ""}`);
 }
 
 export function reactivateStudent(id: number): Promise<void> {

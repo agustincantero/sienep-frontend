@@ -6,6 +6,8 @@ type ConfirmDialogProps = {
   open: boolean;
   title: string;
   message: string;
+  // Advertencia opcional, destacada debajo del mensaje (ej. procesos abiertos antes de una baja).
+  aviso?: string | null;
   confirmLabel: string;
   destructive?: boolean;
   onConfirm: () => void;
@@ -20,6 +22,7 @@ export function ConfirmDialog({
   open,
   title,
   message,
+  aviso,
   confirmLabel,
   destructive,
   onConfirm,
@@ -39,6 +42,11 @@ export function ConfirmDialog({
       <div className="modal-box">
         <h3 className="text-lg font-semibold">{title}</h3>
         <p className="py-3 text-sm text-base-content/70">{message}</p>
+        {aviso ? (
+          <div role="alert" className="alert alert-warning alert-soft text-sm">
+            <span>{aviso}</span>
+          </div>
+        ) : null}
         <div className="modal-action">
           <button type="button" className="btn" onClick={onCancel}>
             Cancelar
