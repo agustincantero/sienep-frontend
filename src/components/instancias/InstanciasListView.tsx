@@ -219,6 +219,7 @@ export function InstanciasListView() {
               filas={instancias}
               basePath="/instancias"
               puedeEditar={puedeEditar}
+              puedeClonar={puedeCrear}
               puedeDesactivar={puedeDesactivar}
               puedeReactivar={puedeReactivar}
               accionEnCursoId={accionEnCursoId}

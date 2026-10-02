@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, Pencil, UserCheck, UserX } from "lucide-react";
+import { Copy, Eye, Pencil, UserCheck, UserX } from "lucide-react";
 import { formatFechaHora } from "@/lib/format";
 import { DataTable } from "@/components/ui/DataTable";
 import { EstadoBadge } from "./EstadoBadge";
@@ -26,6 +26,8 @@ type InstanciasTablaProps = {
   // Sin columna de acciones ni filas clickeables: para el propio estudiante ("Mi perfil"), que no tiene VER_INSTANCIAS / VER_INCIDENCIAS y no puede abrir el detalle.
   soloLectura?: boolean;
   puedeEditar?: boolean;
+  // Botón "Clonar" (RF17): solo tiene sentido para instancias comunes (basePath "/instancias").
+  puedeClonar?: boolean;
   puedeDesactivar?: boolean;
   puedeReactivar?: boolean;
   accionEnCursoId?: number | null;
@@ -40,6 +42,7 @@ export function InstanciasTabla({
   query = "",
   soloLectura = false,
   puedeEditar = false,
+  puedeClonar = false,
   puedeDesactivar = false,
   puedeReactivar = false,
   accionEnCursoId = null,
@@ -93,6 +96,12 @@ export function InstanciasTabla({
                   <Link href={`${basePath}/${i.codInstancia}/editar${query}`} className="btn btn-ghost btn-xs gap-1">
                     <Pencil size={13} aria-hidden />
                     Editar
+                  </Link>
+                ) : null}
+                {abrible && puedeClonar ? (
+                  <Link href={`/instancias/nuevo?clonar=${i.codInstancia}`} className="btn btn-ghost btn-xs gap-1">
+                    <Copy size={13} aria-hidden />
+                    Clonar
                   </Link>
                 ) : null}
                 {i.estado === "ACTIVO" && puedeDesactivar ? (

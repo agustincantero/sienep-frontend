@@ -25,14 +25,16 @@ type FormState = {
   canal: string;
 };
 
-function estadoInicial(instancia?: InstanciaComun, idEstudianteFijo?: number): FormState {
+// origen: la instancia que se edita, o la que se clona (RF17). Al clonar se copian todos los campos menos la fecha, que queda vacía para que se cargue la de la nueva instancia (el ID y los timestamps los genera el backend).
+function estadoInicial(instancia?: InstanciaComun, idEstudianteFijo?: number, clonDe?: InstanciaComun): FormState {
+  const origen = instancia ?? clonDe;
   return {
-    idEstudiante: instancia ? String(instancia.idEstudiante) : idEstudianteFijo ? String(idEstudianteFijo) : "",
-    titulo: instancia?.titulo ?? "",
-    idCategoria: instancia ? String(instancia.idCategoria) : "",
+    idEstudiante: origen ? String(origen.idEstudiante) : idEstudianteFijo ? String(idEstudianteFijo) : "",
+    titulo: origen?.titulo ?? "",
+    idCategoria: origen ? String(origen.idCategoria) : "",
     // El backend manda "yyyy-MM-ddTHH:mm:ss"; datetime-local solo entiende hasta los minutos, así que se recorta.
     fechaHora: instancia?.fechaHora.slice(0, 16) ?? "",
-    canal: instancia?.canal ?? "",
+    canal: origen?.canal ?? "",
   };
 }
 
@@ -47,8 +49,8 @@ function SeccionLegend({ icon: Icon, children }: { icon: typeof User; children: 
 }
 
 type InstanciaFormProps =
-  // idEstudianteFijo: alta desde la ficha del estudiante (RF18), con el estudiante preseleccionado y bloqueado.
-  | { mode: "crear"; idEstudianteFijo?: number }
+  // idEstudianteFijo: alta desde la ficha del estudiante (RF18), con el estudiante preseleccionado y bloqueado. clonDe: alta desde el botón "Clonar" (RF17), con los datos de esa instancia precargados.
+  | { mode: "crear"; idEstudianteFijo?: number; clonDe?: InstanciaComun }
   | { mode: "editar"; codInstancia: number; instancia: InstanciaComun; volverAEstudiante?: boolean };
 
 export function InstanciaForm(props: InstanciaFormProps) {
@@ -56,8 +58,9 @@ export function InstanciaForm(props: InstanciaFormProps) {
   const esEdicion = props.mode === "editar";
 
   const idEstudianteFijo = props.mode === "crear" ? props.idEstudianteFijo : undefined;
+  const clonDe = props.mode === "crear" ? props.clonDe : undefined;
   const [form, setForm] = useState<FormState>(() =>
-    estadoInicial(esEdicion ? props.instancia : undefined, idEstudianteFijo),
+    estadoInicial(esEdicion ? props.instancia : undefined, idEstudianteFijo, clonDe),
   );
   const [estudiantes, setEstudiantes] = useState<StudentSummary[]>([]);
   const [categorias, setCategorias] = useState<CategoriaInstancia[]>([]);
@@ -160,6 +163,14 @@ export function InstanciaForm(props: InstanciaFormProps) {
         </button>
 
         <h1 className="text-xl font-bold mb-4">{esEdicion ? "Editar instancia" : "Nueva instancia"}</h1>
+
+        {clonDe ? (
+          <div role="status" className="alert alert-info alert-soft text-sm mb-4">
+            <span>
+              Estás clonando la instancia {clonDe.idNegInstancia ?? `#${clonDe.codInstancia}`}: se copiaron sus datos, menos la fecha. Completá la fecha y hora para guardarla como una instancia nueva.
+            </span>
+          </div>
+        ) : null}
 
         {errorGeneral ? (
           <div role="alert" className="alert alert-error alert-soft text-sm mb-4">
