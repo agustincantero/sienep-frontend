@@ -79,6 +79,8 @@ export type StudentListParams = {
   estado?: string;
   page?: number;
   size?: number;
+  // Formato de Spring Data: "campo,asc|desc" (ver ORDENES en lib/estudiantes-filtros.ts).
+  sort?: string;
 };
 
 export function listStudents(params: StudentListParams = {}): Promise<Page<StudentSummary>> {
