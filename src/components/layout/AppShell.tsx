@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { logout } from "@/lib/auth";
+import { FotoPerfilProvider, useFotoPerfil } from "@/lib/foto-perfil-context";
 import { useSession } from "@/lib/session-context";
 import { SesionExpiradaModal } from "./SesionExpiradaModal";
 import { TopBar } from "./TopBar";
@@ -10,7 +11,17 @@ import { TopBar } from "./TopBar";
 // solo aparece dentro de las secciones (ver src/app/(app)/(secciones)/layout.tsx),
 // como el prototipo — el dashboard en / no tiene sidebar.
 export function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <FotoPerfilProvider>
+      <AppShellContenido>{children}</AppShellContenido>
+    </FotoPerfilProvider>
+  );
+}
+
+// Separado de AppShell para poder leer useFotoPerfil(), que necesita estar dentro del provider.
+function AppShellContenido({ children }: { children: React.ReactNode }) {
   const user = useSession();
+  const { urlFoto } = useFotoPerfil();
   const [saliendo, setSaliendo] = useState(false);
 
   async function handleLogout() {
@@ -30,9 +41,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <TopBar
         userName={`${user.nombre} ${user.apellido}`}
         userRole={user.rol}
+        urlFoto={urlFoto}
         onLogout={handleLogout}
       />
-      <main className="flex grow min-h-0">{children}</main>
+      <main className="flex grow min-h-0 min-w-0">{children}</main>
       <SesionExpiradaModal />
     </div>
   );

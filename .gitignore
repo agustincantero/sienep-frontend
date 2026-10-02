@@ -45,6 +45,7 @@ yarn-error.log*
 
 # claude code / agentes: nada se versiona, skills incluidas (viven local en cada máquina).
 /CLAUDE.md
+/AGENTS.md
 CLAUDE.local.md
 .claude/
 .agents/
