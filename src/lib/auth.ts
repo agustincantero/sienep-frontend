@@ -15,6 +15,11 @@ export function loginWithGoogle(idToken: string): Promise<Ok> {
   return apiPost<Ok>("/auth/google", { idToken });
 }
 
+// POST /api/auth/ad — { usuario, contrasenia }. Cuenta UTEC validada contra Active Directory; `usuario` va sin @dominio. 401 = credenciales inválidas.
+export function loginWithAd(usuario: string, contrasenia: string): Promise<Ok> {
+  return apiPost<Ok>("/auth/ad", { usuario, contrasenia });
+}
+
 // POST /api/auth/logout — avisa al backend y borra la cookie de sesión.
 export function logout(): Promise<Ok> {
   return apiPost<Ok>("/auth/logout", {});
