@@ -1,17 +1,23 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Logo } from "./Logo";
 
 type TopBarProps = {
   userName: string;
   userRole: string;
+  // Ruta de la foto para el proxy (/api<urlFoto>); null -> iniciales. Solo los estudiantes tienen foto.
+  urlFoto?: string | null;
   onLogout: () => void;
 };
 
-export function TopBar({ userName, userRole, onLogout }: TopBarProps) {
+export function TopBar({ userName, userRole, urlFoto, onLogout }: TopBarProps) {
   const [abierto, setAbierto] = useState(false);
+  // Si la foto no carga (archivo borrado, sesión vencida) se cae a las iniciales, mismo criterio que StudentAvatar.
+  const [urlFallida, setUrlFallida] = useState<string | null>(null);
+  const mostrarFoto = urlFoto && urlFoto !== urlFallida;
   const botonRef = useRef<HTMLButtonElement>(null);
   const contenedorRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
@@ -64,9 +70,20 @@ export function TopBar({ userName, userRole, onLogout }: TopBarProps) {
             onClick={() => setAbierto((v) => !v)}
             className="flex items-center gap-2 cursor-pointer"
           >
-            <span className="w-8 h-8 text-xs rounded-full bg-primary text-primary-content inline-flex items-center justify-center font-semibold">
-              {iniciales}
-            </span>
+            {mostrarFoto ? (
+              // eslint-disable-next-line @next/next/no-img-element -- foto servida por el proxy autenticado, no un asset estático de Next
+              <img
+                src={`/api${urlFoto}`}
+                alt=""
+                className="w-8 h-8 rounded-full object-cover"
+                decoding="async"
+                onError={() => setUrlFallida(urlFoto)}
+              />
+            ) : (
+              <span className="w-8 h-8 text-xs rounded-full bg-primary text-primary-content inline-flex items-center justify-center font-semibold">
+                {iniciales}
+              </span>
+            )}
             <div className="hidden sm:block leading-tight text-left">
               <div className="text-sm font-semibold">{userName}</div>
               <div className="text-white/60 text-xs">{userRole}</div>
@@ -82,6 +99,11 @@ export function TopBar({ userName, userRole, onLogout }: TopBarProps) {
             hidden={!abierto}
             className="menu absolute right-0 top-full mt-2 z-10 w-52 p-2 bg-base-100 text-base-content border border-base-300 rounded-box shadow-md"
           >
+            <li>
+              <Link href="/perfil" onClick={() => setAbierto(false)}>
+                Mi perfil
+              </Link>
+            </li>
             <li>
               <button
                 type="button"

@@ -89,6 +89,11 @@ export function getStudent(id: number): Promise<Student> {
   return apiGet<Student>(`/estudiantes/${id}`);
 }
 
+// GET /estudiantes/mi-perfil — perfil propio del estudiante autenticado (EstudianteResumenDTO, mismo shape que StudentSummary). GET /estudiantes/{id} no sirve acá: exige VER_ESTUDIANTE, que el rol ESTUDIANTE no tiene. El resumen no trae dirección ni fecha de nacimiento.
+export function getMiPerfil(): Promise<StudentSummary> {
+  return apiGet<StudentSummary>("/estudiantes/mi-perfil");
+}
+
 // Datos de alta — EstudianteRequestDTO. documento y paisDocumento son
 // inmutables después de creado (por eso no están en StudentUpdateInput).
 export type StudentCreateInput = {
