@@ -12,7 +12,8 @@ import {
   type InstanciaComunCreateInput,
   type InstanciaComunUpdateInput,
 } from "@/lib/instancias";
-import { listStudents, type StudentSummary } from "@/lib/students";
+import { getStudent } from "@/lib/students";
+import { EstudianteSelector, type EstudianteElegido } from "./EstudianteSelector";
 
 const TITULO_MAX = 150;
 const CANAL_MAX = 50;
@@ -25,14 +26,16 @@ type FormState = {
   canal: string;
 };
 
-function estadoInicial(instancia?: InstanciaComun, idEstudianteFijo?: number): FormState {
+// origen: la instancia que se edita, o la que se clona (RF17). Al clonar se copian todos los campos menos la fecha, que queda vacía para que se cargue la de la nueva instancia (el ID y los timestamps los genera el backend).
+function estadoInicial(instancia?: InstanciaComun, idEstudianteFijo?: number, clonDe?: InstanciaComun): FormState {
+  const origen = instancia ?? clonDe;
   return {
-    idEstudiante: instancia ? String(instancia.idEstudiante) : idEstudianteFijo ? String(idEstudianteFijo) : "",
-    titulo: instancia?.titulo ?? "",
-    idCategoria: instancia ? String(instancia.idCategoria) : "",
+    idEstudiante: origen ? String(origen.idEstudiante) : idEstudianteFijo ? String(idEstudianteFijo) : "",
+    titulo: origen?.titulo ?? "",
+    idCategoria: origen ? String(origen.idCategoria) : "",
     // El backend manda "yyyy-MM-ddTHH:mm:ss"; datetime-local solo entiende hasta los minutos, así que se recorta.
     fechaHora: instancia?.fechaHora.slice(0, 16) ?? "",
-    canal: instancia?.canal ?? "",
+    canal: origen?.canal ?? "",
   };
 }
 
@@ -47,8 +50,8 @@ function SeccionLegend({ icon: Icon, children }: { icon: typeof User; children: 
 }
 
 type InstanciaFormProps =
-  // idEstudianteFijo: alta desde la ficha del estudiante (RF18), con el estudiante preseleccionado y bloqueado.
-  | { mode: "crear"; idEstudianteFijo?: number }
+  // idEstudianteFijo: alta desde la ficha del estudiante (RF18), con el estudiante preseleccionado y bloqueado. clonDe: alta desde el botón "Clonar" (RF17), con los datos de esa instancia precargados.
+  | { mode: "crear"; idEstudianteFijo?: number; clonDe?: InstanciaComun }
   | { mode: "editar"; codInstancia: number; instancia: InstanciaComun; volverAEstudiante?: boolean };
 
 export function InstanciaForm(props: InstanciaFormProps) {
@@ -56,27 +59,40 @@ export function InstanciaForm(props: InstanciaFormProps) {
   const esEdicion = props.mode === "editar";
 
   const idEstudianteFijo = props.mode === "crear" ? props.idEstudianteFijo : undefined;
+  const clonDe = props.mode === "crear" ? props.clonDe : undefined;
   const [form, setForm] = useState<FormState>(() =>
-    estadoInicial(esEdicion ? props.instancia : undefined, idEstudianteFijo),
+    estadoInicial(esEdicion ? props.instancia : undefined, idEstudianteFijo, clonDe),
   );
-  const [estudiantes, setEstudiantes] = useState<StudentSummary[]>([]);
+  // Estudiante elegido en el selector (solo en el alta; en la edición es inmutable). Al clonar arranca con el de la instancia origen.
+  const [estudiante, setEstudiante] = useState<EstudianteElegido | null>(
+    clonDe ? { id: clonDe.idEstudiante, nombre: clonDe.nombreEstudiante } : null,
+  );
   const [categorias, setCategorias] = useState<CategoriaInstancia[]>([]);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState("");
   const [guardando, setGuardando] = useState(false);
 
+  // Con estudiante fijo (alta desde la ficha) hay que resolver su nombre para mostrarlo; si el rol no puede leer la ficha, queda el número.
   useEffect(() => {
-    // Estudiante inmutable en edición (ver abajo), así que solo hace falta la lista para el combo del alta.
-    if (!esEdicion) {
-      listStudents({ size: 1000 })
-        .then((res) => setEstudiantes(res.content))
-        .catch(() => setEstudiantes([]));
-    }
+    if (idEstudianteFijo === undefined) return;
+    let cancelado = false;
+    getStudent(idEstudianteFijo)
+      .then((s) => {
+        if (!cancelado) setEstudiante({ id: s.idUsuario, nombre: `${s.nombre} ${s.apellido}`, documento: s.documento });
+      })
+      .catch(() => {
+        if (!cancelado) setEstudiante({ id: idEstudianteFijo, nombre: `Estudiante #${idEstudianteFijo}` });
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [idEstudianteFijo]);
+
+  useEffect(() => {
     // La categoría requiere VER_CATEGORIAS_INSTANCIA — si el rol no lo tiene, el combo queda vacío y el usuario no puede guardar hasta que se corrija del lado del backend. No se rompe la pantalla por eso.
     listCategoriasInstancia()
       .then(setCategorias)
       .catch(() => setCategorias([]));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo debe correr al montar
   }, []);
 
   function campo<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -161,6 +177,14 @@ export function InstanciaForm(props: InstanciaFormProps) {
 
         <h1 className="text-xl font-bold mb-4">{esEdicion ? "Editar instancia" : "Nueva instancia"}</h1>
 
+        {clonDe ? (
+          <div role="status" className="alert alert-info alert-soft text-sm mb-4">
+            <span>
+              Estás clonando la instancia {clonDe.idNegInstancia ?? `#${clonDe.codInstancia}`}: se copiaron sus datos, menos la fecha. Completá la fecha y hora para guardarla como una instancia nueva.
+            </span>
+          </div>
+        ) : null}
+
         {errorGeneral ? (
           <div role="alert" className="alert alert-error alert-soft text-sm mb-4">
             <span>{errorGeneral}</span>
@@ -177,23 +201,18 @@ export function InstanciaForm(props: InstanciaFormProps) {
                 <input className="input w-full" value={props.instancia.nombreEstudiante} disabled />
               </Field>
             ) : (
-              <Field label="Estudiante" fieldKey="idEstudiante" error={errores.idEstudiante}>
-                {/* Con idEstudianteFijo (alta desde la ficha) el combo queda bloqueado en ese estudiante: se muestra igual, para que se vea a quién se le crea. */}
-                <select
-                  className={`select w-full${errores.idEstudiante ? " select-error" : ""}`}
-                  value={form.idEstudiante}
-                  onChange={(e) => campo("idEstudiante", e.target.value)}
-                  disabled={guardando || idEstudianteFijo !== undefined}
-                  required
-                >
-                  <option value="">Seleccioná un estudiante</option>
-                  {estudiantes.map((est) => (
-                    <option key={est.idUsuario} value={est.idUsuario}>
-                      {est.nombre} {est.apellido}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+              // Con idEstudianteFijo (alta desde la ficha) el selector queda bloqueado en ese estudiante: se muestra igual, para que se vea a quién se le crea.
+              <EstudianteSelector
+                label="Estudiante"
+                fieldKey="idEstudiante"
+                value={estudiante}
+                onChange={(e) => {
+                  setEstudiante(e);
+                  campo("idEstudiante", e ? String(e.id) : "");
+                }}
+                error={errores.idEstudiante}
+                disabled={guardando || idEstudianteFijo !== undefined}
+              />
             )}
 
             <Field label="Título" fieldKey="titulo" error={errores.titulo}>
