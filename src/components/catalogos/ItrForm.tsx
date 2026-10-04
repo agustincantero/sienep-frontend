@@ -83,7 +83,8 @@ export function ItrForm({ itr }: { itr?: Itr }) {
       leyenda={
         <>
           <p>Institutos Tecnológicos Regionales y las carreras que dicta cada uno.</p>
-          <p>Al dar de alta un estudiante, el ITR acota qué carreras y grupos se ofrecen. Solo se pueden asociar carreras activas.</p>
+          <p>Al dar de alta un estudiante, el ITR acota qué carreras y grupos se ofrecen.</p>
+          <p>Solo se listan las carreras activas. Si el ITR ya tenía asociada una carrera que hoy está inactiva, ese vínculo se conserva al guardar y vuelve a aparecer cuando se reactiva la carrera.</p>
         </>
       }
       seccion={{ icon: Building2, titulo: "Datos del ITR" }}
