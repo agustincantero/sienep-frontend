@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFechaHora } from "@/lib/format";
+import { nombreConDocumento } from "@/lib/identificacion";
 import { deactivateInstancia, getInstancia, reactivateInstancia, type InstanciaComun } from "@/lib/instancias";
 import { useSession } from "@/lib/session-context";
 import { ConfirmDialog } from "./ConfirmDialog";
@@ -158,11 +159,11 @@ export function InstanciaDetalle({
         </div>
 
         <Dl label="Identificador" value={instancia.idNegInstancia} />
-        <Dl label="Estudiante" value={instancia.nombreEstudiante} />
+        <Dl label="Estudiante" value={nombreConDocumento(instancia.nombreEstudiante, instancia.documentoEstudiante)} />
         <Dl label="Categoría" value={instancia.nombreCategoria} />
         <Dl label="Fecha y hora" value={formatFechaHora(instancia.fechaHora)} />
         <Dl label="Canal" value={instancia.canal} />
-        <Dl label="Responsable" value={instancia.nombreFuncionario} />
+        <Dl label="Responsable" value={nombreConDocumento(instancia.nombreFuncionario, instancia.documentoFuncionario)} />
 
         <InstanciaComentarios codInstancia={codInstancia} />
       </div>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFechaHora } from "@/lib/format";
+import { nombreConDocumento } from "@/lib/identificacion";
 import { deactivateIncidencia, getIncidencia, reactivateIncidencia, type Incidencia } from "@/lib/incidencias";
 import { useSession } from "@/lib/session-context";
 import { ConfirmDialog } from "@/components/instancias/ConfirmDialog";
@@ -159,11 +160,11 @@ export function IncidenciaDetalle({
         </div>
 
         <Dl label="Identificador" value={incidencia.idNegInstancia} />
-        <Dl label="Estudiante" value={incidencia.nombreEstudiante} />
+        <Dl label="Estudiante" value={nombreConDocumento(incidencia.nombreEstudiante, incidencia.documentoEstudiante)} />
         <Dl label="Lugar" value={incidencia.lugar} />
         <Dl label="Fecha y hora" value={formatFechaHora(incidencia.fechaHora)} />
         <Dl label="Canal" value={incidencia.canal} />
-        <Dl label="Responsable" value={incidencia.nombreFuncionario} />
+        <Dl label="Responsable" value={nombreConDocumento(incidencia.nombreFuncionario, incidencia.documentoFuncionario)} />
 
         <InvolucradosPanel codInstancia={codInstancia} />
         <InstanciaComentarios codInstancia={codInstancia} />
