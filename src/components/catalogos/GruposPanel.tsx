@@ -84,8 +84,8 @@ export function GruposPanel({ exitoInicial }: { exitoInicial?: string }) {
     >
       {visibles.map((g) => (
         <tr key={g.idGrupo}>
-          <td className="font-semibold text-sm">{g.nomGrupo}</td>
-          <td className="text-sm">{g.nomCarrera}</td>
+          <td className="font-semibold text-sm wrap-anywhere">{g.nomGrupo}</td>
+          <td className="text-sm wrap-anywhere">{g.nomCarrera}</td>
           <td className="text-sm tabular-nums">{g.generacion}</td>
           <td>
             <EstadoBadge estado={g.estado} />

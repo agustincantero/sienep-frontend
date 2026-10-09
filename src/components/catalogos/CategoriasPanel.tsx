@@ -62,8 +62,8 @@ export function CategoriasPanel({ config, exitoInicial }: { config: ConfigCatego
     >
       {visibles.map((c) => (
         <tr key={c.idCategoria}>
-          <td className="font-semibold text-sm break-all">{c.nomCategoria}</td>
-          <td className="text-base-content/70 text-sm">{c.descripcion || "—"}</td>
+          <td className="font-semibold text-sm wrap-anywhere">{c.nomCategoria}</td>
+          <td className="text-base-content/70 text-sm wrap-anywhere">{c.descripcion || "—"}</td>
           <td>
             <EstadoBadge estado={c.estado} />
           </td>

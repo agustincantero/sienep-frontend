@@ -70,12 +70,12 @@ export function ItrsPanel({ exitoInicial }: { exitoInicial?: string }) {
     >
       {visibles.map((i) => (
         <tr key={i.idItr}>
-          <td className="font-semibold text-sm">{i.nomItr}</td>
+          <td className="font-semibold text-sm wrap-anywhere">{i.nomItr}</td>
           <td>
             {i.carreras.length > 0 ? (
               <div className="flex flex-wrap gap-1">
                 {[...i.carreras].sort(compararTexto).map((c) => (
-                  <span key={c} className="badge badge-outline badge-sm whitespace-nowrap">
+                  <span key={c} className="badge badge-outline badge-sm h-auto min-h-5 max-w-full text-left wrap-anywhere">
                     {c}
                   </span>
                 ))}

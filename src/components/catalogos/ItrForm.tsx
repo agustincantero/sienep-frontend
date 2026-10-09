@@ -145,7 +145,7 @@ export function ItrForm({ itr }: { itr?: Itr }) {
                     onChange={() => toggleCarrera(c.nomCarrera)}
                     disabled={guardando}
                   />
-                  <label htmlFor={inputId} className="text-sm leading-tight">
+                  <label htmlFor={inputId} className="text-sm leading-tight min-w-0 wrap-anywhere">
                     {c.nomCarrera}
                   </label>
                 </div>

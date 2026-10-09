@@ -607,7 +607,7 @@ export function StudentForm(props: StudentFormProps) {
                           de la vista uno ya elegido, aunque siga asignado. */}
                       <div className="flex flex-wrap gap-2">
                         {gruposSeleccionados.map((g) => (
-                          <span key={g.idGrupo} className="badge badge-primary gap-1.5 py-3">
+                          <span key={g.idGrupo} className="badge badge-primary gap-1.5 h-auto min-h-6 py-1 max-w-full text-left wrap-anywhere">
                             {g.nomGrupo} · {g.generacion} — {g.nomCarrera}
                             <button
                               type="button"
@@ -797,7 +797,7 @@ function GrupoChip({
 }) {
   return (
     <label
-      className={`btn btn-sm rounded-full normal-case font-normal ${
+      className={`btn btn-sm rounded-full normal-case font-normal h-auto min-h-8 py-1 max-w-full wrap-anywhere ${
         seleccionado ? "btn-primary" : "btn-outline"
       }${disabled ? " btn-disabled" : ""}`}
     >

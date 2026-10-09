@@ -67,13 +67,13 @@ export function CatalogoMarco({
 
       {exito ? (
         <div role="status" className="alert alert-success alert-soft text-sm mb-3">
-          <span>{exito}</span>
+          <span className="min-w-0 wrap-anywhere">{exito}</span>
         </div>
       ) : null}
 
       {errorCarga || error ? (
         <div role="alert" className="alert alert-error alert-soft text-sm mb-3">
-          <span>{errorCarga || error}</span>
+          <span className="min-w-0 wrap-anywhere">{errorCarga || error}</span>
         </div>
       ) : null}
 

@@ -35,7 +35,7 @@ export function ConfirmDialog({
     <dialog ref={ref} className="modal" onClose={onCancel}>
       <div className="modal-box">
         <h3 className="text-lg font-semibold">{title}</h3>
-        <p className="py-3 text-sm text-base-content/70">{message}</p>
+        <p className="py-3 text-sm text-base-content/70 wrap-anywhere">{message}</p>
         <div className="modal-action">
           <button type="button" className="btn" onClick={onCancel}>
             Cancelar

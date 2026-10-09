@@ -60,12 +60,12 @@ export function CarrerasPanel({ exitoInicial }: { exitoInicial?: string }) {
     >
       {visibles.map((c) => (
         <tr key={c.idCarrera}>
-          <td className="font-semibold text-sm">{c.nomCarrera}</td>
+          <td className="font-semibold text-sm wrap-anywhere">{c.nomCarrera}</td>
           <td>
             {c.itrs && c.itrs.length > 0 ? (
               <div className="flex flex-wrap gap-1">
                 {c.itrs.map((i) => (
-                  <span key={i.idItr} className="badge badge-outline badge-sm whitespace-nowrap">
+                  <span key={i.idItr} className="badge badge-outline badge-sm h-auto min-h-5 max-w-full text-left wrap-anywhere">
                     {i.nomItr}
                   </span>
                 ))}

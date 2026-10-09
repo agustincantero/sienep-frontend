@@ -45,7 +45,7 @@ export function CatalogoFormLayout({
 
         {errorGeneral ? (
           <div role="alert" className="alert alert-error alert-soft text-sm mb-4">
-            <span>{errorGeneral}</span>
+            <span className="min-w-0 wrap-anywhere">{errorGeneral}</span>
           </div>
         ) : null}
 
