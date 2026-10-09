@@ -91,9 +91,35 @@ export function getStudent(id: number): Promise<Student> {
   return apiGet<Student>(`/estudiantes/${id}`);
 }
 
-// GET /estudiantes/mi-perfil — perfil propio del estudiante autenticado (EstudianteResumenDTO, mismo shape que StudentSummary). GET /estudiantes/{id} no sirve acá: exige VER_ESTUDIANTE, que el rol ESTUDIANTE no tiene. El resumen no trae dirección ni fecha de nacimiento.
-export function getMiPerfil(): Promise<StudentSummary> {
-  return apiGet<StudentSummary>("/estudiantes/mi-perfil");
+// GET /estudiantes/mi-perfil — perfil propio del estudiante autenticado (MiPerfilEstudianteDTO). GET /estudiantes/{id} no sirve acá: exige VER_ESTUDIANTE, que el rol ESTUDIANTE no tiene.
+export function getMiPerfil(): Promise<MiPerfilEstudiante> {
+  return apiGet<MiPerfilEstudiante>("/estudiantes/mi-perfil");
+}
+
+// MiPerfilEstudianteDTO: el resumen más la dirección y la fecha de nacimiento, para que el estudiante
+// pueda editar su contacto partiendo de los valores actuales. Sin bloque confidencial ni motivo de derivación.
+export type MiPerfilEstudiante = StudentSummary & {
+  paisDocumento: string;
+  fechaNacimiento: string;
+  ciudad: string | null;
+  departamento: string | null;
+  calle: string | null;
+  nroPuerta: number | null;
+};
+
+// MisDatosRequestDTO — lo único que el estudiante puede editar de sí mismo. Es un reemplazo completo:
+// un campo que no se manda queda vacío, y la lista de teléfonos reemplaza a la anterior.
+export type MisDatosInput = {
+  ciudad?: string;
+  departamento?: string;
+  calle?: string;
+  nroPuerta?: number;
+  telefonos: string[];
+};
+
+// PUT /estudiantes/{id}/mis-datos — el backend rechaza con 403 un id que no sea el del propio estudiante.
+export function updateMisDatos(id: number, dto: MisDatosInput): Promise<MiPerfilEstudiante> {
+  return apiPut<MiPerfilEstudiante>(`/estudiantes/${id}/mis-datos`, dto);
 }
 
 // Datos de alta — EstudianteRequestDTO. documento y paisDocumento son
