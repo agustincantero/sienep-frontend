@@ -6,17 +6,18 @@ import { apiErrorMessage } from "@/lib/api";
 import { useFotoPerfil } from "@/lib/foto-perfil-context";
 import { iniciales } from "@/lib/format";
 import { useSession } from "@/lib/session-context";
-import { getMiPerfil, uploadStudentPhoto, type StudentSummary } from "@/lib/students";
+import { getMiPerfil, uploadStudentPhoto, type MiPerfilEstudiante } from "@/lib/students";
 import { EstadoBadge } from "@/components/students/EstadoBadge";
 import { StudentAvatar } from "@/components/students/StudentAvatar";
 import { CambiarContraseniaForm } from "./CambiarContraseniaForm";
-import { MisInstanciasCard } from "./MisInstanciasCard";
+import { ContactoCard } from "./ContactoCard";
+import { Dato } from "./Dato";
 import { SeccionCard } from "./SeccionCard";
 
 const EXTENSIONES_FOTO = [".jpg", ".jpeg", ".png"];
 const MAX_FOTO_BYTES = 5 * 1024 * 1024;
 
-// "Mi perfil" para funcionario y estudiante. Los datos son de solo lectura: lo único editable es la foto (solo estudiante, Funcionario no tiene foto en el modelo) y la contraseña.
+// "Mi perfil" para funcionario y estudiante. Además de la contraseña, el estudiante puede editar su foto (Funcionario no tiene foto en el modelo) y sus datos de contacto (dirección y teléfonos).
 export function MiPerfil() {
   const user = useSession();
   const esEstudiante = user.tipo === "ESTUDIANTE";
@@ -27,7 +28,6 @@ export function MiPerfil() {
         <h1 className="text-xl font-bold mb-4">Mi perfil</h1>
         <div className="space-y-6">
           {esEstudiante ? <PerfilEstudiante /> : <PerfilFuncionario />}
-          {esEstudiante ? <MisInstanciasCard /> : null}
           <CambiarContraseniaForm user={user} />
         </div>
       </div>
@@ -55,7 +55,7 @@ function PerfilFuncionario() {
 
 function PerfilEstudiante() {
   const { urlFoto, actualizarFoto } = useFotoPerfil();
-  const [perfil, setPerfil] = useState<StudentSummary | null>(null);
+  const [perfil, setPerfil] = useState<MiPerfilEstudiante | null>(null);
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState("");
   const [errorFoto, setErrorFoto] = useState("");
@@ -167,69 +167,71 @@ function PerfilEstudiante() {
   );
 
   return (
-    <SeccionCard icon={User} titulo="Datos personales">
-      <Encabezado
-        avatar={avatar}
-        nombre={`${perfil.nombre} ${perfil.apellido}`}
-        detalle={<EstadoBadge estado={perfil.estado} />}
-        accion={
-          <>
-            <input
-              ref={inputFotoRef}
-              type="file"
-              accept=".jpg,.jpeg,.png"
-              className="hidden"
-              onChange={handleElegirFoto}
-              disabled={subiendoFoto}
-            />
-            {fotoPendiente ? (
-              <>
+    <>
+      <SeccionCard icon={User} titulo="Datos personales">
+        <Encabezado
+          avatar={avatar}
+          nombre={`${perfil.nombre} ${perfil.apellido}`}
+          detalle={<EstadoBadge estado={perfil.estado} />}
+          accion={
+            <>
+              <input
+                ref={inputFotoRef}
+                type="file"
+                accept=".jpg,.jpeg,.png"
+                className="hidden"
+                onChange={handleElegirFoto}
+                disabled={subiendoFoto}
+              />
+              {fotoPendiente ? (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => setFotoPendiente(null)}
+                    disabled={subiendoFoto}
+                  >
+                    Cancelar
+                  </button>
+                  <button type="button" className="btn btn-primary btn-sm" onClick={guardarFoto} disabled={subiendoFoto}>
+                    {subiendoFoto ? <span className="loading loading-spinner loading-xs" /> : null}
+                    Guardar foto
+                  </button>
+                </>
+              ) : (
                 <button
                   type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => setFotoPendiente(null)}
+                  className="btn btn-outline btn-sm"
+                  onClick={() => inputFotoRef.current?.click()}
                   disabled={subiendoFoto}
                 >
-                  Cancelar
+                  {perfil.urlFoto ? "Cambiar foto" : "Subir foto"}
                 </button>
-                <button type="button" className="btn btn-primary btn-sm" onClick={guardarFoto} disabled={subiendoFoto}>
-                  {subiendoFoto ? <span className="loading loading-spinner loading-xs" /> : null}
-                  Guardar foto
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
-                onClick={() => inputFotoRef.current?.click()}
-                disabled={subiendoFoto}
-              >
-                {perfil.urlFoto ? "Cambiar foto" : "Subir foto"}
-              </button>
-            )}
-          </>
-        }
-      />
-      {fotoPendiente ? (
-        <p role="status" className="text-sm text-base-content/60">
-          Vista previa: la foto todavía no se guardó.
-        </p>
-      ) : null}
-      {errorFoto ? (
-        <div role="alert" className="alert alert-error alert-soft text-sm">
-          <span>{errorFoto}</span>
+              )}
+            </>
+          }
+        />
+        {fotoPendiente ? (
+          <p role="status" className="text-sm text-base-content/60">
+            Vista previa: la foto todavía no se guardó.
+          </p>
+        ) : null}
+        {errorFoto ? (
+          <div role="alert" className="alert alert-error alert-soft text-sm">
+            <span>{errorFoto}</span>
+          </div>
+        ) : null}
+        <div>
+          <Dato label="Documento" value={perfil.documento} />
+          <Dato label="Email" value={perfil.email} />
+          <Dato label="Grupos" value={perfil.grupos.join(", ")} />
         </div>
-      ) : null}
-      <div>
-        <Dato label="Documento" value={perfil.documento} />
-        <Dato label="Email" value={perfil.email} />
-        <Dato label="Teléfono" value={perfil.telefonos.join(", ")} />
-        <Dato label="Grupos" value={perfil.grupos.join(", ")} />
-      </div>
-      <p className="text-sm text-base-content/60">
-        Si algún dato no es correcto, pedile a la coordinación que lo actualice.
-      </p>
-    </SeccionCard>
+        <p className="text-sm text-base-content/60">
+          Si alguno de estos datos no es correcto, pedile a la coordinación que lo actualice.
+        </p>
+      </SeccionCard>
+      <ContactoCard perfil={perfil} onGuardado={setPerfil} />
+    </>
   );
 }
 
@@ -265,16 +267,6 @@ function Encabezado({
         </div>
       </div>
       {accion ? <div className="flex gap-2">{accion}</div> : null}
-    </div>
-  );
-}
-
-// Mismo formato que el Dato de StudentProfile (etiqueta + valor, "—" si está vacío).
-function Dato({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="py-2 border-b border-base-300 flex flex-wrap gap-x-4 text-sm">
-      <span className="text-base-content/60 w-40 shrink-0">{label}</span>
-      <span className="font-medium">{value || "—"}</span>
     </div>
   );
 }

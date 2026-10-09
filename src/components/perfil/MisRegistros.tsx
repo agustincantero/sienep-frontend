@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ClipboardList } from "lucide-react";
+import { Calendar, TriangleAlert, type LucideIcon } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFechaHora } from "@/lib/format";
 import { listMisIncidencias } from "@/lib/incidencias";
@@ -9,7 +9,6 @@ import { listMisInstancias } from "@/lib/instancias";
 import type { Page } from "@/lib/students";
 import { DataTable } from "@/components/ui/DataTable";
 import { PaginationFooter } from "@/components/ui/PaginationFooter";
-import { SeccionCard } from "./SeccionCard";
 
 // Más recientes primero: es lo primero que se busca al revisar el propio historial.
 const ORDEN = "fechaHora,desc";
@@ -22,12 +21,11 @@ type Fila = {
   responsable: string;
 };
 
-// "Mis instancias e incidencias" del estudiante, contra GET /instancias/mis-instancias y GET /incidencias/mis-incidencias (solo las ACTIVAS). Solo lectura y sin link al detalle: GET /instancias/{id} y GET /incidencias/{id} exigen VER_INSTANCIAS / VER_INCIDENCIAS, que el rol ESTUDIANTE no tiene.
-export function MisInstanciasCard() {
+// "Mis instancias" y "Mis incidencias" del estudiante, cada una en su página, contra GET /instancias/mis-instancias y GET /incidencias/mis-incidencias (solo las ACTIVAS). Solo lectura y sin link al detalle: GET /instancias/{id} y GET /incidencias/{id} exigen VER_INSTANCIAS / VER_INCIDENCIAS, que el rol ESTUDIANTE no tiene.
+export function MisInstancias() {
   return (
-    <SeccionCard icon={ClipboardList} titulo="Mis instancias e incidencias">
+    <PaginaRegistros titulo="Mis instancias" icon={Calendar}>
       <Listado
-        titulo="Instancias"
         noun="instancias"
         vacio="No tenés instancias registradas."
         columnaExtra="Categoría"
@@ -43,8 +41,14 @@ export function MisInstanciasCard() {
           )
         }
       />
+    </PaginaRegistros>
+  );
+}
+
+export function MisIncidencias() {
+  return (
+    <PaginaRegistros titulo="Mis incidencias" icon={TriangleAlert}>
       <Listado
-        titulo="Incidencias"
         noun="incidencias"
         vacio="No tenés incidencias registradas."
         columnaExtra="Lugar"
@@ -60,7 +64,21 @@ export function MisInstanciasCard() {
           )
         }
       />
-    </SeccionCard>
+    </PaginaRegistros>
+  );
+}
+
+function PaginaRegistros({ titulo, icon: Icon, children }: { titulo: string; icon: LucideIcon; children: React.ReactNode }) {
+  return (
+    <div className="grow overflow-auto">
+      <div className="max-w-[980px] mx-auto w-full px-4 py-5">
+        <h1 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <Icon size={20} aria-hidden className="text-primary" />
+          {titulo}
+        </h1>
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -69,13 +87,11 @@ function aFilas<T>(res: Page<T>, fila: (item: T) => Fila): Page<Fila> {
 }
 
 function Listado({
-  titulo,
   noun,
   vacio,
   columnaExtra,
   cargar,
 }: {
-  titulo: string;
   noun: string;
   vacio: string;
   columnaExtra: string;
@@ -111,12 +127,7 @@ function Listado({
   const filas = resultado?.content ?? [];
 
   return (
-    // id: destino de las tarjetas "Mis instancias" / "Mis incidencias" del inicio (/perfil#mis-...). scroll-mt deja aire arriba al saltar.
-    <div id={`mis-${noun}`} className="text-sm scroll-mt-4">
-      <h3 className="font-semibold text-base-content mb-1">
-        {titulo}
-        {resultado ? <span className="text-base-content/60 font-normal"> ({resultado.totalElements})</span> : null}
-      </h3>
+    <div className="text-sm">
 
       {error ? (
         <div role="alert" className="alert alert-error alert-soft text-sm">
@@ -140,7 +151,7 @@ function Listado({
               </tr>
             ))}
           </DataTable>
-          {resultado && resultado.totalPages > 1 ? (
+          {resultado ? (
             <PaginationFooter
               shown={filas.length}
               total={resultado.totalElements}
