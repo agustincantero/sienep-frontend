@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Calendar, FileText, HeartPulse, MessageSquare, TriangleAlert, User } from "lucide-react";
+import { Calendar, FileText, HeartPulse, MessageSquare, TriangleAlert, User } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFecha } from "@/lib/format";
 import { getStudent, resendStudentPassword, uploadStudentPhoto, type Student } from "@/lib/students";
@@ -13,6 +13,7 @@ import { MedicalReportsPanel } from "./MedicalReportsPanel";
 import { StudentAvatar } from "./StudentAvatar";
 import { StudentCommentsPanel } from "./StudentCommentsPanel";
 import { StudentInstanciasPanel } from "./StudentInstanciasPanel";
+import { BackButton } from "@/components/layout/BackButton";
 
 type Tab = "datos" | "salud" | "instancias" | "incidencias" | "informes" | "comentarios";
 
@@ -150,10 +151,7 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
     return (
       <div className="grow overflow-auto">
         <div className="max-w-[980px] mx-auto w-full px-4 py-5">
-          <Link href="/estudiantes" className="btn btn-link no-underline mb-3 gap-1">
-            <ArrowLeft size={16} aria-hidden />
-            Volver a estudiantes
-          </Link>
+          <BackButton href="/estudiantes" label="Volver a estudiantes" />
           <div role="alert" className="alert alert-error alert-soft text-sm">
             <span>{errorCarga || "Estudiante no encontrado."}</span>
           </div>
@@ -167,10 +165,7 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
   return (
     <div className="grow overflow-auto">
       <div className="max-w-[980px] mx-auto w-full px-4 py-5">
-        <Link href="/estudiantes" className="btn btn-link no-underline mb-3 gap-1">
-          <ArrowLeft size={16} aria-hidden />
-          Volver a estudiantes
-        </Link>
+        <BackButton href="/estudiantes" label="Volver a estudiantes" />
 
         {aviso ? (
           <div role="alert" className="alert alert-warning alert-soft text-sm mb-4">

@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { BackendError, backendJson } from "@/lib/backend";
 import { IncidenciaForm } from "@/components/incidencias/IncidenciaForm";
 import { SinPermiso } from "@/components/layout/SinPermiso";
 import { tienePermiso } from "@/lib/current-user";
 import type { Incidencia } from "@/lib/incidencias";
+import { BackButton } from "@/components/layout/BackButton";
 
 export const metadata: Metadata = {
   title: "Editar incidencia · SIENEP",
@@ -36,10 +35,7 @@ export default async function EditarIncidenciaPage({
     return (
       <div className="grow overflow-auto">
         <div className="max-w-[600px] mx-auto w-full px-4 py-5">
-          <Link href="/incidencias" className="btn btn-link no-underline mb-3 gap-1">
-            <ArrowLeft size={16} aria-hidden />
-            Volver a incidencias
-          </Link>
+          <BackButton href="/incidencias" label="Volver a incidencias" />
           <div role="alert" className="alert alert-error alert-soft text-sm">
             <span>{err instanceof BackendError ? err.message : "No se pudo cargar la incidencia."}</span>
           </div>

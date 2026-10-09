@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Shield, ShieldAlert, Tag } from "lucide-react";
+import { Shield, ShieldAlert, Tag } from "lucide-react";
 import { ApiError, apiErrorMessage } from "@/lib/api";
 import { agruparPermisos, listPermisos, type Permiso } from "@/lib/permisos";
 import { createRole, normalizarNombreRol, updateRole, type Rol } from "@/lib/roles";
 import { useSession } from "@/lib/session-context";
+import { BackButton } from "@/components/layout/BackButton";
 
 type FormState = {
   nombre: string;
@@ -136,10 +137,7 @@ export function RolForm(props: RolFormProps) {
   return (
     <div className="grow overflow-auto">
       <div className="max-w-[720px] mx-auto w-full px-4 py-5">
-        <button type="button" className="btn btn-link btn-sm pl-0 no-underline mb-2 gap-1" onClick={() => router.back()}>
-          <ArrowLeft size={14} aria-hidden />
-          Cancelar
-        </button>
+        <BackButton onClick={() => router.back()} label="Cancelar" />
 
         <h1 className="text-xl font-bold mb-1">{esEdicion ? "Editar rol" : "Nuevo rol"}</h1>
         <p className="text-sm text-base-content/60 mb-4">
