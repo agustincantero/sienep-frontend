@@ -12,6 +12,7 @@ import {
   type InstanciaComunCreateInput,
   type InstanciaComunUpdateInput,
 } from "@/lib/instancias";
+import { ahoraParaInputLocal } from "@/lib/format";
 import { getStudent } from "@/lib/students";
 import { EstudianteSelector, type EstudianteElegido } from "./EstudianteSelector";
 
@@ -71,6 +72,9 @@ export function InstanciaForm(props: InstanciaFormProps) {
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const ahora = ahoraParaInputLocal();
+  // Una instancia no puede quedar en el pasado; al editar una ya vencida no se pone mínimo para no marcar su fecha guardada como inválida.
+  const fechaMin = esEdicion && props.instancia.fechaHora.slice(0, 16) < ahora ? undefined : ahora;
 
   // Con estudiante fijo (alta desde la ficha) hay que resolver su nombre para mostrarlo; si el rol no puede leer la ficha, queda el número.
   useEffect(() => {
@@ -249,6 +253,8 @@ export function InstanciaForm(props: InstanciaFormProps) {
                   type="datetime-local"
                   className={`input w-full${errores.fechaHora ? " input-error" : ""}`}
                   value={form.fechaHora}
+                  min={fechaMin}
+                  suppressHydrationWarning
                   onChange={(e) => campo("fechaHora", e.target.value)}
                   disabled={guardando}
                   required
