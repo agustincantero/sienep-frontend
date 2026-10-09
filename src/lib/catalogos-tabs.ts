@@ -14,7 +14,7 @@ export type DefinicionCatalogo = {
   permisos: { ver: string; crear: string; editar: string };
 };
 
-// Pestañas de /catalogos y los permisos de cada una. Vive fuera de los componentes (que son "use client") porque también lo usan las páginas server-side para decidir si el usuario puede entrar.
+// Pestañas de /catalogos (una ruta /catalogos/[id] cada una) y los permisos de cada una. Vive fuera de los componentes (que son "use client") porque también lo usan las páginas server-side para decidir si el usuario puede entrar.
 // Mismo orden que el prototipo (docs/prototipo.html): la jerarquía académica primero (Carrera → Grupo, ITR → Carreras) y después las dos categorías.
 export const TABS_CATALOGO: DefinicionCatalogo[] = [
   {
@@ -72,9 +72,7 @@ export function buscarCatalogo(id: string | undefined): DefinicionCatalogo | und
   return TABS_CATALOGO.find((t) => t.id === id);
 }
 
-// Vuelta al listado en la pestaña correspondiente; con `exito`, el listado muestra ese mensaje al llegar (después de un alta o edición).
+// Listado de un catálogo (/catalogos/[catalogo]); con `exito`, el listado muestra ese mensaje al llegar (después de un alta o edición).
 export function hrefListado(id: TabCatalogo, exito?: string): string {
-  const usp = new URLSearchParams({ tab: id });
-  if (exito) usp.set("exito", exito);
-  return `/catalogos?${usp.toString()}`;
+  return exito ? `/catalogos/${id}?${new URLSearchParams({ exito }).toString()}` : `/catalogos/${id}`;
 }

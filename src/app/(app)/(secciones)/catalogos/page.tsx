@@ -1,21 +1,17 @@
-import type { Metadata } from "next";
-import { CatalogosView } from "@/components/catalogos/CatalogosView";
+import { redirect } from "next/navigation";
 import { SinPermiso } from "@/components/layout/SinPermiso";
-import { TABS_CATALOGO } from "@/lib/catalogos-tabs";
+import { TABS_CATALOGO, hrefListado } from "@/lib/catalogos-tabs";
 import { getCurrentUser } from "@/lib/current-user";
 
-export const metadata: Metadata = {
-  title: "Catálogos · SIENEP",
-};
-
-export default async function CatalogosPage({ searchParams }: { searchParams: Promise<{ tab?: string; exito?: string }> }) {
-  // Mismo criterio que el ítem del menú (nav-items.ts): alcanza con poder ver uno de los cinco catálogos; las pestañas sin permiso no se muestran.
+// /catalogos no tiene vista propia: cada catálogo vive en /catalogos/[catalogo]. Se redirige al primero que el usuario puede ver (mismo criterio que el ítem del menú en nav-items.ts).
+export default async function CatalogosPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const user = await getCurrentUser();
   const permisos = user?.permisos ?? [];
-  if (!TABS_CATALOGO.some((t) => permisos.includes(t.permisos.ver))) {
+  const visibles = TABS_CATALOGO.filter((t) => permisos.includes(t.permisos.ver));
+  if (visibles.length === 0) {
     return <SinPermiso volverHref="/" volverLabel="Volver al inicio" />;
   }
-  // ?tab=: pestaña con la que abre la pantalla (CatalogosView ignora valores que no sean una pestaña visible para el usuario). ?exito=: mensaje que deja el formulario de alta/edición al guardar.
-  const { tab, exito } = await searchParams;
-  return <CatalogosView tabInicial={tab} exitoInicial={exito} />;
+  // ?tab=: compatibilidad con los links de antes (/catalogos?tab=itrs).
+  const { tab } = await searchParams;
+  redirect(hrefListado((visibles.find((t) => t.id === tab) ?? visibles[0]).id));
 }
