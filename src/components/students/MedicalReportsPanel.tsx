@@ -10,7 +10,7 @@ import {
   type MedicalReport,
 } from "@/lib/medical-reports";
 import { useSession } from "@/lib/session-context";
-import { ConfirmDialog } from "./ConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 const EXTENSIONES_PERMITIDAS = [".pdf", ".jpg", ".jpeg", ".png"];
 // InformeAdjuntoRequestDTO.nombre — mismo patrón que nombre/apellido de

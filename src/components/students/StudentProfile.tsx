@@ -7,7 +7,7 @@ import { apiErrorMessage } from "@/lib/api";
 import { formatFecha } from "@/lib/format";
 import { getStudent, resendStudentPassword, uploadStudentPhoto, type Student } from "@/lib/students";
 import { useSession } from "@/lib/session-context";
-import { ConfirmDialog } from "./ConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EstadoBadge } from "./EstadoBadge";
 import { MedicalReportsPanel } from "./MedicalReportsPanel";
 import { StudentAvatar } from "./StudentAvatar";

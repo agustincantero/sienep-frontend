@@ -8,7 +8,7 @@ import { deactivateIncidencia, listIncidencias, reactivateIncidencia } from "@/l
 import { deactivateInstancia, listInstancias, reactivateInstancia } from "@/lib/instancias";
 import { useSession } from "@/lib/session-context";
 import type { Page } from "@/lib/students";
-import { ConfirmDialog } from "@/components/instancias/ConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { InstanciasTabla } from "@/components/instancias/InstanciasTabla";
 import { PaginationFooter } from "@/components/ui/PaginationFooter";
 

@@ -7,7 +7,7 @@ import { formatFechaHora } from "@/lib/format";
 import { nombreConDocumento } from "@/lib/identificacion";
 import { deactivateIncidencia, getIncidencia, reactivateIncidencia, type Incidencia } from "@/lib/incidencias";
 import { useSession } from "@/lib/session-context";
-import { ConfirmDialog } from "@/components/instancias/ConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EstadoBadge } from "@/components/instancias/EstadoBadge";
 import { InstanciaComentarios } from "@/components/instancias/InstanciaComentarios";
 import { InvolucradosPanel } from "./InvolucradosPanel";

@@ -16,7 +16,7 @@ import { useSession } from "@/lib/session-context";
 import { PaginationFooter } from "@/components/ui/PaginationFooter";
 import { InstanciasTabla } from "./InstanciasTabla";
 import { Toolbar, type ToolbarFilter } from "@/components/ui/Toolbar";
-import { ConfirmDialog } from "./ConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 const ESTADO_A_VALOR: Record<string, string> = { Activo: "ACTIVO", Inactivo: "INACTIVO" };
 

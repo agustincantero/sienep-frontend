@@ -3,7 +3,7 @@
 import { OPCIONES_ESTADO, type FiltroEstado } from "@/lib/catalogos";
 import { DataTable, type DataTableHeader } from "@/components/ui/DataTable";
 import { Toolbar, type ToolbarFilter } from "@/components/ui/Toolbar";
-import { ConfirmDialog } from "@/components/instancias/ConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 type CatalogoMarcoProps = {
   buscadorPlaceholder: string;

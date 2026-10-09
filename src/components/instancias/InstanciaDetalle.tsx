@@ -7,7 +7,7 @@ import { formatFechaHora } from "@/lib/format";
 import { nombreConDocumento } from "@/lib/identificacion";
 import { deactivateInstancia, getInstancia, reactivateInstancia, type InstanciaComun } from "@/lib/instancias";
 import { useSession } from "@/lib/session-context";
-import { ConfirmDialog } from "./ConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EstadoBadge } from "./EstadoBadge";
 import { InstanciaComentarios } from "./InstanciaComentarios";
 import { BackButton } from "@/components/layout/BackButton";
