@@ -299,18 +299,33 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
           ) : null}
         </div>
 
-        {puedeBuscar ? (
-          <Toolbar
-            placeholder="Buscar por nombre, apellido o documento"
-            searchValue={texto}
-            onSearchChange={handleTextoChange}
-            filters={filters}
-          />
-        ) : null}
+        {/* Orden: para todos (no es un filtro, no exige BUSCAR_ESTUDIANTE), por eso el Toolbar se muestra igual sin buscador ni filtros. Va en la misma fila que los filtros, al final. */}
+        <Toolbar
+          placeholder="Buscar por nombre, apellido o documento"
+          searchValue={texto}
+          onSearchChange={puedeBuscar ? handleTextoChange : undefined}
+          filters={filters}
+          trailing={
+            <label className="floating-label">
+              <select
+                className="select w-full border-neutral-800/30"
+                value={orden}
+                onChange={(e) => handleOrdenChange(e.target.value as OrdenEstudiantes)}
+              >
+                {(Object.keys(ORDENES) as OrdenEstudiantes[]).map((clave) => (
+                  <option key={clave} value={clave}>
+                    {ORDENES[clave].label}
+                  </option>
+                ))}
+              </select>
+              <span>Ordenar por</span>
+            </label>
+          }
+        />
 
-        {/* Orden: para todos (no es un filtro, no exige BUSCAR_ESTUDIANTE). "Limpiar filtros" solo si hay algo distinto del listado por defecto. */}
-        <div className="flex items-end justify-between gap-2 mb-3 flex-wrap">
-          {hayFiltrosActivos({ ...filtrosActuales, texto }) ? (
+        {/* "Limpiar filtros" solo si hay algo distinto del listado por defecto. */}
+        {hayFiltrosActivos({ ...filtrosActuales, texto }) ? (
+          <div className="mb-3">
             <button
               type="button"
               className="btn btn-ghost btn-sm gap-1"
@@ -319,24 +334,8 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
               <FilterX size={14} aria-hidden />
               Limpiar filtros
             </button>
-          ) : (
-            <span />
-          )}
-          <label className="floating-label w-48">
-            <select
-              className="select select-sm w-full border-neutral-800/30"
-              value={orden}
-              onChange={(e) => handleOrdenChange(e.target.value as OrdenEstudiantes)}
-            >
-              {(Object.keys(ORDENES) as OrdenEstudiantes[]).map((clave) => (
-                <option key={clave} value={clave}>
-                  {ORDENES[clave].label}
-                </option>
-              ))}
-            </select>
-            <span>Ordenar por</span>
-          </label>
-        </div>
+          </div>
+        ) : null}
 
         {exito ? (
           <div role="status" className="alert alert-success alert-soft text-sm mb-3">
