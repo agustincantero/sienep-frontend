@@ -2,7 +2,7 @@
 
 import { cloneElement, isValidElement, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CalendarClock, User } from "lucide-react";
+import { CalendarClock, User } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { listCategoriasInstancia, type CategoriaInstancia } from "@/lib/categorias-instancia";
 import {
@@ -15,6 +15,7 @@ import {
 import { ahoraParaInputLocal } from "@/lib/format";
 import { getStudent } from "@/lib/students";
 import { EstudianteSelector, type EstudianteElegido } from "./EstudianteSelector";
+import { BackButton } from "@/components/layout/BackButton";
 
 const TITULO_MAX = 150;
 const CANAL_MAX = 50;
@@ -170,14 +171,7 @@ export function InstanciaForm(props: InstanciaFormProps) {
   return (
     <div className="grow overflow-auto">
       <div className="max-w-[600px] mx-auto w-full px-4 py-5">
-        <button
-          type="button"
-          className="btn btn-link btn-sm pl-0 no-underline mb-2 gap-1"
-          onClick={() => router.back()}
-        >
-          <ArrowLeft size={14} aria-hidden />
-          Cancelar
-        </button>
+        <BackButton onClick={() => router.back()} label="Cancelar" />
 
         <h1 className="text-xl font-bold mb-4">{esEdicion ? "Editar instancia" : "Nueva instancia"}</h1>
 

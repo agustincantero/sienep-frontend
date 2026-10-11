@@ -28,7 +28,7 @@ import {
 import { DataTable } from "@/components/ui/DataTable";
 import { PaginationFooter } from "@/components/ui/PaginationFooter";
 import { Toolbar, type ToolbarFilter } from "@/components/ui/Toolbar";
-import { ConfirmDialog } from "./ConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EstadoBadge } from "./EstadoBadge";
 import { StudentAvatar } from "./StudentAvatar";
 

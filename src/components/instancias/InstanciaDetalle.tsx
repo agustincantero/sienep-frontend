@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFechaHora } from "@/lib/format";
 import { nombreConDocumento } from "@/lib/identificacion";
 import { deactivateInstancia, getInstancia, reactivateInstancia, type InstanciaComun } from "@/lib/instancias";
 import { useSession } from "@/lib/session-context";
-import { ConfirmDialog } from "./ConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EstadoBadge } from "./EstadoBadge";
 import { InstanciaComentarios } from "./InstanciaComentarios";
+import { BackButton } from "@/components/layout/BackButton";
 
 // Sin tabs, a diferencia de la ficha de Estudiante (StudentProfile): acá es un único panel de datos + comentarios.
 // volverAEstudiante: se llegó desde la ficha del estudiante (ver StudentInstanciasPanel), así que "Volver" regresa a esa ficha, en la pestaña de instancias, en vez de al listado general.
@@ -92,10 +92,7 @@ export function InstanciaDetalle({
     return (
       <div className="grow overflow-auto">
         <div className="max-w-[700px] mx-auto w-full px-4 py-5">
-          <Link href="/instancias" className="btn btn-link no-underline mb-3 gap-1">
-            <ArrowLeft size={16} aria-hidden />
-            Volver a instancias
-          </Link>
+          <BackButton href="/instancias" label="Volver a instancias" />
           <div role="alert" className="alert alert-error alert-soft text-sm">
             <span>{errorCarga || "Instancia no encontrada."}</span>
           </div>
@@ -107,13 +104,7 @@ export function InstanciaDetalle({
   return (
     <div className="grow overflow-auto">
       <div className="max-w-[700px] mx-auto w-full px-4 py-5">
-        <Link
-          href={volverAEstudiante ? `/estudiantes/${instancia.idEstudiante}?tab=instancias` : "/instancias"}
-          className="btn btn-link no-underline mb-3 gap-1"
-        >
-          <ArrowLeft size={16} aria-hidden />
-          {volverAEstudiante ? "Volver al estudiante" : "Volver a instancias"}
-        </Link>
+        <BackButton href={volverAEstudiante ? `/estudiantes/${instancia.idEstudiante}?tab=instancias` : "/instancias"} label={volverAEstudiante ? "Volver al estudiante" : "Volver a instancias"} />
 
         {error ? (
           <div role="alert" className="alert alert-error alert-soft text-sm mb-4">

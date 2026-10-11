@@ -2,11 +2,12 @@
 
 import { cloneElement, isValidElement, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, HeartPulse, MapPin, Phone, Plus, User, Users, X } from "lucide-react";
+import { HeartPulse, MapPin, Phone, Plus, User, Users, X } from "lucide-react";
 import { apiErrorMessage, ApiError } from "@/lib/api";
 import { isValidUruguayanCi } from "@/lib/document-validation";
 import { listGroups, type Group } from "@/lib/groups";
 import { listItrs, type Itr } from "@/lib/itrs";
+import { BackButton } from "@/components/layout/BackButton";
 import {
   NRO_PUERTA_INVALIDO_MSG,
   TELEFONO_INVALIDO_MSG,
@@ -366,14 +367,7 @@ export function StudentForm(props: StudentFormProps) {
   return (
     <div className="grow overflow-auto">
       <div className="max-w-[720px] mx-auto w-full px-4 py-5">
-        <button
-          type="button"
-          className="btn btn-link btn-sm pl-0 no-underline mb-2 gap-1"
-          onClick={() => router.back()}
-        >
-          <ArrowLeft size={14} aria-hidden />
-          Cancelar
-        </button>
+        <BackButton onClick={() => router.back()} label="Cancelar" />
 
         <h1 className="text-xl font-bold mb-1">{esEdicion ? "Editar estudiante" : "Nuevo estudiante"}</h1>
         {!esEdicion ? (

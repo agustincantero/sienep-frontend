@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { BackendError, backendJson } from "@/lib/backend";
 import { InstanciaForm } from "@/components/instancias/InstanciaForm";
 import { SinPermiso } from "@/components/layout/SinPermiso";
 import { tienePermiso } from "@/lib/current-user";
 import type { InstanciaComun } from "@/lib/instancias";
+import { BackButton } from "@/components/layout/BackButton";
 
 export const metadata: Metadata = {
   title: "Nueva instancia · SIENEP",
@@ -33,10 +32,7 @@ export default async function NuevaInstanciaPage({
       return (
         <div className="grow overflow-auto">
           <div className="max-w-[600px] mx-auto w-full px-4 py-5">
-            <Link href="/instancias" className="btn btn-link no-underline mb-3 gap-1">
-              <ArrowLeft size={16} aria-hidden />
-              Volver a instancias
-            </Link>
+            <BackButton href="/instancias" label="Volver a instancias" />
             <div role="alert" className="alert alert-error alert-soft text-sm">
               <span>{err instanceof BackendError ? err.message : "No se pudo cargar la instancia a clonar."}</span>
             </div>

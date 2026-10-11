@@ -6,17 +6,20 @@ type ConfirmDialogProps = {
   open: boolean;
   title: string;
   message: string;
+  // Advertencia opcional, destacada debajo del mensaje (ej. procesos abiertos antes de una baja).
+  aviso?: string | null;
   confirmLabel: string;
   destructive?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 };
 
-// Componente 100% genérico, compartido entre Instancias e Incidencias (components/incidencias/ lo importa desde acá en vez de duplicarlo).
+// Reemplaza window.confirm(): permite marcar la acción como destructiva (botón rojo) y mantiene el lenguaje visual de la app, cosa que el confirm nativo del navegador no puede.
 export function ConfirmDialog({
   open,
   title,
   message,
+  aviso,
   confirmLabel,
   destructive,
   onConfirm,
@@ -36,6 +39,11 @@ export function ConfirmDialog({
       <div className="modal-box">
         <h3 className="text-lg font-semibold">{title}</h3>
         <p className="py-3 text-sm text-base-content/70 wrap-anywhere">{message}</p>
+        {aviso ? (
+          <div role="alert" className="alert alert-warning alert-soft text-sm">
+            <span>{aviso}</span>
+          </div>
+        ) : null}
         <div className="modal-action">
           <button type="button" className="btn" onClick={onCancel}>
             Cancelar

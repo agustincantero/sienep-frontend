@@ -25,13 +25,19 @@ Forma parte del **Proyecto Final de Tecnicatura** del cuarto semestre de la **Li
 
 En construcción. Lo que ya funciona:
 
-- **Autenticación**: login con email/contraseña y con Google (Google Identity Services), "olvidé mi contraseña" y restablecimiento, todo conectado a la API. Si el usuario está `PENDIENTE_DE_ACTIVACION` (alta reciente, contraseña temporal), se lo fuerza a elegir contraseña nueva antes de entrar a la app: `SetPasswordForm` lo resuelve ahí mismo en el login, y `SetPasswordScreen` hace de respaldo cuando se llega con una sesión que ya estaba iniciada.
+- **Autenticación**: login con email/contraseña, con Google (Google Identity Services) y con cuenta UTEC (Active Directory, `/auth/ad`), "olvidé mi contraseña" y restablecimiento, todo conectado a la API. Si el usuario está `PENDIENTE_DE_ACTIVACION` (alta reciente, contraseña temporal), se lo fuerza a elegir contraseña nueva antes de entrar a la app: `SetPasswordForm` lo resuelve ahí mismo en el login, y `SetPasswordScreen` hace de respaldo cuando se llega con una sesión que ya estaba iniciada.
 - **Sesión**: el JWT del backend viaja en una cookie `httpOnly` que el JavaScript no puede leer. Un proxy propio (`src/app/api/**`) recibe las llamadas del cliente, saca el token de la cookie y lo reenvía a la API como `Authorization: Bearer`. El acceso al área autenticada se valida contra `GET /auth/me`; sin sesión válida, redirige a `/login`. Si la sesión muere en medio del uso, un modal no descartable (`SesionExpiradaModal`) obliga a volver a `/login`.
 - **Inicio** (`/`): panel post-login con accesos a los módulos, filtrados según el `tipo` de usuario (funcionario/estudiante) y sus `permisos`.
-- **Estudiantes**: primer módulo completo: listado con búsqueda/filtros/paginación, alta, ficha (datos, comentarios normales y confidenciales, informes médicos adjuntos), edición, foto de perfil, asignación de grupo e ITR, desactivar/reactivar y reenvío de contraseña temporal.
+- **Estudiantes**: listado con búsqueda/filtros/paginación, alta, ficha (datos, comentarios normales y confidenciales, informes médicos adjuntos), edición, foto de perfil, asignación de grupo e ITR, desactivar/reactivar y reenvío de contraseña temporal. La ficha también muestra las instancias e incidencias del estudiante.
+- **Instancias** e **Incidencias**: listado con filtros, alta, detalle y edición; las instancias llevan comentarios y las incidencias, involucrados.
+- **Roles**: listado, alta y edición de roles con sus permisos agrupados por dominio.
+- **Auditoría**: listado de eventos (quién hizo qué, y cuándo).
+- **Catálogos**: carreras, grupos, ITRs y categorías de instancia y de recordatorio, con alta y edición por catálogo (`/catalogos/[catalogo]`). Falta commitear la página de listado de cada catálogo.
+- **Perfil del estudiante** (`/perfil`): autoservicio con sus datos, contacto editable, cambio de contraseña y sus propias instancias e incidencias.
+- **Autorización**: la navegación se filtra por los `permisos` del usuario, y cada página de módulo vuelve a chequear el permiso en el server (`SinPermiso` si falta).
 - **Estructura de página**: `TopBar` en toda pantalla autenticada, `Sidebar` dentro de las secciones de funcionario. Las pantallas sin sesión (login, recuperación) y la página 404 comparten otra estructura, con `Footer`.
 
-Módulos planeados (11): Autenticación, Estudiantes, Instancias, Incidencias, Recordatorios, Funcionarios, Roles, Catálogos, Auditoría, Reportes, Perfil Estudiante. De estos, Autenticación y Estudiantes ya están implementados; el resto todavía no tiene páginas propias. La capa de datos quedó resuelta con un cliente `fetch` propio en `src/lib/api.ts` (`apiGet`/`apiPost`/`apiPut`/`apiPatch`/`apiDelete`, más variantes `*Form` para `multipart/form-data`).
+Módulos planeados (11): Autenticación, Estudiantes, Instancias, Incidencias, Recordatorios, Funcionarios, Roles, Catálogos, Auditoría, Reportes, Perfil Estudiante. Todavía no tienen páginas propias Recordatorios, Funcionarios y Reportes (sus ítems del menú ya existen y dan 404). La capa de datos quedó resuelta con un cliente `fetch` propio en `src/lib/api.ts` (`apiGet`/`apiPost`/`apiPut`/`apiPatch`/`apiDelete`, más variantes `*Form` para `multipart/form-data`).
 
 ## UI y estilos
 
@@ -42,9 +48,9 @@ Módulos planeados (11): Autenticación, Estudiantes, Instancias, Incidencias, R
 
 ## Estructura del código
 
-- `src/app/`: rutas de Next.js (App Router). `(auth)/` tiene el login y la recuperación de contraseña; `(app)/` es el área autenticada, con `(secciones)/` para las páginas de módulo (hoy solo `estudiantes/`); `api/` es el proxy al backend.
-- `src/components/`: `auth/` (pantallas sin sesión), `layout/` (TopBar, Sidebar, Footer y demás piezas de la estructura de página), `students/` (módulo Estudiantes) y `ui/` (bloques reutilizables de listado).
-- `src/lib/`: acceso a la API y lógica de dominio. `api.ts`, `auth.ts`, `session.ts`, `current-user.ts` y `session-context.tsx` manejan la sesión y las llamadas HTTP; `students.ts`, `groups.ts`, `itrs.ts`, `comments.ts` y `medical-reports.ts` son del módulo Estudiantes; `nav-items.ts` define la navegación.
+- `src/app/`: rutas de Next.js (App Router). `(auth)/` tiene el login y la recuperación de contraseña; `(app)/` es el área autenticada, con `(secciones)/` para las páginas de módulo (`estudiantes/`, `instancias/`, `incidencias/`, `roles/`, `auditoria/`, `catalogos/` y `perfil/`); `api/` es el proxy al backend.
+- `src/components/`: `auth/` (pantallas sin sesión), `layout/` (TopBar, Sidebar, Footer y demás piezas de la estructura de página), `ui/` (bloques reutilizables) y una carpeta por módulo (`students/`, `instancias/`, `incidencias/`, `roles/`, `audit/`, `catalogos/`, `perfil/`).
+- `src/lib/`: acceso a la API y lógica de dominio. `api.ts`, `auth.ts`, `auth-handlers.ts`, `auth-paths.ts`, `session.ts`, `backend.ts`, `current-user.ts` y `session-context.tsx` manejan la sesión y las llamadas HTTP; `nav-items.ts` define la navegación y `permisos.ts` agrupa el catálogo de permisos; el resto son tipos y funciones por módulo (`students.ts`, `instancias.ts`, `incidencias.ts`, `roles.ts`, `audit.ts`, `catalogos-tabs.ts`, etc.).
 
 ## Componentes disponibles
 
@@ -55,10 +61,12 @@ Normalmente **no** se instancian a mano: ya vienen puestos por los layouts de `s
 | Componente | Qué es / dónde | Props |
 |---|---|---|
 | `AppShell` | Estructura de toda pantalla autenticada: `TopBar` arriba + contenido. La incluye `(app)/layout.tsx`. | `children` |
-| `TopBar` | Barra superior: logo; a la derecha avatar + nombre/rol + menú con "Cerrar sesión". | `userName`, `userRole`, `onLogout` |
+| `TopBar` | Barra superior: logo; a la derecha avatar + nombre/rol + menú con "Cerrar sesión". | `userName`, `userRole`, `urlFoto?`, `onLogout` |
 | `Footer` | Pie de página de las pantallas sin sesión y de la 404 (lo incluye `AuthLayout`). El área autenticada no lo usa. | - |
 | `SeccionShell` | Estructura de página de los módulos. Funcionario → `Sidebar` + botón "Menú" mobile + contenido. Estudiante → `BackButton` + contenido. Lo incluye `(app)/(secciones)/layout.tsx`. | `children` |
 | `Sidebar` | Nav lateral de funcionario, filtrada por los `permisos` del usuario; offcanvas en mobile. Devuelve `null` para estudiante. | `show`, `onClose` |
+| `SinPermiso` | Pantalla que muestran las páginas de módulo cuando el usuario no tiene el permiso requerido. | `volverHref`, `volverLabel` |
+| `ErrorPantalla`, `PantallaCard`, `PantallaCargando` | Pantallas de error y de carga de los `error.tsx` / `loading.tsx`, en variante `"seccion"` o `"auth"`. | `variante` (`ErrorPantalla` además `error`, `retry`) |
 | `SesionExpiradaModal` | Modal no descartable que se abre al evento `SESION_EXPIRADA` (`src/lib/api.ts`); fuerza `window.location.href = "/login"`. Montado en `AppShell`. | - |
 | `BackButton` | Link con flecha para volver. | `href`, `label?` (default `"Volver al inicio"`) |
 | `Logo` | Isotipo "SIENEP" (`next/image`), dos variantes. | `variant?` (`"blanco"` \| `"negro"`, default `"blanco"`), `className?` |
@@ -70,6 +78,7 @@ Normalmente **no** se instancian a mano: ya vienen puestos por los layouts de `s
 | `AuthLayout` | Estructura de página de las pantallas sin sesión: `LoginBackground` de fondo, logo arriba, `Footer` abajo. | `children` |
 | `AuthCard` | Card blanca centrada dentro de `AuthLayout`. | `title`, `description?`, `focusOnMount?`, `children` |
 | `LoginBackground` | Fondo decorativo: tres fotos del campus que se funden lentamente entre sí, con un velo celeste para que el texto blanco de encima tenga contraste. | - |
+| `UtecLoginForm` | Formulario de login con cuenta UTEC (AD); se abre desde `LoginForm`. | `onSuccess`, `onVolver` |
 | `LoginForm`, `ForgotPasswordForm`, `ResetPasswordForm`, `SetPasswordForm` | Formularios de login, pedido de recuperación, restablecimiento con token y cambio de contraseña obligatorio (`PENDIENTE_DE_ACTIVACION`). | propios de cada uno |
 | `GoogleLoginButton` | Botón de login con Google (Google Identity Services); deshabilitado sin `NEXT_PUBLIC_GOOGLE_CLIENT_ID`. | `onSuccess`, `onError` |
 | `PasswordInput` | Campo de contraseña con toggle de visibilidad. | `label`, `value`, `onChange`, `autoComplete`, `disabled?`, `required?`, `error?`, `hint?`, `errorId?` |
@@ -81,23 +90,27 @@ Normalmente **no** se instancian a mano: ya vienen puestos por los layouts de `s
 |---|---|---|
 | `StudentsListView` | Vista de listado: `Toolbar` + `DataTable` + `PaginationFooter` conectados a `GET /estudiantes`. | - |
 | `StudentForm` | Alta y edición; secciones en `fieldset`s: datos personales, dirección, teléfonos, grupos (filtrado por ITR y carrera) e información de salud. | `{ mode: "crear" }` \| `{ mode: "editar", estudianteId, estudiante }` |
-| `StudentProfile` | Ficha del estudiante en tabs: datos generales, salud (confidencial, según permiso), instancias e incidencias (placeholder hasta que exista ese módulo), informes médicos y comentarios. | `idEstudiante` |
+| `StudentProfile` | Ficha del estudiante en tabs: datos generales, salud (confidencial, según permiso), instancias e incidencias (`StudentInstanciasPanel`), informes médicos y comentarios. | `idEstudiante`, `tabInicial?` |
 | `StudentCommentsPanel` | Comentarios normales y confidenciales, paginados. | `idEstudiante` |
 | `MedicalReportsPanel` | Informes médicos adjuntos: listar, subir, borrar. | `idEstudiante` |
 | `StudentAvatar` | Foto de perfil (proxy autenticado) o iniciales si no hay foto o la imagen falla al cargar. | `nombre`, `apellido`, `urlFoto?`, `size?` (`"sm"` \| `"lg"`) |
 | `EstadoBadge` | Chip de estado del estudiante (Activo/Inactivo/etc.), colores vía `describeEstado()` en `src/lib/students.ts`. | `estado` |
-| `ConfirmDialog` | Reemplazo de `window.confirm()` para acciones como desactivar o reenviar contraseña; variante destructiva en rojo. | `open`, `title`, `message`, `confirmLabel`, `destructive?`, `onConfirm`, `onCancel` |
 
 ### Bloques de listado (`src/components/ui/`)
 
-Reutilizables para las páginas de cualquier módulo (hoy en uso en Estudiantes).
+Reutilizables para las páginas de cualquier módulo.
 
 | Componente | Qué es | Props |
 |---|---|---|
 | `SectionHeader` | Encabezado de sección: título + botón de acción opcional (ej. "Nuevo…"). | `title`, `action?` (texto del botón), `onAction?` |
 | `Toolbar` | Barra de búsqueda + `select`s de filtro, controlada por props. | `placeholder`, `searchValue?`, `onSearchChange?`, `filters?` (`{ label, emptyLabel, options, value?, onChange? }[]`) |
 | `DataTable` | `<table>` de daisyUI: recibe `headers` y las filas como `children` (`<tr>…`). | `headers: string[]`, `children` |
+| `ConfirmDialog` | Reemplazo de `window.confirm()` para acciones como desactivar o reenviar contraseña; variante destructiva en rojo y `aviso` opcional. | `open`, `title`, `message`, `aviso?`, `confirmLabel`, `destructive?`, `onConfirm`, `onCancel` |
 | `PaginationFooter` | Pie de listado: "Mostrando X de Y …" + Anterior / Siguiente. | `shown`, `total`, `noun`, `hasPrevious?`, `hasNext?`, `onPrevious?`, `onNext?` |
+
+### Otros módulos
+
+`instancias/`, `incidencias/`, `roles/`, `audit/`, `catalogos/` y `perfil/` siguen el mismo patrón: la `page.tsx` (Server Component) chequea el permiso y delega en un `*ListView` / `*Detalle` / `*Form` cliente que usa `src/lib/<modulo>.ts`. Se reutilizan entre módulos `EstadoBadge`, `InstanciasTabla`, `InstanciaComentarios` y `EstudianteSelector` (de `instancias/`).
 
 ### Íconos
 
