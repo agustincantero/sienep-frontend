@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { BackendError, backendJson } from "@/lib/backend";
 import { CatalogoForm } from "@/components/catalogos/CatalogoForm";
 import { BackButton } from "@/components/layout/BackButton";
@@ -17,10 +17,13 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 function Aviso({ volverHref, mensaje }: { volverHref: string; mensaje: string }) {
   return (
     <div className="grow overflow-auto">
-      <div className="max-w-[600px] mx-auto w-full px-4 py-5">
-        <BackButton href={volverHref} label="Volver a catálogos" />
-        <div role="alert" className="alert alert-error alert-soft text-sm">
-          <span>{mensaje}</span>
+      {/* Mismo contenedor que el formulario (CatalogoFormLayout): alineado con el listado. */}
+      <div className="max-w-[1200px] mx-auto w-full px-4 py-5">
+        <div className="max-w-[600px]">
+          <BackButton href={volverHref} label="Volver a catálogos" />
+          <div role="alert" className="alert alert-error alert-soft text-sm">
+            <span>{mensaje}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -31,7 +34,8 @@ function Aviso({ volverHref, mensaje }: { volverHref: string; mensaje: string })
 export default async function EditarItemCatalogoPage({ params }: Params) {
   const { catalogo, id } = await params;
   const definicion = buscarCatalogo(catalogo);
-  if (!definicion) notFound();
+  // Mismo criterio que el listado ([catalogo]/page.tsx): catálogo inexistente redirige a /catalogos en vez de notFound().
+  if (!definicion) redirect("/catalogos");
   const volverHref = hrefListado(definicion.id);
 
   if (!(await tienePermiso(definicion.permisos.editar))) {
