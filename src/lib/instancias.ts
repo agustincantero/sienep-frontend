@@ -10,8 +10,11 @@ export type InstanciaComun = {
   canal: string | null;
   idEstudiante: number;
   nombreEstudiante: string;
+  // Documentos del estudiante y del funcionario, para mostrarlos junto al nombre en la ficha; opcionales por si el backend no los envía.
+  documentoEstudiante?: string | null;
   idFuncionario: number;
   nombreFuncionario: string;
+  documentoFuncionario?: string | null;
   idCategoria: number;
   nombreCategoria: string;
   estado: string;

@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { BackendError, backendJson } from "@/lib/backend";
 import { CatalogoForm } from "@/components/catalogos/CatalogoForm";
+import { BackButton } from "@/components/layout/BackButton";
 import { SinPermiso } from "@/components/layout/SinPermiso";
 import { buscarCatalogo, hrefListado } from "@/lib/catalogos-tabs";
 import { tienePermiso } from "@/lib/current-user";
@@ -19,10 +18,7 @@ function Aviso({ volverHref, mensaje }: { volverHref: string; mensaje: string })
   return (
     <div className="grow overflow-auto">
       <div className="max-w-[600px] mx-auto w-full px-4 py-5">
-        <Link href={volverHref} className="btn btn-link no-underline mb-3 gap-1">
-          <ArrowLeft size={16} aria-hidden />
-          Volver a catálogos
-        </Link>
+        <BackButton href={volverHref} label="Volver a catálogos" />
         <div role="alert" className="alert alert-error alert-soft text-sm">
           <span>{mensaje}</span>
         </div>

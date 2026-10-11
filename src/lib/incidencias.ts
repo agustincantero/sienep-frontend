@@ -11,8 +11,11 @@ export type Incidencia = {
   lugar: string;
   idEstudiante: number;
   nombreEstudiante: string;
+  // Documentos del estudiante y del funcionario, para mostrarlos junto al nombre en la ficha; opcionales por si el backend no los envía.
+  documentoEstudiante?: string | null;
   idFuncionario: number;
   nombreFuncionario: string;
+  documentoFuncionario?: string | null;
   estado: string;
   createdAt: string;
   updatedAt: string;

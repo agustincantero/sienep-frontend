@@ -121,10 +121,9 @@ export const FUNCIONARIO_NAV: NavGroup[] = [
 
 // Self-service del estudiante: sin permiso, el filtro por `tipo` ya alcanza.
 export const ESTUDIANTE_NAV: NavItem[] = [
-  // "Mis instancias" y "Mis incidencias" no tienen página propia: se listan dentro de "Mi perfil" (MisInstanciasCard), y el ancla lleva directo a esa sección.
-  { key: "perfil-estudiante", href: "/perfil", icon: User, title: "Mi perfil", desc: "Tus datos personales y tu contraseña." },
-  { key: "mis-incidencias", href: "/perfil#mis-incidencias", icon: TriangleAlert, title: "Mis incidencias", desc: "Incidencias registradas sobre vos." },
-  { key: "mis-instancias", href: "/perfil#mis-instancias", icon: Calendar, title: "Mis instancias", desc: "Reuniones y seguimientos agendados." },
+  { key: "perfil-estudiante", href: "/perfil", icon: User, title: "Mi perfil", desc: "Tus datos personales, tu contacto y tu contraseña." },
+  { key: "mis-incidencias", href: "/perfil/incidencias", icon: TriangleAlert, title: "Mis incidencias", desc: "Incidencias registradas sobre vos." },
+  { key: "mis-instancias", href: "/perfil/instancias", icon: Calendar, title: "Mis instancias", desc: "Reuniones y seguimientos agendados." },
 ];
 
 // El usuario ve el ítem si no tiene requisitos de permiso, o si tiene al menos

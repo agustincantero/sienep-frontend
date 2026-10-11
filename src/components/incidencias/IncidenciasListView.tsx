@@ -12,7 +12,7 @@ import {
 } from "@/lib/incidencias";
 import { listStudents, type Page, type StudentSummary } from "@/lib/students";
 import { useSession } from "@/lib/session-context";
-import { ConfirmDialog } from "@/components/instancias/ConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { PaginationFooter } from "@/components/ui/PaginationFooter";
 import { InstanciasTabla } from "@/components/instancias/InstanciasTabla";
 import { Toolbar, type ToolbarFilter } from "@/components/ui/Toolbar";

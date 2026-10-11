@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ShieldAlert } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 import { BackendError, backendJson } from "@/lib/backend";
 import { SinPermiso } from "@/components/layout/SinPermiso";
 import { RolForm } from "@/components/roles/RolForm";
 import { tienePermiso } from "@/lib/current-user";
 import { esRolProtegido, type Rol } from "@/lib/roles";
+import { BackButton } from "@/components/layout/BackButton";
 
 export const metadata: Metadata = {
   title: "Editar rol · SIENEP",
@@ -26,10 +27,7 @@ export default async function EditarRolPage({ params }: { params: Promise<{ id: 
     return (
       <div className="grow overflow-auto">
         <div className="max-w-[720px] mx-auto w-full px-4 py-5">
-          <Link href="/roles" className="btn btn-link no-underline mb-3 gap-1">
-            <ArrowLeft size={16} aria-hidden />
-            Volver a roles
-          </Link>
+          <BackButton href="/roles" label="Volver a roles" />
           <div role="alert" className="alert alert-error alert-soft text-sm">
             <span>{err instanceof BackendError ? err.message : "No se pudo cargar el rol."}</span>
           </div>

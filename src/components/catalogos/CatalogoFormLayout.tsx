@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowLeft, type LucideIcon } from "lucide-react";
+import { type LucideIcon } from "lucide-react";
+import { BackButton } from "@/components/layout/BackButton";
 
 type CatalogoFormLayoutProps = {
   titulo: string;
@@ -35,10 +36,7 @@ export function CatalogoFormLayout({
   return (
     <div className="grow overflow-auto">
       <div className="max-w-[600px] mx-auto w-full px-4 py-5">
-        <button type="button" className="btn btn-link btn-sm pl-0 no-underline mb-2 gap-1" onClick={() => router.back()}>
-          <ArrowLeft size={14} aria-hidden />
-          Cancelar
-        </button>
+        <BackButton onClick={() => router.back()} label="Cancelar" />
 
         <h1 className="text-xl font-bold mb-1">{titulo}</h1>
         <div className="text-sm text-base-content/60 mb-4 space-y-1">{leyenda}</div>

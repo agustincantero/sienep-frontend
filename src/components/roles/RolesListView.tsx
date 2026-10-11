@@ -16,7 +16,7 @@ import { useSession } from "@/lib/session-context";
 import { DataTable } from "@/components/ui/DataTable";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Toolbar, type ToolbarFilter } from "@/components/ui/Toolbar";
-import { ConfirmDialog } from "@/components/students/ConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EstadoRolBadge } from "./EstadoRolBadge";
 
 // /roles no tiene ?estado=TODOS (el enum del backend es ACTIVO/INACTIVO/ELIMINADO/PENDIENTE_DE_ACTIVACION, y Rol nunca usa los últimos dos): "Todos" en el filtro pide ambos estados en paralelo y los junta acá, en vez de ser un valor real de la API.

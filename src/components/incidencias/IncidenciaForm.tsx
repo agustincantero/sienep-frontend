@@ -2,11 +2,13 @@
 
 import { cloneElement, isValidElement, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, TriangleAlert, User } from "lucide-react";
+import { TriangleAlert, User } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { createIncidencia, updateIncidencia, type Incidencia, type IncidenciaInput } from "@/lib/incidencias";
+import { ahoraParaInputLocal } from "@/lib/format";
 import { getStudent } from "@/lib/students";
 import { EstudianteSelector, type EstudianteElegido } from "@/components/instancias/EstudianteSelector";
+import { BackButton } from "@/components/layout/BackButton";
 
 const TITULO_MAX = 150;
 const LUGAR_MAX = 50;
@@ -60,6 +62,8 @@ export function IncidenciaForm(props: IncidenciaFormProps) {
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState("");
   const [guardando, setGuardando] = useState(false);
+  // Una incidencia registra algo que ya ocurrió: no puede quedar en el futuro.
+  const ahora = ahoraParaInputLocal();
 
   // Con estudiante fijo (alta desde la ficha) hay que resolver su nombre para mostrarlo; si el rol no puede leer la ficha, queda el número.
   useEffect(() => {
@@ -146,14 +150,7 @@ export function IncidenciaForm(props: IncidenciaFormProps) {
   return (
     <div className="grow overflow-auto">
       <div className="max-w-[600px] mx-auto w-full px-4 py-5">
-        <button
-          type="button"
-          className="btn btn-link btn-sm pl-0 no-underline mb-2 gap-1"
-          onClick={() => router.back()}
-        >
-          <ArrowLeft size={14} aria-hidden />
-          Cancelar
-        </button>
+        <BackButton onClick={() => router.back()} label="Cancelar" />
 
         <h1 className="text-xl font-bold mb-4">{esEdicion ? "Editar incidencia" : "Nueva incidencia"}</h1>
 
@@ -219,6 +216,8 @@ export function IncidenciaForm(props: IncidenciaFormProps) {
                   type="datetime-local"
                   className={`input w-full${errores.fechaHora ? " input-error" : ""}`}
                   value={form.fechaHora}
+                  max={ahora}
+                  suppressHydrationWarning
                   onChange={(e) => campo("fechaHora", e.target.value)}
                   disabled={guardando}
                   required

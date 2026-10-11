@@ -22,6 +22,12 @@ export function formatFechaHora(fechaIso: string): string {
   return `${formatFecha(fecha)} ${hora.slice(0, 5)}`;
 }
 
+// Fecha y hora actual en el formato de un <input type="datetime-local"> ("2026-09-15T14:30"), en hora local del navegador (toISOString la daría en UTC).
+export function ahoraParaInputLocal(): string {
+  const ahora = new Date();
+  return new Date(ahora.getTime() - ahora.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
 // Iniciales para el avatar de respaldo (estudiante sin foto subida).
 export function iniciales(nombre: string, apellido: string): string {
   return `${nombre.charAt(0)}${apellido.charAt(0)}`.toUpperCase();

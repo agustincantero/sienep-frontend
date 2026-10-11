@@ -2,11 +2,19 @@
 
 import { cloneElement, isValidElement, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, HeartPulse, MapPin, Phone, Plus, User, Users, X } from "lucide-react";
+import { HeartPulse, MapPin, Phone, Plus, User, Users, X } from "lucide-react";
 import { apiErrorMessage, ApiError } from "@/lib/api";
 import { isValidUruguayanCi } from "@/lib/document-validation";
 import { listGroups, type Group } from "@/lib/groups";
 import { listItrs, type Itr } from "@/lib/itrs";
+import { BackButton } from "@/components/layout/BackButton";
+import {
+  NRO_PUERTA_INVALIDO_MSG,
+  TELEFONO_INVALIDO_MSG,
+  TELEFONO_REGEX,
+  TEXTO_INVALIDO_MSG,
+  TEXTO_REGEX,
+} from "@/lib/validaciones-estudiante";
 import {
   createStudent,
   updateStudent,
@@ -27,12 +35,7 @@ const PAISES = [
   { codigo: "PER", nombre: "Perú" },
 ];
 
-// Mismo patrón para nombre/apellido/ciudad/departamento/calle/sistemaSalud —
-// EstudianteRequestDTO/UpdateDTO usan exactamente este regex en los seis.
-const TEXTO_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9 ]+$/;
 const DOCUMENTO_REGEX = /^[A-Za-z0-9]+$/;
-const TELEFONO_REGEX = /^[0-9]{8,12}$/;
-const TEXTO_INVALIDO_MSG = "Solo se permiten letras, números y espacios.";
 
 type FormState = {
   nombre: string;
@@ -275,7 +278,7 @@ export function StudentForm(props: StudentFormProps) {
     if (form.nroPuerta) {
       const n = Number(form.nroPuerta);
       if (!Number.isInteger(n) || n < 1 || n > 9999) {
-        e.nroPuerta = "Tiene que ser un número entero entre 1 y 9999.";
+        e.nroPuerta = NRO_PUERTA_INVALIDO_MSG;
       }
     }
     if (form.ciudad.trim() && !TEXTO_REGEX.test(form.ciudad)) {
@@ -286,7 +289,7 @@ export function StudentForm(props: StudentFormProps) {
     }
     form.telefonos.forEach((tel, idx) => {
       if (tel.trim() && !TELEFONO_REGEX.test(tel.trim())) {
-        e[`telefono-${idx}`] = "Tiene que tener entre 8 y 12 dígitos numéricos.";
+        e[`telefono-${idx}`] = TELEFONO_INVALIDO_MSG;
       }
     });
     if (form.sistemaSalud.trim() && !TEXTO_REGEX.test(form.sistemaSalud)) {
@@ -364,14 +367,7 @@ export function StudentForm(props: StudentFormProps) {
   return (
     <div className="grow overflow-auto">
       <div className="max-w-[720px] mx-auto w-full px-4 py-5">
-        <button
-          type="button"
-          className="btn btn-link btn-sm pl-0 no-underline mb-2 gap-1"
-          onClick={() => router.back()}
-        >
-          <ArrowLeft size={14} aria-hidden />
-          Cancelar
-        </button>
+        <BackButton onClick={() => router.back()} label="Cancelar" />
 
         <h1 className="text-xl font-bold mb-1">{esEdicion ? "Editar estudiante" : "Nuevo estudiante"}</h1>
         {!esEdicion ? (
