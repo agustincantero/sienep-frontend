@@ -17,10 +17,13 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 function Aviso({ volverHref, mensaje }: { volverHref: string; mensaje: string }) {
   return (
     <div className="grow overflow-auto">
-      <div className="max-w-[600px] mx-auto w-full px-4 py-5">
-        <BackButton href={volverHref} label="Volver a catálogos" />
-        <div role="alert" className="alert alert-error alert-soft text-sm">
-          <span>{mensaje}</span>
+      {/* Mismo contenedor que el formulario (CatalogoFormLayout): alineado con el listado. */}
+      <div className="max-w-[1200px] mx-auto w-full px-4 py-5">
+        <div className="max-w-[600px]">
+          <BackButton href={volverHref} label="Volver a catálogos" />
+          <div role="alert" className="alert alert-error alert-soft text-sm">
+            <span>{mensaje}</span>
+          </div>
         </div>
       </div>
     </div>

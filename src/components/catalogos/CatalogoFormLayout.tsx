@@ -35,44 +35,47 @@ export function CatalogoFormLayout({
 
   return (
     <div className="grow overflow-auto">
-      <div className="max-w-[600px] mx-auto w-full px-4 py-5">
-        <BackButton onClick={() => router.back()} label="Cancelar" />
+      {/* Mismo contenedor que el listado (CatalogosView) y la columna de 600px adentro, alineada a la izquierda: así el contenido no salta al medio al pasar del listado al formulario. */}
+      <div className="max-w-[1200px] mx-auto w-full px-4 py-5">
+        <div className="max-w-[600px]">
+          <BackButton onClick={() => router.back()} label="Cancelar" />
 
-        <h1 className="text-xl font-bold mb-1">{titulo}</h1>
-        <div className="text-sm text-base-content/60 mb-4 space-y-1">{leyenda}</div>
+          <h1 className="text-xl font-bold mb-1">{titulo}</h1>
+          <div className="text-sm text-base-content/60 mb-4 space-y-1">{leyenda}</div>
 
-        {errorGeneral ? (
-          <div role="alert" className="alert alert-error alert-soft text-sm mb-4">
-            <span className="min-w-0 wrap-anywhere">{errorGeneral}</span>
-          </div>
-        ) : null}
+          {errorGeneral ? (
+            <div role="alert" className="alert alert-error alert-soft text-sm mb-4">
+              <span className="min-w-0 wrap-anywhere">{errorGeneral}</span>
+            </div>
+          ) : null}
 
-        <form
-          noValidate
-          className="space-y-6"
-          onSubmit={(e) => {
-            e.preventDefault();
-            onSubmit();
-          }}
-        >
-          <fieldset className="fieldset space-y-3 p-4 rounded-box border border-base-300">
-            <legend className="fieldset-legend text-sm font-semibold text-base-content mb-1 gap-1.5">
-              <Icon size={15} aria-hidden className="text-primary" />
-              {tituloSeccion}
-            </legend>
-            {children}
-          </fieldset>
+          <form
+            noValidate
+            className="space-y-6"
+            onSubmit={(e) => {
+              e.preventDefault();
+              onSubmit();
+            }}
+          >
+            <fieldset className="fieldset space-y-3 p-4 rounded-box border border-base-300">
+              <legend className="fieldset-legend text-sm font-semibold text-base-content mb-1 gap-1.5">
+                <Icon size={15} aria-hidden className="text-primary" />
+                {tituloSeccion}
+              </legend>
+              {children}
+            </fieldset>
 
-          <div className="flex justify-end gap-2">
-            <button type="button" className="btn btn-ghost" onClick={() => router.back()} disabled={guardando}>
-              Cancelar
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={guardando || bloquearGuardado}>
-              {guardando ? <span className="loading loading-spinner loading-sm" /> : null}
-              {submitLabel}
-            </button>
-          </div>
-        </form>
+            <div className="flex justify-end gap-2">
+              <button type="button" className="btn btn-ghost" onClick={() => router.back()} disabled={guardando}>
+                Cancelar
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={guardando || bloquearGuardado}>
+                {guardando ? <span className="loading loading-spinner loading-sm" /> : null}
+                {submitLabel}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
