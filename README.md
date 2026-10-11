@@ -68,7 +68,7 @@ Normalmente **no** se instancian a mano: ya vienen puestos por los layouts de `s
 | `SinPermiso` | Pantalla que muestran las páginas de módulo cuando el usuario no tiene el permiso requerido. | `volverHref`, `volverLabel` |
 | `ErrorPantalla`, `PantallaCard`, `PantallaCargando` | Pantallas de error y de carga de los `error.tsx` / `loading.tsx`, en variante `"seccion"` o `"auth"`. | `variante` (`ErrorPantalla` además `error`, `retry`) |
 | `SesionExpiradaModal` | Modal no descartable que se abre al evento `SESION_EXPIRADA` (`src/lib/api.ts`); fuerza `window.location.href = "/login"`. Montado en `AppShell`. | - |
-| `BackButton` | Link con flecha para volver. | `href`, `label?` (default `"Volver al inicio"`) |
+| `BackButton` | Botón "volver" con chevron: navega a un `href` o ejecuta un `onClick` (ej. "Cancelar" con `router.back()`). | `href` \| `onClick`, `label?` (default `"Volver al inicio"`) |
 | `Logo` | Isotipo "SIENEP" (`next/image`), dos variantes. | `variant?` (`"blanco"` \| `"negro"`, default `"blanco"`), `className?` |
 
 ### Autenticación (`src/components/auth/`)
