@@ -18,6 +18,8 @@ export function ErrorPantalla({ error, retry, variante }: ErrorPantallaProps) {
     console.error(error);
   }, [error]);
 
+  const esAuth = variante === "auth";
+
   const contenido = (
     <>
       <TriangleAlert size={32} aria-hidden className="text-error" />
@@ -28,15 +30,13 @@ export function ErrorPantalla({ error, retry, variante }: ErrorPantallaProps) {
       {error.digest ? (
         <p className="text-xs text-base-content/50">Código del error: {error.digest}</p>
       ) : null}
-      <div className="flex gap-2 mt-3">
-        <button type="button" className="btn btn-primary btn-sm" onClick={() => retry()}>
+      <div className={esAuth ? "flex flex-col gap-4 w-full mt-3" : "flex flex-col items-center gap-3 mt-3"}>
+        <button type="button" className={esAuth ? "btn btn-primary w-full" : "btn btn-primary btn-sm"} onClick={() => retry()}>
           Reintentar
         </button>
-        {variante === "auth" ? (
-          <Link href="/login" className="btn btn-ghost btn-sm">
-            Ir al inicio de sesión
-          </Link>
-        ) : null}
+        <Link href={esAuth ? "/login" : "/"} className="link link-hover text-sm text-center">
+          {esAuth ? "Ir al inicio de sesión" : "Volver al inicio"}
+        </Link>
       </div>
     </>
   );

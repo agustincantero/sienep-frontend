@@ -32,7 +32,7 @@ En construcción. Lo que ya funciona:
 - **Instancias** e **Incidencias**: listado con filtros, alta, detalle y edición; las instancias llevan comentarios y las incidencias, involucrados.
 - **Roles**: listado, alta y edición de roles con sus permisos agrupados por dominio.
 - **Auditoría**: listado de eventos (quién hizo qué, y cuándo).
-- **Catálogos**: carreras, grupos, ITRs y categorías de instancia y de recordatorio, con alta y edición por catálogo (`/catalogos/[catalogo]`). Falta commitear la página de listado de cada catálogo.
+- **Catálogos**: carreras, grupos, ITRs y categorías de instancia y de recordatorio, con alta y edición por catálogo (`/catalogos/[catalogo]`).
 - **Perfil del estudiante** (`/perfil`): autoservicio con sus datos, contacto editable, cambio de contraseña y sus propias instancias e incidencias.
 - **Autorización**: la navegación se filtra por los `permisos` del usuario, y cada página de módulo vuelve a chequear el permiso en el server (`SinPermiso` si falta).
 - **Estructura de página**: `TopBar` en toda pantalla autenticada, `Sidebar` dentro de las secciones de funcionario. Las pantallas sin sesión (login, recuperación) y la página 404 comparten otra estructura, con `Footer`.
@@ -68,7 +68,7 @@ Normalmente **no** se instancian a mano: ya vienen puestos por los layouts de `s
 | `SinPermiso` | Pantalla que muestran las páginas de módulo cuando el usuario no tiene el permiso requerido. | `volverHref`, `volverLabel` |
 | `ErrorPantalla`, `PantallaCard`, `PantallaCargando` | Pantallas de error y de carga de los `error.tsx` / `loading.tsx`, en variante `"seccion"` o `"auth"`. | `variante` (`ErrorPantalla` además `error`, `retry`) |
 | `SesionExpiradaModal` | Modal no descartable que se abre al evento `SESION_EXPIRADA` (`src/lib/api.ts`); fuerza `window.location.href = "/login"`. Montado en `AppShell`. | - |
-| `BackButton` | Link con flecha para volver. | `href`, `label?` (default `"Volver al inicio"`) |
+| `BackButton` | Botón "volver" con chevron: navega a un `href` o ejecuta un `onClick` (ej. "Cancelar" con `router.back()`). | `href` \| `onClick`, `label?` (default `"Volver al inicio"`) |
 | `Logo` | Isotipo "SIENEP" (`next/image`), dos variantes. | `variant?` (`"blanco"` \| `"negro"`, default `"blanco"`), `className?` |
 
 ### Autenticación (`src/components/auth/`)
