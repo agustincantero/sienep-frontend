@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { BackendError, backendJson } from "@/lib/backend";
 import { CatalogoForm } from "@/components/catalogos/CatalogoForm";
 import { BackButton } from "@/components/layout/BackButton";
@@ -34,7 +34,8 @@ function Aviso({ volverHref, mensaje }: { volverHref: string; mensaje: string })
 export default async function EditarItemCatalogoPage({ params }: Params) {
   const { catalogo, id } = await params;
   const definicion = buscarCatalogo(catalogo);
-  if (!definicion) notFound();
+  // Mismo criterio que el listado ([catalogo]/page.tsx): catálogo inexistente redirige a /catalogos en vez de notFound().
+  if (!definicion) redirect("/catalogos");
   const volverHref = hrefListado(definicion.id);
 
   if (!(await tienePermiso(definicion.permisos.editar))) {

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { CatalogoForm } from "@/components/catalogos/CatalogoForm";
 import { SinPermiso } from "@/components/layout/SinPermiso";
 import { buscarCatalogo, hrefListado } from "@/lib/catalogos-tabs";
@@ -14,7 +14,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function NuevoItemCatalogoPage({ params }: Params) {
   const definicion = buscarCatalogo((await params).catalogo);
-  if (!definicion) notFound();
+  // Mismo criterio que el listado ([catalogo]/page.tsx): catálogo inexistente redirige a /catalogos en vez de notFound().
+  if (!definicion) redirect("/catalogos");
 
   if (!(await tienePermiso(definicion.permisos.crear))) {
     return <SinPermiso volverHref={hrefListado(definicion.id)} volverLabel="Volver a catálogos" />;

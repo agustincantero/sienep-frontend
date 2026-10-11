@@ -32,7 +32,7 @@ En construcción. Lo que ya funciona:
 - **Instancias** e **Incidencias**: listado con filtros, alta, detalle y edición; las instancias llevan comentarios y las incidencias, involucrados.
 - **Roles**: listado, alta y edición de roles con sus permisos agrupados por dominio.
 - **Auditoría**: listado de eventos (quién hizo qué, y cuándo).
-- **Catálogos**: carreras, grupos, ITRs y categorías de instancia y de recordatorio, con alta y edición por catálogo (`/catalogos/[catalogo]`). Falta commitear la página de listado de cada catálogo.
+- **Catálogos**: carreras, grupos, ITRs y categorías de instancia y de recordatorio, con un listado por catálogo (`/catalogos/[catalogo]`, cada pestaña es su propia ruta) y alta y edición en páginas aparte (`/catalogos/[catalogo]/nuevo` y `/[id]/editar`). `/catalogos` redirige al primer catálogo que el usuario puede ver. Un catálogo inexistente en la URL (mal escrito o link viejo) redirige a `/catalogos` en vez de mostrar el 404: la página 404 es una pantalla de fuera de sesión y, disparada desde adentro de la app, se dibuja debajo de la TopBar.
 - **Perfil del estudiante** (`/perfil`): autoservicio con sus datos, contacto editable, cambio de contraseña y sus propias instancias e incidencias.
 - **Autorización**: la navegación se filtra por los `permisos` del usuario, y cada página de módulo vuelve a chequear el permiso en el server (`SinPermiso` si falta).
 - **Estructura de página**: `TopBar` en toda pantalla autenticada, `Sidebar` dentro de las secciones de funcionario. Las pantallas sin sesión (login, recuperación) y la página 404 comparten otra estructura, con `Footer`.
