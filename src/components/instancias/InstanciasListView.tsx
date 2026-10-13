@@ -30,7 +30,8 @@ export function InstanciasListView() {
 
   const [nomEstudiante, setNomEstudiante] = useState("");
   const [nomCategoria, setNomCategoria] = useState("");
-  const [estadoLabel, setEstadoLabel] = useState("");
+  // El listado abre mostrando las activas; "Todos" e "Inactivo" se eligen desde el filtro.
+  const [estadoLabel, setEstadoLabel] = useState("Activo");
   const [page, setPage] = useState(0);
 
   function conResetDePagina<T>(setter: (valor: T) => void) {
@@ -54,6 +55,9 @@ export function InstanciasListView() {
   const [hasNext, setHasNext] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [exito, setExito] = useState("");
+  // Se incrementa para volver a pedir la página actual después de desactivar o reactivar.
+  const [recarga, setRecarga] = useState(0);
   const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
   const [idADesactivar, setIdADesactivar] = useState<number | null>(null);
 
@@ -119,20 +123,40 @@ export function InstanciasListView() {
       cancelado = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- estudiantes/categorias solo se usan para resolver el id, no deben re-disparar el fetch por sí solos
-  }, [nomEstudiante, nomCategoria, estadoLabel, page]);
+  }, [nomEstudiante, nomCategoria, estadoLabel, page, recarga]);
 
   const instanciaADesactivar = instancias.find((i) => i.codInstancia === idADesactivar);
+
+  // Tras desactivar o reactivar: con un estado puntual filtrado, la fila ya no corresponde al listado, así que
+  // se vuelve a pedir la página (o la anterior, si era la última fila de esta) y la fila sale. En "Todos" la
+  // fila sigue correspondiendo: se le actualiza el estado en el lugar, sin moverla.
+  function reflejarCambioDeEstado(id: number, nuevoEstado: string) {
+    if (!estadoLabel) {
+      setInstancias((prev) => prev.map((i) => (i.codInstancia === id ? { ...i, estado: nuevoEstado } : i)));
+    } else if (instancias.length === 1 && page > 0) {
+      setPage(page - 1);
+    } else {
+      setRecarga((n) => n + 1);
+    }
+  }
+
+  function describir(id: number) {
+    const instancia = instancias.find((i) => i.codInstancia === id);
+    return instancia ? `: ${instancia.nombreEstudiante} (${instancia.nombreCategoria})` : "";
+  }
 
   async function confirmarDesactivar() {
     if (idADesactivar == null) return;
     const id = idADesactivar;
+    const descripcion = describir(id);
     setIdADesactivar(null);
     setAccionEnCursoId(id);
+    setExito("");
+    setError("");
     try {
       await deactivateInstancia(id);
-      setInstancias((prev) =>
-        prev.map((i) => (i.codInstancia === id ? { ...i, estado: "INACTIVO" } : i)),
-      );
+      reflejarCambioDeEstado(id, "INACTIVO");
+      setExito(`Instancia desactivada${descripcion}.`);
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo desactivar la instancia."));
     } finally {
@@ -141,12 +165,14 @@ export function InstanciasListView() {
   }
 
   async function handleReactivar(id: number) {
+    const descripcion = describir(id);
     setAccionEnCursoId(id);
+    setExito("");
+    setError("");
     try {
       await reactivateInstancia(id);
-      setInstancias((prev) =>
-        prev.map((i) => (i.codInstancia === id ? { ...i, estado: "ACTIVO" } : i)),
-      );
+      reflejarCambioDeEstado(id, "ACTIVO");
+      setExito(`Instancia activada${descripcion}.`);
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo reactivar la instancia."));
     } finally {
@@ -200,6 +226,12 @@ export function InstanciasListView() {
           searchOptions={estudiantes.map((e) => `${e.nombre} ${e.apellido}`)}
           filters={filters}
         />
+
+        {exito ? (
+          <div role="status" className="alert alert-success alert-soft text-sm mb-3">
+            <span>{exito}</span>
+          </div>
+        ) : null}
 
         {error ? (
           <div role="alert" className="alert alert-error alert-soft text-sm mb-3">
