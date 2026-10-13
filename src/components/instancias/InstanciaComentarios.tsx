@@ -21,28 +21,32 @@ const CONTENIDO_MAX = 1000;
 // Compartido entre InstanciaDetalle e IncidenciaDetalle: el backend expone comentarios normales/confidenciales sobre /instancias/{codInstancia}/... para ambos subtipos.
 export function InstanciaComentarios({ codInstancia }: { codInstancia: number }) {
   const { permisos } = useSession();
+  const puedeVerNormal = permisos.includes("VER_COMENTARIO_NORMAL_INSTANCIA");
   const puedeVerConfidencial = permisos.includes("VER_COMENTARIO_CONFIDENCIAL_INSTANCIA");
   const puedeEditarNormal = permisos.includes("EDITAR_COMENTARIO_NORMAL_INSTANCIA");
   const puedeEliminarNormal = permisos.includes("ELIMINAR_COMENTARIO_NORMAL_INSTANCIA");
 
   return (
     <div className="space-y-6 mt-4">
-      <ComentarioBox
-        titulo="Comentarios"
-        codInstancia={codInstancia}
-        puedeCrear={permisos.includes("CREAR_COMENTARIO_NORMAL_INSTANCIA")}
-        listar={listComentariosNormales}
-        crear={crearComentarioNormal}
-        acciones={
-          puedeEditarNormal || puedeEliminarNormal
-            ? {
-                idDe: (c) => c.idComentario,
-                editar: puedeEditarNormal ? editarComentarioNormal : undefined,
-                eliminar: puedeEliminarNormal ? eliminarComentarioNormal : undefined,
-              }
-            : undefined
-        }
-      />
+      {/* Sin el permiso la sección no se muestra (ni el listado ni el alta) y no se intenta la llamada, que el backend rechazaría con 403. */}
+      {puedeVerNormal ? (
+        <ComentarioBox
+          titulo="Comentarios"
+          codInstancia={codInstancia}
+          puedeCrear={permisos.includes("CREAR_COMENTARIO_NORMAL_INSTANCIA")}
+          listar={listComentariosNormales}
+          crear={crearComentarioNormal}
+          acciones={
+            puedeEditarNormal || puedeEliminarNormal
+              ? {
+                  idDe: (c) => c.idComentario,
+                  editar: puedeEditarNormal ? editarComentarioNormal : undefined,
+                  eliminar: puedeEliminarNormal ? eliminarComentarioNormal : undefined,
+                }
+              : undefined
+          }
+        />
+      ) : null}
 
       {/* Sin el permiso, ni se intenta la llamada: es un endpoint aparte que se bloquea entero, el backend igual la rechazaría con 403. */}
       {puedeVerConfidencial ? (
@@ -89,6 +93,8 @@ function ComentarioBox<T extends ComentarioInstancia>({
   const [comentarios, setComentarios] = useState<T[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  // true si la última carga falló: no se sabe si hay comentarios, así que no se afirma que no los hay.
+  const [cargaFallida, setCargaFallida] = useState(false);
   const [contenido, setContenido] = useState("");
   const [enviando, setEnviando] = useState(false);
   // Comentario en edición (uno a la vez) y su texto en curso.
@@ -103,9 +109,13 @@ function ComentarioBox<T extends ComentarioInstancia>({
     listar(codInstancia)
       .then((res) => {
         setComentarios(res.content);
+        setCargaFallida(false);
         setError("");
       })
-      .catch((err) => setError(apiErrorMessage(err, "No se pudieron cargar los comentarios.")))
+      .catch((err) => {
+        setCargaFallida(true);
+        setError(apiErrorMessage(err, "No se pudieron cargar los comentarios."));
+      })
       .finally(() => setCargando(false));
   }
 
@@ -187,7 +197,9 @@ function ComentarioBox<T extends ComentarioInstancia>({
           <span className="loading loading-spinner loading-sm" />
         </div>
       ) : comentarios.length === 0 ? (
-        <p className="text-base-content/60 text-sm mb-3">Todavía no hay comentarios.</p>
+        cargaFallida ? null : (
+          <p className="text-base-content/60 text-sm mb-3">Todavía no hay comentarios.</p>
+        )
       ) : (
         <ul className="divide-y divide-base-300 mb-3">
           {comentarios.map((c, idx) => {
