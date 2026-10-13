@@ -162,7 +162,7 @@ export function RolForm(props: RolFormProps) {
                   <input
                     id="nombre"
                     className={`input w-full${errores.nombre ? " input-error" : ""}`}
-                    placeholder="Nombre"
+                    placeholder="Nombre *"
                     value={form.nombre}
                     maxLength={50}
                     onChange={(e) => campo("nombre", e.target.value)}

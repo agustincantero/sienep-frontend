@@ -38,7 +38,8 @@ export function Campo({
     maxLength,
     disabled,
     required,
-    placeholder: label,
+    // Con el campo vacío y sin foco se ve el placeholder y no el <span>: el asterisco va en los dos.
+    placeholder: required ? `${label} *` : label,
     "aria-invalid": error ? true : undefined,
     "aria-describedby": descripcionId,
   };
