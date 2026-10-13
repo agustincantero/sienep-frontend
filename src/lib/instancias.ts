@@ -34,7 +34,7 @@ export type InstanciaListParams = {
   size?: number;
 };
 
-// Sin ?estado=, el backend devuelve solo las ACTIVAS (igual que /estudiantes sin filtro de estado).
+// Sin ?estado=, el backend devuelve solo las ACTIVAS (igual que /estudiantes sin filtro de estado). estado admite varios separados por coma ("ACTIVO,INACTIVO").
 export function listInstancias(params: InstanciaListParams = {}): Promise<Page<InstanciaComun>> {
   return apiGet<Page<InstanciaComun>>("/instancias", params);
 }
