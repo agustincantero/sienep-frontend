@@ -390,7 +390,7 @@ export function StudentForm(props: StudentFormProps) {
           <SeccionCard>
             <SeccionLegend icon={User}>Datos personales</SeccionLegend>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Nombre" fieldKey="nombre" error={errores.nombre}>
+              <Field label="Nombre" fieldKey="nombre" error={errores.nombre} required>
                 <input
                   className={`input w-full${errores.nombre ? " input-error" : ""}`}
                   placeholder="Nombre"
@@ -401,7 +401,7 @@ export function StudentForm(props: StudentFormProps) {
                   required
                 />
               </Field>
-              <Field label="Apellido" fieldKey="apellido" error={errores.apellido}>
+              <Field label="Apellido" fieldKey="apellido" error={errores.apellido} required>
                 <input
                   className={`input w-full${errores.apellido ? " input-error" : ""}`}
                   placeholder="Apellido"
@@ -415,7 +415,8 @@ export function StudentForm(props: StudentFormProps) {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Field label="Documento" fieldKey="documento" error={errores.documento}>
+              {/* En edición el documento no se puede cambiar (va deshabilitado), así que no se marca. */}
+              <Field label="Documento" fieldKey="documento" error={errores.documento} required={!esEdicion}>
                 <input
                   className={`input w-full${errores.documento ? " input-error" : ""}`}
                   placeholder="Documento"
@@ -440,7 +441,12 @@ export function StudentForm(props: StudentFormProps) {
                   ))}
                 </select>
               </Field>
-              <Field label="Fecha de nacimiento" fieldKey="fechaNacimiento" error={errores.fechaNacimiento}>
+              <Field
+                label="Fecha de nacimiento"
+                fieldKey="fechaNacimiento"
+                error={errores.fechaNacimiento}
+                required
+              >
                 <input
                   type="date"
                   className={`input w-full${errores.fechaNacimiento ? " input-error" : ""}`}
@@ -454,7 +460,7 @@ export function StudentForm(props: StudentFormProps) {
               </Field>
             </div>
 
-            <Field label="Email" fieldKey="email" error={errores.email}>
+            <Field label="Email" fieldKey="email" error={errores.email} required>
               <input
                 type="email"
                 className={`input w-full${errores.email ? " input-error" : ""}`}
@@ -741,15 +747,18 @@ export function StudentForm(props: StudentFormProps) {
 // document.getElementById) y arma el id del <p> de error para
 // aria-describedby — un lector de pantalla que tabula a un campo inválido
 // necesita esa asociación, no alcanza con el color rojo.
+// `required` agrega el asterisco a la etiqueta, igual que en los formularios de roles y catálogos.
 function Field({
   label,
   error,
   fieldKey,
+  required,
   children,
 }: {
   label: string;
   error?: string;
   fieldKey: string;
+  required?: boolean;
   children: React.ReactElement;
 }) {
   const errorId = `${fieldKey}-error`;
@@ -765,7 +774,10 @@ function Field({
     <div>
       <label className="floating-label">
         {control}
-        <span>{label}</span>
+        <span>
+          {label}
+          {required ? " *" : ""}
+        </span>
       </label>
       {error ? (
         <p id={errorId} className="mt-1 text-xs text-error">
