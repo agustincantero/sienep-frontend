@@ -140,6 +140,9 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
   }, [listo, queryActual]);
 
   const [grupos, setGrupos] = useState<Group[]>([]);
+  // false hasta que termina la carga de grupos (con o sin error): los filtros de grupo y carrera viajan por id,
+  // y el id recién se puede resolver con el catálogo cargado.
+  const [gruposCargados, setGruposCargados] = useState(false);
   const [estudiantes, setEstudiantes] = useState<StudentSummary[]>([]);
   const [totalElements, setTotalElements] = useState(0);
   const [hasNext, setHasNext] = useState(false);
@@ -154,7 +157,8 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
   useEffect(() => {
     listGroups()
       .then(setGrupos)
-      .catch(() => setGrupos([]));
+      .catch(() => setGrupos([]))
+      .finally(() => setGruposCargados(true));
   }, []);
 
   // Las carreras no tienen catálogo propio en esta pantalla: se derivan de
@@ -165,12 +169,15 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
     return [...vistas.entries()].map(([nomCarrera, idCarrera]) => ({ nomCarrera, idCarrera }));
   }, [grupos]);
 
-  useEffect(() => {
-    if (!listo) return;
-    let cancelado = false;
+  const idGrupo = grupos.find((g) => g.nomGrupo === nomGrupo)?.idGrupo;
+  const idCarrera = carreras.find((c) => c.nomCarrera === nomCarrera)?.idCarrera;
+  // Con un filtro de grupo o carrera ya elegido (URL o sesión) pero el catálogo todavía en camino, la búsqueda
+  // espera: si saliera ahora iría sin el id y listaría estudiantes de otros grupos/carreras.
+  const esperandoGrupos = puedeBuscar && !gruposCargados && (nomGrupo !== "" || nomCarrera !== "");
 
-    const idGrupo = grupos.find((g) => g.nomGrupo === nomGrupo)?.idGrupo;
-    const idCarrera = carreras.find((c) => c.nomCarrera === nomCarrera)?.idCarrera;
+  useEffect(() => {
+    if (!listo || esperandoGrupos) return;
+    let cancelado = false;
 
     listStudents({
       texto: puedeBuscar ? textoDebounced || undefined : undefined,
@@ -198,8 +205,7 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
     return () => {
       cancelado = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- grupos/carreras solo se usan para resolver el id, no deben re-disparar el fetch por sí solos
-  }, [listo, textoDebounced, nomGrupo, nomCarrera, estadoLabel, orden, page, puedeBuscar]);
+  }, [listo, esperandoGrupos, textoDebounced, idGrupo, idCarrera, estadoLabel, orden, page, puedeBuscar]);
 
   const estudianteADesactivar = estudiantes.find((e) => e.idUsuario === idADesactivar);
 
