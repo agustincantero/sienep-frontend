@@ -9,7 +9,7 @@ export type ComentarioInstancia = {
   idAutor: number;
   nombreAutor: string;
   estado: string;
-  // true si el contenido se modificó después de creado (solo lo informan los comentarios normales).
+  // true si el contenido se modificó después de creado.
   editado?: boolean;
   createdAt: string;
   // Fecha de la última edición o, si está ELIMINADO, de la eliminación.
@@ -72,4 +72,20 @@ export function crearComentarioConfidencial(
     `/instancias/${codInstancia}/comentarios-confidenciales`,
     { contenido },
   );
+}
+
+export function editarComentarioConfidencial(
+  codInstancia: number,
+  idComConfidencial: number,
+  contenido: string,
+): Promise<ComentarioConfidencialInstancia> {
+  return apiPut<ComentarioConfidencialInstancia>(
+    `/instancias/${codInstancia}/comentarios-confidenciales/${idComConfidencial}`,
+    { contenido },
+  );
+}
+
+// Baja lógica, con el mismo criterio que eliminarComentarioNormal: queda listado como marca, sin su texto.
+export function eliminarComentarioConfidencial(codInstancia: number, idComConfidencial: number): Promise<void> {
+  return apiDelete(`/instancias/${codInstancia}/comentarios-confidenciales/${idComConfidencial}`);
 }

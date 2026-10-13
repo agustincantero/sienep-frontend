@@ -8,7 +8,9 @@ import type { ComentarioInstancia } from "@/lib/instancia-comentarios";
 import {
   crearComentarioConfidencial,
   crearComentarioNormal,
+  editarComentarioConfidencial,
   editarComentarioNormal,
+  eliminarComentarioConfidencial,
   eliminarComentarioNormal,
   listComentariosConfidenciales,
   listComentariosNormales,
@@ -26,6 +28,8 @@ export function InstanciaComentarios({ codInstancia }: { codInstancia: number })
   const puedeVerConfidencial = permisos.includes("VER_COMENTARIO_CONFIDENCIAL_INSTANCIA");
   const puedeEditarNormal = permisos.includes("EDITAR_COMENTARIO_NORMAL_INSTANCIA");
   const puedeEliminarNormal = permisos.includes("ELIMINAR_COMENTARIO_NORMAL_INSTANCIA");
+  const puedeEditarConfidencial = permisos.includes("EDITAR_COMENTARIO_CONFIDENCIAL_INSTANCIA");
+  const puedeEliminarConfidencial = permisos.includes("ELIMINAR_COMENTARIO_CONFIDENCIAL_INSTANCIA");
 
   return (
     <div className="space-y-6 mt-4">
@@ -57,6 +61,15 @@ export function InstanciaComentarios({ codInstancia }: { codInstancia: number })
           puedeCrear={permisos.includes("CREAR_COMENTARIO_CONFIDENCIAL_INSTANCIA")}
           listar={listComentariosConfidenciales}
           crear={crearComentarioConfidencial}
+          acciones={
+            puedeEditarConfidencial || puedeEliminarConfidencial
+              ? {
+                  idDe: (c) => c.idComConfidencial,
+                  editar: puedeEditarConfidencial ? editarComentarioConfidencial : undefined,
+                  eliminar: puedeEliminarConfidencial ? eliminarComentarioConfidencial : undefined,
+                }
+              : undefined
+          }
           confidencial
         />
       ) : (
