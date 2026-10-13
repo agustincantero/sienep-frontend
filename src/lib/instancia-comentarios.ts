@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from "./api";
+import { apiGet, apiPost, apiPut } from "./api";
 import type { Page } from "./students";
 
 // Comentarios sobre una Instancia (normal o confidencial) — el backend los expone sobre /instancias/{codInstancia}/comentarios-*, y funciona igual para InstanciaComun e Incidencia. Vive en su propio archivo porque lo usan las dos fichas.
@@ -32,6 +32,17 @@ export function crearComentarioNormal(
   return apiPost<ComentarioNormalInstancia>(`/instancias/${codInstancia}/comentarios-normales`, {
     contenido,
   });
+}
+
+export function editarComentarioNormal(
+  codInstancia: number,
+  idComentario: number,
+  contenido: string,
+): Promise<ComentarioNormalInstancia> {
+  return apiPut<ComentarioNormalInstancia>(
+    `/instancias/${codInstancia}/comentarios-normales/${idComentario}`,
+    { contenido },
+  );
 }
 
 export function listComentariosConfidenciales(
