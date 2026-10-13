@@ -88,9 +88,16 @@ export function GrupoForm({ grupo }: { grupo?: Group }) {
       }
       router.push(hrefListado("grupos", `Grupo ${grupo ? "actualizado" : "creado"}: ${nombre}.`));
     } catch (err) {
-      // El backend no deja dos grupos ACTIVOS con el mismo nombre en la misma carrera y generación.
+      // El backend no deja dos grupos con el mismo nombre en la misma carrera y generación, y su mensaje dice si el
+      // que ya existe está activo o inactivo (el inactivo se reactiva, no se crea de nuevo). El texto propio queda
+      // para el rechazo genérico del UNIQUE de la tabla.
       if (esNombreRepetido(err)) {
-        setErrores((prev) => ({ ...prev, nombre: "Ya hay un grupo activo con ese nombre en esa carrera y generación." }));
+        const mensaje = apiErrorMessage(err, "");
+        const nombreRepetido =
+          !mensaje || mensaje.includes("datos existentes")
+            ? "Ya hay un grupo con ese nombre en esa carrera y generación."
+            : mensaje;
+        setErrores((prev) => ({ ...prev, nombre: nombreRepetido }));
       } else {
         setErrorGeneral(apiErrorMessage(err, "No se pudo guardar el grupo. Probá de nuevo."));
       }
@@ -104,7 +111,7 @@ export function GrupoForm({ grupo }: { grupo?: Group }) {
       leyenda={
         <>
           <p>Cada grupo pertenece a una carrera y a una generación, y es lo que se le asigna a cada estudiante.</p>
-          <p>La carrera no se puede cambiar después de crear el grupo. No puede haber dos grupos activos con el mismo nombre en la misma carrera y generación.</p>
+          <p>La carrera no se puede cambiar después de crear el grupo. No puede haber dos grupos con el mismo nombre en la misma carrera y generación: si ya existe uno inactivo, se reactiva desde el listado.</p>
         </>
       }
       seccion={{ icon: Users, titulo: "Datos del grupo" }}
