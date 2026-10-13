@@ -762,11 +762,17 @@ function Field({
   children: React.ReactElement;
 }) {
   const errorId = `${fieldKey}-error`;
+  // Con el campo vacío y sin foco, floating-label oculta el <span> y lo que se ve es el placeholder: el
+  // asterisco tiene que ir también ahí, o el obligatorio recién se nota al enfocar o escribir.
+  const placeholder = isValidElement(children)
+    ? (children.props as Record<string, unknown>).placeholder
+    : undefined;
   const control = isValidElement(children)
     ? cloneElement(children as React.ReactElement<Record<string, unknown>>, {
         id: fieldKey,
         "aria-invalid": error ? true : undefined,
         "aria-describedby": error ? errorId : undefined,
+        ...(required && typeof placeholder === "string" ? { placeholder: `${placeholder} *` } : {}),
       })
     : children;
 
