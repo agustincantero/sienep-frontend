@@ -29,7 +29,8 @@ export function IncidenciasListView() {
   const puedeReactivar = permisos.includes("REACTIVAR_INCIDENCIA");
 
   const [nomEstudiante, setNomEstudiante] = useState("");
-  const [estadoLabel, setEstadoLabel] = useState("");
+  // El listado abre mostrando las activas; "Todos" e "Inactivo" se eligen desde el filtro.
+  const [estadoLabel, setEstadoLabel] = useState("Activo");
   const [page, setPage] = useState(0);
 
   function conResetDePagina<T>(setter: (valor: T) => void) {
@@ -49,6 +50,9 @@ export function IncidenciasListView() {
   const [hasNext, setHasNext] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [exito, setExito] = useState("");
+  // Se incrementa para volver a pedir la página actual después de desactivar o reactivar.
+  const [recarga, setRecarga] = useState(0);
   const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
   const [idADesactivar, setIdADesactivar] = useState<number | null>(null);
 
@@ -109,20 +113,40 @@ export function IncidenciasListView() {
       cancelado = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- estudiantes solo se usa para resolver el id
-  }, [nomEstudiante, estadoLabel, page]);
+  }, [nomEstudiante, estadoLabel, page, recarga]);
 
   const incidenciaADesactivar = incidencias.find((i) => i.codInstancia === idADesactivar);
+
+  // Mismo criterio que InstanciasListView: con un estado puntual filtrado, la fila ya no corresponde al
+  // listado y sale (se vuelve a pedir la página, o la anterior si era la última fila de esta); en "Todos" se
+  // le actualiza el estado en el lugar, sin moverla.
+  function reflejarCambioDeEstado(id: number, nuevoEstado: string) {
+    if (!estadoLabel) {
+      setIncidencias((prev) => prev.map((i) => (i.codInstancia === id ? { ...i, estado: nuevoEstado } : i)));
+    } else if (incidencias.length === 1 && page > 0) {
+      setPage(page - 1);
+    } else {
+      setRecarga((n) => n + 1);
+    }
+  }
+
+  function describir(id: number) {
+    const incidencia = incidencias.find((i) => i.codInstancia === id);
+    return incidencia ? `: "${incidencia.titulo}" de ${incidencia.nombreEstudiante}` : "";
+  }
 
   async function confirmarDesactivar() {
     if (idADesactivar == null) return;
     const id = idADesactivar;
+    const descripcion = describir(id);
     setIdADesactivar(null);
     setAccionEnCursoId(id);
+    setExito("");
+    setError("");
     try {
       await deactivateIncidencia(id);
-      setIncidencias((prev) =>
-        prev.map((i) => (i.codInstancia === id ? { ...i, estado: "INACTIVO" } : i)),
-      );
+      reflejarCambioDeEstado(id, "INACTIVO");
+      setExito(`Incidencia desactivada${descripcion}.`);
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo desactivar la incidencia."));
     } finally {
@@ -131,12 +155,14 @@ export function IncidenciasListView() {
   }
 
   async function handleReactivar(id: number) {
+    const descripcion = describir(id);
     setAccionEnCursoId(id);
+    setExito("");
+    setError("");
     try {
       await reactivateIncidencia(id);
-      setIncidencias((prev) =>
-        prev.map((i) => (i.codInstancia === id ? { ...i, estado: "ACTIVO" } : i)),
-      );
+      reflejarCambioDeEstado(id, "ACTIVO");
+      setExito(`Incidencia activada${descripcion}.`);
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo reactivar la incidencia."));
     } finally {
@@ -182,6 +208,12 @@ export function IncidenciasListView() {
           searchOptions={estudiantes.map((e) => `${e.nombre} ${e.apellido}`)}
           filters={filters}
         />
+
+        {exito ? (
+          <div role="status" className="alert alert-success alert-soft text-sm mb-3">
+            <span>{exito}</span>
+          </div>
+        ) : null}
 
         {error ? (
           <div role="alert" className="alert alert-error alert-soft text-sm mb-3">
