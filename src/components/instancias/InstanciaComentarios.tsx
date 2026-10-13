@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Ban, Pencil, Send, ShieldAlert, Trash2 } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFechaHora } from "@/lib/format";
@@ -17,6 +17,7 @@ import { useSession } from "@/lib/session-context";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 const CONTENIDO_MAX = 1000;
+const CONTENIDO_VACIO_MSG = "El comentario no puede estar vacío.";
 
 // Compartido entre InstanciaDetalle e IncidenciaDetalle: el backend expone comentarios normales/confidenciales sobre /instancias/{codInstancia}/... para ambos subtipos.
 export function InstanciaComentarios({ codInstancia }: { codInstancia: number }) {
@@ -97,6 +98,14 @@ function ComentarioBox<T extends ComentarioInstancia>({
   const [cargaFallida, setCargaFallida] = useState(false);
   const [contenido, setContenido] = useState("");
   const [enviando, setEnviando] = useState(false);
+  // Mensajes de validación de cada textarea (alta y edición). Los botones no se deshabilitan por contenido
+  // vacío: se deja intentar y se avisa por qué no se guardó.
+  const [errorContenido, setErrorContenido] = useState("");
+  const [errorEdicion, setErrorEdicion] = useState("");
+  // Hay un ComentarioBox por tipo de comentario en la misma pantalla: los ids no pueden ser fijos.
+  const idBase = useId();
+  const idErrorContenido = `${idBase}-contenido-error`;
+  const idErrorEdicion = `${idBase}-edicion-error`;
   // Comentario en edición (uno a la vez) y su texto en curso.
   const [idEnEdicion, setIdEnEdicion] = useState<number | null>(null);
   const [contenidoEditado, setContenidoEditado] = useState("");
@@ -124,7 +133,10 @@ function ComentarioBox<T extends ComentarioInstancia>({
   async function handleComentar(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
     const texto = contenido.trim();
-    if (!texto) return;
+    if (!texto) {
+      setErrorContenido(CONTENIDO_VACIO_MSG);
+      return;
+    }
     setEnviando(true);
     setError("");
     try {
@@ -141,13 +153,18 @@ function ComentarioBox<T extends ComentarioInstancia>({
   function iniciarEdicion(id: number, contenidoActual: string) {
     setIdEnEdicion(id);
     setContenidoEditado(contenidoActual);
+    setErrorEdicion("");
     setError("");
   }
 
   async function handleGuardarEdicion(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
     const texto = contenidoEditado.trim();
-    if (!acciones?.editar || idEnEdicion == null || !texto) return;
+    if (!acciones?.editar || idEnEdicion == null) return;
+    if (!texto) {
+      setErrorEdicion(CONTENIDO_VACIO_MSG);
+      return;
+    }
     setGuardando(true);
     setError("");
     try {
@@ -233,15 +250,25 @@ function ComentarioBox<T extends ComentarioInstancia>({
                 {id != null && id === idEnEdicion ? (
                   <form onSubmit={handleGuardarEdicion} noValidate className="space-y-2">
                     <textarea
-                      className="textarea w-full"
+                      className={`textarea w-full${errorEdicion ? " textarea-error" : ""}`}
                       aria-label="Editar comentario"
                       rows={2}
                       maxLength={CONTENIDO_MAX}
                       value={contenidoEditado}
-                      onChange={(e) => setContenidoEditado(e.target.value)}
+                      onChange={(e) => {
+                        setContenidoEditado(e.target.value);
+                        if (errorEdicion) setErrorEdicion("");
+                      }}
                       disabled={guardando}
+                      aria-invalid={errorEdicion ? true : undefined}
+                      aria-describedby={errorEdicion ? idErrorEdicion : undefined}
                       autoFocus
                     />
+                    {errorEdicion ? (
+                      <p id={idErrorEdicion} className="text-xs text-error">
+                        {errorEdicion}
+                      </p>
+                    ) : null}
                     <div className="flex justify-end gap-2">
                       <button
                         type="button"
@@ -254,7 +281,7 @@ function ComentarioBox<T extends ComentarioInstancia>({
                       <button
                         type="submit"
                         className="btn btn-primary btn-xs gap-1"
-                        disabled={guardando || !contenidoEditado.trim() || contenidoEditado.trim() === contenidoActual}
+                        disabled={guardando || contenidoEditado.trim() === contenidoActual}
                       >
                         {guardando ? <span className="loading loading-spinner loading-xs" /> : null}
                         Guardar
@@ -300,16 +327,28 @@ function ComentarioBox<T extends ComentarioInstancia>({
 
       {puedeCrear ? (
         <form onSubmit={handleComentar} noValidate className="flex gap-2 items-start">
-          <textarea
-            className="textarea w-full"
-            placeholder="Escribir un comentario…"
-            rows={2}
-            maxLength={CONTENIDO_MAX}
-            value={contenido}
-            onChange={(e) => setContenido(e.target.value)}
-            disabled={enviando}
-          />
-          <button type="submit" className="btn btn-primary btn-sm gap-1" disabled={enviando || !contenido.trim()}>
+          <div className="grow">
+            <textarea
+              className={`textarea w-full${errorContenido ? " textarea-error" : ""}`}
+              placeholder="Escribir un comentario…"
+              rows={2}
+              maxLength={CONTENIDO_MAX}
+              value={contenido}
+              onChange={(e) => {
+                setContenido(e.target.value);
+                if (errorContenido) setErrorContenido("");
+              }}
+              disabled={enviando}
+              aria-invalid={errorContenido ? true : undefined}
+              aria-describedby={errorContenido ? idErrorContenido : undefined}
+            />
+            {errorContenido ? (
+              <p id={idErrorContenido} className="mt-1 text-xs text-error">
+                {errorContenido}
+              </p>
+            ) : null}
+          </div>
+          <button type="submit" className="btn btn-primary btn-sm gap-1" disabled={enviando}>
             {enviando ? <span className="loading loading-spinner loading-xs" /> : <Send size={14} aria-hidden />}
             Comentar
           </button>
