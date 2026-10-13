@@ -11,7 +11,7 @@ import {
   reactivateInstancia,
   type InstanciaComun,
 } from "@/lib/instancias";
-import { listStudents, type Page, type StudentSummary } from "@/lib/students";
+import { listStudents, type StudentSummary } from "@/lib/students";
 import { useSession } from "@/lib/session-context";
 import { PaginationFooter } from "@/components/ui/PaginationFooter";
 import { InstanciasTabla } from "./InstanciasTabla";
@@ -19,6 +19,8 @@ import { Toolbar, type ToolbarFilter } from "@/components/ui/Toolbar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 const ESTADO_A_VALOR: Record<string, string> = { Activo: "ACTIVO", Inactivo: "INACTIVO" };
+// "Estado: Todos": el backend acepta varios estados separados por coma.
+const ESTADOS_TODOS = "ACTIVO,INACTIVO";
 
 export function InstanciasListView() {
   const router = useRouter();
@@ -51,7 +53,6 @@ export function InstanciasListView() {
   const [instancias, setInstancias] = useState<InstanciaComun[]>([]);
   const [totalElements, setTotalElements] = useState(0);
   const [pageSize, setPageSize] = useState(20);
-  const [offsetPrevio, setOffsetPrevio] = useState<number | undefined>(undefined);
   const [hasNext, setHasNext] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
@@ -79,35 +80,13 @@ export function InstanciasListView() {
     const idCategoria = categorias.find((c) => c.nomCategoria === nomCategoria)?.idCategoria;
     const estadoParam = estadoLabel ? ESTADO_A_VALOR[estadoLabel] : undefined;
 
-    // Sin ?estado=, el backend devuelve solo las ACTIVAS; para que "Estado: Todos" muestre activas e inactivas se piden las dos por separado y se combinan acá (la paginación queda aproximada en ese caso).
-    // offsetPrevio: solo en "Todos", donde cada mitad pagina por su cuenta y las filas de las páginas anteriores son (activas ya vistas) + (inactivas ya vistas); en un estado puntual alcanza con page * pageSize.
-    const peticion: Promise<{ pagina: Page<InstanciaComun>; offsetPrevio?: number }> = estadoParam
-      ? listInstancias({ idEstudiante, idCategoria, estado: estadoParam, page }).then((pagina) => ({ pagina }))
-      : Promise.all([
-          listInstancias({ idEstudiante, idCategoria, estado: "ACTIVO", page }),
-          listInstancias({ idEstudiante, idCategoria, estado: "INACTIVO", page }),
-        ]).then(([activas, inactivas]) => ({
-          pagina: {
-            content: [...activas.content, ...inactivas.content],
-            totalElements: activas.totalElements + inactivas.totalElements,
-            totalPages: Math.max(activas.totalPages, inactivas.totalPages),
-            number: page,
-            size: activas.size,
-            first: activas.first && inactivas.first,
-            last: activas.last && inactivas.last,
-          },
-          offsetPrevio:
-            Math.min(page * activas.size, activas.totalElements) +
-            Math.min(page * inactivas.size, inactivas.totalElements),
-        }));
-
-    peticion
-      .then(({ pagina, offsetPrevio: previo }) => {
+    // Sin ?estado=, el backend devuelve solo las ACTIVAS; "Estado: Todos" pide los dos estados en una sola consulta, así la paginación (20 por página, total y rango del pie) la resuelve el backend igual que con un estado puntual.
+    listInstancias({ idEstudiante, idCategoria, estado: estadoParam ?? ESTADOS_TODOS, page })
+      .then((pagina) => {
         if (cancelado) return;
         setInstancias(pagina.content);
         setTotalElements(pagina.totalElements);
         setPageSize(pagina.size);
-        setOffsetPrevio(previo);
         setHasNext(!pagina.last);
         setError("");
       })
@@ -265,7 +244,6 @@ export function InstanciasListView() {
               noun="instancias"
               page={page}
               pageSize={pageSize}
-              offset={offsetPrevio}
               hasPrevious={page > 0}
               hasNext={hasNext}
               onPrevious={() => setPage((p) => Math.max(0, p - 1))}
