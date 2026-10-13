@@ -6,9 +6,12 @@ export type MedicalReport = {
   idInforme: number;
   idUsuario: number;
   nombre: string;
-  urlDescarga: string;
+  // null en un informe ELIMINADO: el backend lo sigue listando como marca de que existió, sin descarga.
+  urlDescarga: string | null;
   estado: string;
   createdAt: string;
+  // Si está ELIMINADO, fecha de la eliminación.
+  updatedAt: string;
 };
 
 export function listMedicalReports(idEstudiante: number, page = 0): Promise<Page<MedicalReport>> {
@@ -24,7 +27,7 @@ export function attachMedicalReport(idEstudiante: number, nombre: string, archiv
   return apiPostForm<MedicalReport>("/informes-adjuntos", formData);
 }
 
-// Baja lógica.
+// Baja lógica: el informe pasa a ELIMINADO y se sigue listando, sin descarga, como marca de que existió.
 export function deleteMedicalReport(id: number): Promise<void> {
   return apiDelete<void>(`/informes-adjuntos/${id}`);
 }

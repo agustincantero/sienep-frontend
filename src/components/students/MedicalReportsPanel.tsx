@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Download, Paperclip, Trash2, Upload } from "lucide-react";
+import { Ban, Download, Paperclip, Trash2, Upload } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
+import { formatFechaHora } from "@/lib/format";
 import {
   attachMedicalReport,
   deleteMedicalReport,
@@ -124,7 +125,8 @@ export function MedicalReportsPanel({
     setEliminandoId(id);
     try {
       await deleteMedicalReport(id);
-      setInformes((prev) => prev.filter((i) => i.idInforme !== id));
+      // Recarga en vez de sacarlo de la lista: el informe eliminado vuelve como marca.
+      cargar();
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo eliminar el informe."));
     } finally {
@@ -148,7 +150,23 @@ export function MedicalReportsPanel({
         <p className="text-base-content/60 text-sm">Todavía no hay informes adjuntos.</p>
       ) : (
         <ul className="divide-y divide-base-300">
-          {informes.map((inf) => (
+          {informes.map((inf) =>
+            // Eliminado: queda la marca (nombre y cuándo se eliminó) sin ver, descargar ni eliminar, para que
+            // quien abre la ficha sepa que ahí hubo un informe.
+            inf.estado === "ELIMINADO" || !inf.urlDescarga ? (
+              <li
+                key={inf.idInforme}
+                className="py-2 flex flex-wrap items-center justify-between gap-x-3 text-sm text-base-content/60"
+              >
+                <span className="truncate flex items-center gap-2">
+                  <Ban size={14} aria-hidden className="shrink-0" />
+                  <span className="line-through truncate">{inf.nombre}</span>
+                </span>
+                <span className="italic text-xs shrink-0">
+                  Informe eliminado el {formatFechaHora(inf.updatedAt)}
+                </span>
+              </li>
+            ) : (
             <li
               key={inf.idInforme}
               className="px-2 -mx-2 rounded-field flex items-center justify-between gap-3 transition-colors hover:bg-base-200"
@@ -194,7 +212,8 @@ export function MedicalReportsPanel({
                 ) : null}
               </div>
             </li>
-          ))}
+            ),
+          )}
         </ul>
       )}
 
@@ -267,7 +286,7 @@ export function MedicalReportsPanel({
       <ConfirmDialog
         open={informeAEliminar != null}
         title="Eliminar informe"
-        message={informeAEliminar ? `¿Eliminar "${informeAEliminar.nombre}"? Esta acción no se puede deshacer desde la ficha.` : ""}
+        message={informeAEliminar ? `¿Eliminar "${informeAEliminar.nombre}"? Ya no se va a poder ver ni descargar, y en la ficha queda la marca de que fue eliminado.` : ""}
         confirmLabel="Eliminar"
         destructive
         onConfirm={confirmarEliminar}
