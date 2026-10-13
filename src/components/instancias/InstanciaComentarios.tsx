@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Send, ShieldAlert } from "lucide-react";
+import { Pencil, Send, ShieldAlert } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFechaHora } from "@/lib/format";
 import type { ComentarioInstancia } from "@/lib/instancia-comentarios";
 import {
   crearComentarioConfidencial,
   crearComentarioNormal,
+  editarComentarioNormal,
   listComentariosConfidenciales,
   listComentariosNormales,
 } from "@/lib/instancia-comentarios";
@@ -28,6 +29,11 @@ export function InstanciaComentarios({ codInstancia }: { codInstancia: number })
         puedeCrear={permisos.includes("CREAR_COMENTARIO_NORMAL_INSTANCIA")}
         listar={listComentariosNormales}
         crear={crearComentarioNormal}
+        edicion={
+          permisos.includes("EDITAR_COMENTARIO_NORMAL_INSTANCIA")
+            ? { idDe: (c) => c.idComentario, guardar: editarComentarioNormal }
+            : undefined
+        }
       />
 
       {/* Sin el permiso, ni se intenta la llamada: es un endpoint aparte que se bloquea entero, el backend igual la rechazaría con 403. */}
@@ -50,26 +56,36 @@ export function InstanciaComentarios({ codInstancia }: { codInstancia: number })
   );
 }
 
-function ComentarioBox({
+function ComentarioBox<T extends ComentarioInstancia>({
   titulo,
   codInstancia,
   puedeCrear,
   listar,
   crear,
+  edicion,
   confidencial,
 }: {
   titulo: string;
   codInstancia: number;
   puedeCrear: boolean;
-  listar: (codInstancia: number) => Promise<{ content: ComentarioInstancia[] }>;
-  crear: (codInstancia: number, contenido: string) => Promise<ComentarioInstancia>;
+  listar: (codInstancia: number) => Promise<{ content: T[] }>;
+  crear: (codInstancia: number, contenido: string) => Promise<T>;
+  // Solo se pasa si el usuario puede editar: sin esto, los comentarios se muestran sin la acción "Editar".
+  edicion?: {
+    idDe: (comentario: T) => number;
+    guardar: (codInstancia: number, idComentario: number, contenido: string) => Promise<T>;
+  };
   confidencial?: boolean;
 }) {
-  const [comentarios, setComentarios] = useState<ComentarioInstancia[]>([]);
+  const [comentarios, setComentarios] = useState<T[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [contenido, setContenido] = useState("");
   const [enviando, setEnviando] = useState(false);
+  // Comentario en edición (uno a la vez) y su texto en curso.
+  const [idEnEdicion, setIdEnEdicion] = useState<number | null>(null);
+  const [contenidoEditado, setContenidoEditado] = useState("");
+  const [guardando, setGuardando] = useState(false);
 
   function cargar() {
     listar(codInstancia)
@@ -100,6 +116,29 @@ function ComentarioBox({
     }
   }
 
+  function iniciarEdicion(id: number, contenidoActual: string) {
+    setIdEnEdicion(id);
+    setContenidoEditado(contenidoActual);
+    setError("");
+  }
+
+  async function handleGuardarEdicion(ev: React.FormEvent<HTMLFormElement>) {
+    ev.preventDefault();
+    const texto = contenidoEditado.trim();
+    if (!edicion || idEnEdicion == null || !texto) return;
+    setGuardando(true);
+    setError("");
+    try {
+      await edicion.guardar(codInstancia, idEnEdicion, texto);
+      setIdEnEdicion(null);
+      cargar();
+    } catch (err) {
+      setError(apiErrorMessage(err, "No se pudo editar el comentario."));
+    } finally {
+      setGuardando(false);
+    }
+  }
+
   return (
     <div>
       <h6 className="text-sm font-semibold mb-2">{titulo}</h6>
@@ -123,15 +162,64 @@ function ComentarioBox({
         <p className="text-base-content/60 text-sm mb-3">Todavía no hay comentarios.</p>
       ) : (
         <ul className="divide-y divide-base-300 mb-3">
-          {comentarios.map((c, idx) => (
-            <li key={idx} className="py-2">
-              <div className="flex justify-between gap-3 text-xs text-base-content/60 mb-0.5">
-                <span className="font-medium">{c.nombreAutor}</span>
-                <span>{formatFechaHora(c.createdAt)}</span>
-              </div>
-              <p className="text-sm">{c.contenido}</p>
-            </li>
-          ))}
+          {comentarios.map((c, idx) => {
+            const id = edicion?.idDe(c);
+            return (
+              <li key={id ?? idx} className="py-2">
+                <div className="flex justify-between gap-3 text-xs text-base-content/60 mb-0.5">
+                  <span className="font-medium">{c.nombreAutor}</span>
+                  <span>{formatFechaHora(c.createdAt)}</span>
+                </div>
+                {id != null && id === idEnEdicion ? (
+                  <form onSubmit={handleGuardarEdicion} noValidate className="space-y-2">
+                    <textarea
+                      className="textarea w-full"
+                      aria-label="Editar comentario"
+                      rows={2}
+                      maxLength={CONTENIDO_MAX}
+                      value={contenidoEditado}
+                      onChange={(e) => setContenidoEditado(e.target.value)}
+                      disabled={guardando}
+                      autoFocus
+                    />
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-xs"
+                        onClick={() => setIdEnEdicion(null)}
+                        disabled={guardando}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        className="btn btn-primary btn-xs gap-1"
+                        disabled={guardando || !contenidoEditado.trim() || contenidoEditado.trim() === c.contenido}
+                      >
+                        {guardando ? <span className="loading loading-spinner loading-xs" /> : null}
+                        Guardar
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm min-w-0">{c.contenido}</p>
+                    {id != null ? (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-xs gap-1 shrink-0"
+                        onClick={() => iniciarEdicion(id, c.contenido)}
+                        disabled={guardando}
+                      >
+                        <Pencil size={13} aria-hidden />
+                        Editar
+                      </button>
+                    ) : null}
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
 
