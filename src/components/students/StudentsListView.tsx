@@ -59,6 +59,9 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
   const router = useRouter();
   const { permisos } = useSession();
   const puedeBuscar = permisos.includes("BUSCAR_ESTUDIANTE");
+  // Con VER_ESTUDIANTE_RESUMIDO solo (ej. Tutor) el listado se ve, pero la ficha completa no: sin este chequeo
+  // "Ver ficha" y el click en la fila llevaban a una pantalla de "No tienes permisos".
+  const puedeVerFicha = permisos.includes("VER_ESTUDIANTE");
   const puedeCrear = permisos.includes("CREAR_ESTUDIANTE");
   const puedeEditar = permisos.includes("EDITAR_ESTUDIANTE");
   const puedeDesactivar = permisos.includes("DESACTIVAR_ESTUDIANTE");
@@ -367,12 +370,20 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
               {estudiantes.map((e) => (
                 <tr
                   key={e.idUsuario}
-                  className="cursor-pointer select-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
-                  tabIndex={0}
-                  onClick={() => router.push(`/estudiantes/${e.idUsuario}`)}
-                  onKeyDown={(ev) => {
-                    if (ev.key === "Enter") router.push(`/estudiantes/${e.idUsuario}`);
-                  }}
+                  className={
+                    puedeVerFicha
+                      ? "cursor-pointer select-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+                      : undefined
+                  }
+                  tabIndex={puedeVerFicha ? 0 : undefined}
+                  onClick={puedeVerFicha ? () => router.push(`/estudiantes/${e.idUsuario}`) : undefined}
+                  onKeyDown={
+                    puedeVerFicha
+                      ? (ev) => {
+                          if (ev.key === "Enter") router.push(`/estudiantes/${e.idUsuario}`);
+                        }
+                      : undefined
+                  }
                 >
                   <td className="font-semibold">
                     <div className="flex items-center gap-2">
@@ -396,10 +407,12 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
                       "Ver ficha"/"Editar" en la misma columna en vez de correrse. */}
                   <td className="whitespace-nowrap" onClick={(ev) => ev.stopPropagation()}>
                     <div className="inline-flex gap-1">
-                      <Link href={`/estudiantes/${e.idUsuario}`} className="btn btn-ghost btn-xs gap-1">
-                        <Eye size={13} aria-hidden />
-                        Ver ficha
-                      </Link>
+                      {puedeVerFicha ? (
+                        <Link href={`/estudiantes/${e.idUsuario}`} className="btn btn-ghost btn-xs gap-1">
+                          <Eye size={13} aria-hidden />
+                          Ver ficha
+                        </Link>
+                      ) : null}
                       {puedeEditar ? (
                         <Link href={`/estudiantes/${e.idUsuario}/editar`} className="btn btn-ghost btn-xs gap-1">
                           <Pencil size={13} aria-hidden />
