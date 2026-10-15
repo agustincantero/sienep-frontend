@@ -71,13 +71,14 @@ export const todosLosEstudiantes = conVigencia(() => listStudents({ size: TOPE_L
 // Sin `estado` el backend lista solo los ACTIVOS; los autores de auditoría pueden estar dados de baja, así que se piden ambos estados y se juntan.
 const ESTADOS_AUTOR = ["ACTIVO", "INACTIVO"];
 
+// Se deduplica por idUsuario: sin VER_ESTUDIANTE el backend ignora `estado` y fuerza ACTIVO, así que ambas llamadas traerían la misma lista.
 function todosLosEstados(ruta: string): Promise<Persona[]> {
-  return Promise.all(ESTADOS_AUTOR.map((estado) => apiGet<Page<Persona>>(ruta, { size: TOPE_LISTADO, estado }))).then((paginas) =>
-    paginas.flatMap((p) => p.content),
-  );
+  return Promise.all(ESTADOS_AUTOR.map((estado) => apiGet<Page<Persona>>(ruta, { size: TOPE_LISTADO, estado }))).then((paginas) => [
+    ...new Map(paginas.flatMap((p) => p.content).map((p) => [p.idUsuario, p])).values(),
+  ]);
 }
 
-// Estudiantes activos e inactivos (hasta TOPE_LISTADO por estado), para resolver autores de auditoría; da 403 si quien consulta no tiene permiso para verlos.
+// Estudiantes activos e inactivos (hasta TOPE_LISTADO por estado), para resolver autores de auditoría; sin VER_ESTUDIANTE el backend devuelve solo los ACTIVOS (no da 403).
 export const todosLosEstudiantesConInactivos = conVigencia(() => todosLosEstados("/estudiantes"));
 
 // Funcionarios activos e inactivos (hasta TOPE_LISTADO por estado); da 403 si quien consulta no tiene permiso para verlos.
