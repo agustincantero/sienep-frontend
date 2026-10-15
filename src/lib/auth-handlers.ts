@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { headersIpCliente } from "./client-ip";
 import { setSessionToken } from "./session";
 
 const API_BASE_URL = process.env.API_BASE_URL;
@@ -21,7 +22,7 @@ export async function proxyLogin(request: Request, backendPath: string): Promise
   try {
     res = await fetch(`${API_BASE_URL}${backendPath}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...headersIpCliente(request.headers) },
       body: JSON.stringify(body),
       cache: "no-store",
     });
@@ -75,7 +76,7 @@ export async function proxyAuthPublico(
   try {
     res = await fetch(`${API_BASE_URL}${backendPath}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...headersIpCliente(request.headers) },
       body: JSON.stringify(body),
       cache: "no-store",
     });
