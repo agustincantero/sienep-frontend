@@ -16,7 +16,7 @@ import {
   MAX_COINCIDENCIAS,
   paginarMezclado,
   TAMANIO_PAGINA,
-  todosLosEstudiantes,
+  todosLosEstudiantesConInactivos,
   todosLosFuncionarios,
 } from "@/lib/buscar-estudiante";
 import { formatFechaHora } from "@/lib/format";
@@ -71,13 +71,13 @@ export function AuditListView() {
 
     // El `texto` del backend no ignora tildes ni acepta "Nombre Apellido": se resuelve el autor acá (estudiantes y funcionarios) y se filtra por idAutor.
     const pedido: Promise<{ content: AuditEvent[]; total: number; last: boolean; demasiados?: boolean }> = buscado
-      ? Promise.allSettled([todosLosEstudiantes(), todosLosFuncionarios()]).then(async (listas) => {
-          const personas = listas.flatMap((l) => (l.status === "fulfilled" ? l.value : []));
-          // Sin ninguna de las dos listas (permisos o caída) se deja el filtro original del backend.
-          if (personas.length === 0) {
+      ? Promise.allSettled([todosLosEstudiantesConInactivos(), todosLosFuncionarios()]).then(async (listas) => {
+          // Con una sola lista caída (ej. 403 por permisos) la búsqueda local perdería autores sin avisar: se deja el filtro original del backend.
+          if (listas.some((l) => l.status === "rejected")) {
             const res = await listAuditEvents({ ...filtros, texto: buscado, page });
             return { content: res.content, total: res.totalElements, last: res.last };
           }
+          const personas = listas.flatMap((l) => (l.status === "fulfilled" ? l.value : []));
           const autores = coincidenciasPersona(personas, buscado);
           if (autores.length === 0 || autores.length > MAX_COINCIDENCIAS) {
             return { content: [], total: 0, last: true, demasiados: autores.length > MAX_COINCIDENCIAS };

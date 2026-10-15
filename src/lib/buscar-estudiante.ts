@@ -68,10 +68,20 @@ function conVigencia<T>(pedir: () => Promise<T>): () => Promise<T> {
 // Todos los estudiantes (hasta TOPE_LISTADO).
 export const todosLosEstudiantes = conVigencia(() => listStudents({ size: TOPE_LISTADO }).then((p) => p.content));
 
-// Todos los funcionarios (hasta TOPE_LISTADO); da 403 si quien consulta no tiene permiso para verlos.
-export const todosLosFuncionarios = conVigencia(() =>
-  apiGet<Page<Persona>>("/funcionarios", { size: TOPE_LISTADO }).then((p) => p.content),
-);
+// Sin `estado` el backend lista solo los ACTIVOS; los autores de auditoría pueden estar dados de baja, así que se piden ambos estados y se juntan.
+const ESTADOS_AUTOR = ["ACTIVO", "INACTIVO"];
+
+function todosLosEstados(ruta: string): Promise<Persona[]> {
+  return Promise.all(ESTADOS_AUTOR.map((estado) => apiGet<Page<Persona>>(ruta, { size: TOPE_LISTADO, estado }))).then((paginas) =>
+    paginas.flatMap((p) => p.content),
+  );
+}
+
+// Estudiantes activos e inactivos (hasta TOPE_LISTADO por estado), para resolver autores de auditoría; da 403 si quien consulta no tiene permiso para verlos.
+export const todosLosEstudiantesConInactivos = conVigencia(() => todosLosEstados("/estudiantes"));
+
+// Funcionarios activos e inactivos (hasta TOPE_LISTADO por estado); da 403 si quien consulta no tiene permiso para verlos.
+export const todosLosFuncionarios = conVigencia(() => todosLosEstados("/funcionarios"));
 
 type ConFecha = { fechaHora: string; codInstancia: number };
 
