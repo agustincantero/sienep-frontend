@@ -12,6 +12,12 @@ import {
   type InstanciaComun,
 } from "@/lib/instancias";
 import { listStudents, type StudentSummary } from "@/lib/students";
+import {
+  coincidenciasEstudiante,
+  MAX_COINCIDENCIAS,
+  paginarVariosEstudiantes,
+  TAMANIO_PAGINA,
+} from "@/lib/buscar-estudiante";
 import { useSession } from "@/lib/session-context";
 import { PaginationFooter } from "@/components/ui/PaginationFooter";
 import { InstanciasTabla } from "./InstanciasTabla";
@@ -21,6 +27,8 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 const ESTADO_A_VALOR: Record<string, string> = { Activo: "ACTIVO", Inactivo: "INACTIVO" };
 // "Estado: Todos": el backend acepta varios estados separados por coma.
 const ESTADOS_TODOS = "ACTIVO,INACTIVO";
+// Referencia estable para que el efecto de carga no se dispare cuando llegan los estudiantes y no hay nada tipeado en el buscador.
+const SIN_ESTUDIANTES: StudentSummary[] = [];
 
 export function InstanciasListView() {
   const router = useRouter();
@@ -31,6 +39,8 @@ export function InstanciasListView() {
   const puedeReactivar = permisos.includes("REACTIVAR_INSTANCIA");
 
   const [nomEstudiante, setNomEstudiante] = useState("");
+  // Lo que efectivamente se busca: sigue a `nomEstudiante` con 300 ms de demora para no pedir en cada tecla (igual que el buscador de estudiantes).
+  const [textoDebounced, setTextoDebounced] = useState("");
   const [nomCategoria, setNomCategoria] = useState("");
   // El listado abre mostrando las activas; "Todos" e "Inactivo" se eligen desde el filtro.
   const [estadoLabel, setEstadoLabel] = useState("Activo");
@@ -56,6 +66,8 @@ export function InstanciasListView() {
   const [hasNext, setHasNext] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  // Más estudiantes coinciden con el texto que los que se consultan a la vez: no se muestra nada hasta que se acote la búsqueda.
+  const [demasiadasCoincidencias, setDemasiadasCoincidencias] = useState(false);
   const [exito, setExito] = useState("");
   // Se incrementa para volver a pedir la página actual después de desactivar o reactivar.
   const [recarga, setRecarga] = useState(0);
@@ -72,22 +84,60 @@ export function InstanciasListView() {
   }, []);
 
   useEffect(() => {
+    const id = setTimeout(() => setTextoDebounced(nomEstudiante), 300);
+    return () => clearTimeout(id);
+  }, [nomEstudiante]);
+
+  // Los estudiantes solo re-disparan la carga cuando hay texto en el buscador, que es cuando se usan para resolver ids.
+  const estudiantesDeBusqueda = textoDebounced.trim() ? estudiantes : SIN_ESTUDIANTES;
+
+  useEffect(() => {
     let cancelado = false;
 
-    const idEstudiante = estudiantes.find(
-      (e) => `${e.nombre} ${e.apellido}` === nomEstudiante,
-    )?.idUsuario;
+    const texto = textoDebounced.trim();
+    const coincidencias = texto ? coincidenciasEstudiante(estudiantesDeBusqueda, texto) : null;
     const idCategoria = categorias.find((c) => c.nomCategoria === nomCategoria)?.idCategoria;
     const estadoParam = estadoLabel ? ESTADO_A_VALOR[estadoLabel] : undefined;
-
     // Sin ?estado=, el backend devuelve solo las ACTIVAS; "Estado: Todos" pide los dos estados en una sola consulta, así la paginación (20 por página, total y rango del pie) la resuelve el backend igual que con un estado puntual.
-    listInstancias({ idEstudiante, idCategoria, estado: estadoParam ?? ESTADOS_TODOS, page })
-      .then((pagina) => {
+    const estado = estadoParam ?? ESTADOS_TODOS;
+
+    type Resultado = { content: InstanciaComun[]; total: number; size: number; last: boolean; demasiadas: boolean };
+    let pedido: Promise<Resultado>;
+    if (coincidencias === null || coincidencias.length === 1) {
+      const idEstudiante = coincidencias?.[0].idUsuario;
+      pedido = listInstancias({ idEstudiante, idCategoria, estado, page }).then((p) => ({
+        content: p.content,
+        total: p.totalElements,
+        size: p.size,
+        last: p.last,
+        demasiadas: false,
+      }));
+    } else if (coincidencias.length === 0 || coincidencias.length > MAX_COINCIDENCIAS) {
+      const demasiadas = coincidencias.length > MAX_COINCIDENCIAS;
+      pedido = Promise.resolve({ content: [], total: 0, size: TAMANIO_PAGINA, last: true, demasiadas });
+    } else {
+      // El backend filtra de a un idEstudiante: con varias coincidencias se piden por separado y se juntan acá.
+      pedido = paginarVariosEstudiantes(
+        coincidencias.map((c) => c.idUsuario),
+        (idEstudiante, size) => listInstancias({ idEstudiante, idCategoria, estado, size }),
+        page,
+      ).then((r) => ({
+        content: r.content,
+        total: r.total,
+        size: TAMANIO_PAGINA,
+        last: (page + 1) * TAMANIO_PAGINA >= r.total,
+        demasiadas: false,
+      }));
+    }
+
+    pedido
+      .then((r) => {
         if (cancelado) return;
-        setInstancias(pagina.content);
-        setTotalElements(pagina.totalElements);
-        setPageSize(pagina.size);
-        setHasNext(!pagina.last);
+        setInstancias(r.content);
+        setTotalElements(r.total);
+        setPageSize(r.size);
+        setHasNext(!r.last);
+        setDemasiadasCoincidencias(r.demasiadas);
         setError("");
       })
       .catch((err) => {
@@ -101,8 +151,8 @@ export function InstanciasListView() {
     return () => {
       cancelado = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- estudiantes/categorias solo se usan para resolver el id, no deben re-disparar el fetch por sí solos
-  }, [nomEstudiante, nomCategoria, estadoLabel, page, recarga]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- las categorías solo se usan para resolver el id, no deben re-disparar el fetch por sí solas
+  }, [textoDebounced, nomCategoria, estadoLabel, page, recarga, estudiantesDeBusqueda]);
 
   const instanciaADesactivar = instancias.find((i) => i.codInstancia === idADesactivar);
 
@@ -199,10 +249,9 @@ export function InstanciasListView() {
         </div>
 
         <Toolbar
-          placeholder="Buscar por estudiante"
+          placeholder="Buscar por nombre o apellido del estudiante"
           searchValue={nomEstudiante}
           onSearchChange={handleEstudianteChange}
-          searchOptions={estudiantes.map((e) => `${e.nombre} ${e.apellido}`)}
           filters={filters}
         />
 
@@ -218,11 +267,12 @@ export function InstanciasListView() {
           </div>
         ) : null}
 
+
         {cargando ? (
           <div className="flex justify-center py-10">
             <span className="loading loading-spinner loading-md" />
           </div>
-        ) : instancias.length === 0 ? (
+        ) : demasiadasCoincidencias ? null : instancias.length === 0 ? (
           <p className="text-base-content/60 py-6 text-center">No se encontraron instancias.</p>
         ) : (
           <>
