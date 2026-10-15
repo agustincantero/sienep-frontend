@@ -3,7 +3,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
-import { listStudents, type StudentSummary } from "@/lib/students";
+import { coincideTexto, todosLosEstudiantes } from "@/lib/buscar-estudiante";
+import type { StudentSummary } from "@/lib/students";
 
 export type EstudianteElegido = { id: number; nombre: string; documento?: string };
 
@@ -25,7 +26,7 @@ type EstudianteSelectorProps = {
   disabled?: boolean;
 };
 
-// Selector de estudiante con buscador: se escribe nombre, apellido o documento, se consulta al backend (mismo ?texto= que /estudiantes, que requiere BUSCAR_ESTUDIANTE) y se elige de la lista de coincidencias. Reemplaza al <select> que cargaba hasta 1000 estudiantes de una vez.
+// Selector de estudiante con buscador: se escribe nombre, apellido o documento y se elige de la lista de coincidencias (la lista sale de GET /estudiantes, que requiere BUSCAR_ESTUDIANTE). Reemplaza al <select> que cargaba hasta 1000 estudiantes de una vez.
 export function EstudianteSelector({ label, fieldKey, value, onChange, error, disabled }: EstudianteSelectorProps) {
   const listId = useId();
   const errorId = `${fieldKey}-error`;
@@ -49,9 +50,11 @@ export function EstudianteSelector({ label, fieldKey, value, onChange, error, di
   useEffect(() => {
     if (consulta.length < MIN_CARACTERES) return;
     let cancelado = false;
-    listStudents({ texto: consulta, size: MAX_RESULTADOS })
-      .then((res) => {
-        if (!cancelado) setRespuesta({ consulta, filas: res.content, error: "" });
+    // El backend no ignora tildes ni acepta "Nombre Apellido": se baja la lista (memorizada unos segundos) y se busca acá.
+    todosLosEstudiantes()
+      .then((todos) => {
+        const filas = todos.filter((e) => coincideTexto(consulta, e.nombre, e.apellido, e.documento)).slice(0, MAX_RESULTADOS);
+        if (!cancelado) setRespuesta({ consulta, filas, error: "" });
       })
       .catch((err) => {
         if (!cancelado) setRespuesta({ consulta, filas: [], error: apiErrorMessage(err, "No se pudo buscar estudiantes.") });

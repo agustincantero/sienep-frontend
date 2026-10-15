@@ -10,6 +10,14 @@ import {
   type AuditAction,
   type AuditEvent,
 } from "@/lib/audit";
+import {
+  coincidenciasPersona,
+  MAX_COINCIDENCIAS,
+  paginarMezclado,
+  TAMANIO_PAGINA,
+  todosLosEstudiantes,
+  todosLosFuncionarios,
+} from "@/lib/buscar-estudiante";
 import { formatFechaHora } from "@/lib/format";
 import { DataTable } from "@/components/ui/DataTable";
 import { PaginationFooter } from "@/components/ui/PaginationFooter";
@@ -83,7 +91,8 @@ export function AuditListView() {
 
   const [eventos, setEventos] = useState<AuditEvent[]>([]);
   const [totalElements, setTotalElements] = useState(0);
-  const [pageSize, setPageSize] = useState(20);
+  // Más autores coinciden con el texto que los que se consultan a la vez: no se muestra nada hasta que se acote la búsqueda.
+  const [demasiadosAutores, setDemasiadosAutores] = useState(false);
   const [hasNext, setHasNext] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
@@ -103,17 +112,38 @@ export function AuditListView() {
   useEffect(() => {
     let cancelado = false;
 
-    listAuditEvents({
-      texto: textoDebounced || undefined,
-      entidad: entidad || undefined,
-      accion: (accion || undefined) as AuditAction | undefined,
-      page,
-    })
+    const filtros = { entidad: entidad || undefined, accion: (accion || undefined) as AuditAction | undefined };
+    const buscado = textoDebounced.trim();
+
+    // El `texto` del backend no ignora tildes ni acepta "Nombre Apellido": se resuelve el autor acá (estudiantes y funcionarios) y se filtra por idAutor.
+    const pedido: Promise<{ content: AuditEvent[]; total: number; last: boolean; demasiados?: boolean }> = buscado
+      ? Promise.allSettled([todosLosEstudiantes(), todosLosFuncionarios()]).then(async (listas) => {
+          const personas = listas.flatMap((l) => (l.status === "fulfilled" ? l.value : []));
+          // Sin ninguna de las dos listas (permisos o caída) se deja el filtro original del backend.
+          if (personas.length === 0) {
+            const res = await listAuditEvents({ ...filtros, texto: buscado, page });
+            return { content: res.content, total: res.totalElements, last: res.last };
+          }
+          const autores = coincidenciasPersona(personas, buscado);
+          if (autores.length === 0 || autores.length > MAX_COINCIDENCIAS) {
+            return { content: [], total: 0, last: true, demasiados: autores.length > MAX_COINCIDENCIAS };
+          }
+          const r = await paginarMezclado(
+            autores.map((a) => a.idUsuario),
+            (idAutor, size) => listAuditEvents({ ...filtros, idAutor, size }),
+            page,
+            (e) => e.idAuditoria,
+          );
+          return { content: r.content, total: r.total, last: (page + 1) * TAMANIO_PAGINA >= r.total };
+        })
+      : listAuditEvents({ ...filtros, page }).then((res) => ({ content: res.content, total: res.totalElements, last: res.last }));
+
+    pedido
       .then((res) => {
         if (cancelado) return;
         setEventos(res.content);
-        setTotalElements(res.totalElements);
-        setPageSize(res.size);
+        setTotalElements(res.total);
+        setDemasiadosAutores(res.demasiados === true);
         setHasNext(!res.last);
         setError("");
       })
@@ -156,6 +186,10 @@ export function AuditListView() {
         {cargando ? (
           <div className="flex justify-center py-10">
             <span className="loading loading-spinner loading-md" />
+          </div>
+        ) : demasiadosAutores ? (
+          <div role="status" className="alert alert-info alert-soft text-sm">
+            <span>Hay demasiadas coincidencias ({MAX_COINCIDENCIAS}+ autores). Escribí más del nombre o apellido para acotar la búsqueda.</span>
           </div>
         ) : eventos.length === 0 ? (
           <p className="text-base-content/60 py-6 text-center">No se encontraron eventos de auditoría.</p>
@@ -218,7 +252,7 @@ export function AuditListView() {
               total={totalElements}
               noun="eventos"
               page={page}
-              pageSize={pageSize}
+              pageSize={TAMANIO_PAGINA}
               hasPrevious={page > 0}
               hasNext={hasNext}
               onPrevious={() => setPage((p) => Math.max(0, p - 1))}

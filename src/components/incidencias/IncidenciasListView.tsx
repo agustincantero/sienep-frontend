@@ -230,7 +230,7 @@ export function IncidenciasListView() {
         </div>
 
         <Toolbar
-          placeholder="Buscar por nombre o apellido del estudiante"
+          placeholder="Buscar por nombre, apellido o documento del estudiante"
           searchValue={nomEstudiante}
           onSearchChange={handleEstudianteChange}
           filters={filters}
@@ -248,12 +248,15 @@ export function IncidenciasListView() {
           </div>
         ) : null}
 
-
         {cargando ? (
           <div className="flex justify-center py-10">
             <span className="loading loading-spinner loading-md" />
           </div>
-        ) : demasiadasCoincidencias ? null : incidencias.length === 0 ? (
+        ) : demasiadasCoincidencias ? (
+          <div role="status" className="alert alert-info alert-soft text-sm">
+            <span>Hay demasiadas coincidencias ({MAX_COINCIDENCIAS}+ estudiantes). Escribí más del nombre o apellido para acotar la búsqueda.</span>
+          </div>
+        ) : incidencias.length === 0 ? (
           <p className="text-base-content/60 py-6 text-center">No se encontraron incidencias.</p>
         ) : (
           <>

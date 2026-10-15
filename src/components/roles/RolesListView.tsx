@@ -12,6 +12,7 @@ import {
   reactivateRole,
   type Rol,
 } from "@/lib/roles";
+import { coincideTexto } from "@/lib/buscar-estudiante";
 import { useSession } from "@/lib/session-context";
 import { DataTable } from "@/components/ui/DataTable";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -66,11 +67,8 @@ export function RolesListView() {
   }, [estadoLabel]);
 
   const rolesFiltrados = useMemo(() => {
-    const q = texto.trim().toLowerCase();
-    if (!q) return roles;
-    return roles.filter(
-      (r) => r.nombre.toLowerCase().includes(q) || (r.descripcion ?? "").toLowerCase().includes(q),
-    );
+    if (!texto.trim()) return roles;
+    return roles.filter((r) => coincideTexto(texto, r.nombre, r.descripcion));
   }, [roles, texto]);
 
   const rolADesactivar = roles.find((r) => r.idRol === idADesactivar);
