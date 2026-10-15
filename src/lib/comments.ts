@@ -28,6 +28,11 @@ export function listNormalComments(idEstudiante: number, page = 0): Promise<Page
   return apiGet<Page<StudentComment>>("/comentarios-normales-estudiante", { idEstudiante, page });
 }
 
+// Mismo endpoint, para el propio estudiante: sin idEstudiante, el backend usa el id del usuario autenticado.
+export function listMisComentarios(page = 0): Promise<Page<StudentComment>> {
+  return apiGet<Page<StudentComment>>("/comentarios-normales-estudiante", { page, sort: "createdAt,desc" });
+}
+
 export function createNormalComment(idEstudiante: number, contenido: string): Promise<StudentComment> {
   return apiPost<StudentComment>("/comentarios-normales-estudiante", { idEstudiante, contenido });
 }

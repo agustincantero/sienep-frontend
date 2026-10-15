@@ -4,6 +4,7 @@ import {
   Bell,
   Calendar,
   Library,
+  MessageSquare,
   Shield,
   TriangleAlert,
   User,
@@ -124,6 +125,7 @@ export const ESTUDIANTE_NAV: NavItem[] = [
   { key: "perfil-estudiante", href: "/perfil", icon: User, title: "Mi perfil", desc: "Tus datos personales, tu contacto y tu contraseña." },
   { key: "mis-incidencias", href: "/perfil/incidencias", icon: TriangleAlert, title: "Mis incidencias", desc: "Incidencias registradas sobre vos." },
   { key: "mis-instancias", href: "/perfil/instancias", icon: Calendar, title: "Mis instancias", desc: "Reuniones y seguimientos agendados." },
+  { key: "mis-comentarios", href: "/perfil/comentarios", icon: MessageSquare, title: "Mis comentarios", desc: "Comentarios de seguimiento registrados sobre vos." },
 ];
 
 // El usuario ve el ítem si no tiene requisitos de permiso, o si tiene al menos
