@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import {
   AUDIT_ACTIONS,
@@ -19,58 +20,11 @@ import {
   todosLosFuncionarios,
 } from "@/lib/buscar-estudiante";
 import { formatFechaHora } from "@/lib/format";
+import { AuditDetalleEvento } from "./AuditDetalleEvento";
 import { DataTable } from "@/components/ui/DataTable";
 import { PaginationFooter } from "@/components/ui/PaginationFooter";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Toolbar, type ToolbarFilter } from "@/components/ui/Toolbar";
-
-// null/undefined -> "—" (campo no presente en ese lado del diff); objetos/arrays (no debería darse en estas filas, que son de to_jsonb(ROW) plano, pero por las dudas) -> JSON; el resto, texto plano.
-function formatValor(valor: unknown): string {
-  if (valor === null || valor === undefined) return "—";
-  if (typeof valor === "object") return JSON.stringify(valor);
-  return String(valor);
-}
-
-// valorAnterior/valorNuevo son la FILA ENTERA (to_jsonb(OLD)/to_jsonb(NEW) del trigger), no solo el campo que cambió, así que se arma la unión de claves de ambos lados y se resalta lo que difiere.
-function DetalleEvento({ evento }: { evento: AuditEvent }) {
-  const { valorAnterior, valorNuevo } = evento;
-
-  if (!valorAnterior && !valorNuevo) {
-    return (
-      <p className="text-sm text-base-content/60 py-2">
-        Este evento no modifica datos (inicio o cierre de sesión): no tiene valores antes/después.
-      </p>
-    );
-  }
-
-  const campos = [...new Set([...Object.keys(valorAnterior ?? {}), ...Object.keys(valorNuevo ?? {})])];
-
-  return (
-    <table className="table table-sm align-middle" aria-label={`Detalle del cambio en ${evento.entidad}`}>
-      <thead>
-        <tr>
-          <th>Campo</th>
-          <th>Valor anterior</th>
-          <th>Valor nuevo</th>
-        </tr>
-      </thead>
-      <tbody>
-        {campos.map((campo) => {
-          const textoAnterior = formatValor(valorAnterior?.[campo]);
-          const textoNuevo = formatValor(valorNuevo?.[campo]);
-          const cambio = textoAnterior !== textoNuevo;
-          return (
-            <tr key={campo}>
-              <td>{campo}</td>
-              <td className={cambio && valorAnterior ? "text-error" : "text-base-content/60"}>{textoAnterior}</td>
-              <td className={cambio && valorNuevo ? "text-success font-semibold" : ""}>{textoNuevo}</td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
-  );
-}
 
 // Espera a que el usuario termine de tipear antes de pegarle a la API (evita un request por tecla en el buscador).
 function useDebounced<T>(valor: T, ms: number): T {
@@ -199,6 +153,7 @@ export function AuditListView() {
               {eventos.map((evento) => {
                 const expandido = expandidoId === evento.idAuditoria;
                 const detalleId = `detalle-auditoria-${evento.idAuditoria}`;
+                const tieneDetalle = Boolean(evento.valorAnterior || evento.valorNuevo);
                 return (
                   <Fragment key={evento.idAuditoria}>
                     <tr>
@@ -224,21 +179,28 @@ export function AuditListView() {
                       <td className="text-base-content/60">{evento.usuarioBd ?? "—"}</td>
                       <td className="text-base-content/60">{evento.ip ?? "—"}</td>
                       <td className="whitespace-nowrap">
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-xs"
-                          aria-expanded={expandido}
-                          aria-controls={detalleId}
-                          onClick={() => setExpandidoId(expandido ? null : evento.idAuditoria)}
-                        >
-                          {expandido ? "Ocultar" : "Ver detalle"}
-                        </button>
+                        {/* LOGIN/LOGOUT no traen valores antes/después: no hay nada que detallar. */}
+                        {tieneDetalle ? (
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-xs"
+                            aria-expanded={expandido}
+                            aria-controls={detalleId}
+                            onClick={() => setExpandidoId(expandido ? null : evento.idAuditoria)}
+                          >
+                            {expandido ? <ChevronUp size={14} aria-hidden /> : <ChevronDown size={14} aria-hidden />}
+                            {expandido ? "Ocultar" : "Ver detalle"}
+                          </button>
+                        ) : null}
                       </td>
                     </tr>
-                    {expandido ? (
+                    {expandido && tieneDetalle ? (
                       <tr id={detalleId}>
-                        <td colSpan={7} className="bg-base-200">
-                          <DetalleEvento evento={evento} />
+                        <td colSpan={7} className="bg-base-100 p-3 sm:p-4">
+                          {/* La tabla es más ancha que la pantalla en móvil: el panel se fija al borde izquierdo con el ancho visible, así no queda cortado al desplazarla. */}
+                          <div className="sticky left-0 w-[calc(100vw-3.5rem)] lg:w-auto">
+                            <AuditDetalleEvento evento={evento} />
+                          </div>
                         </td>
                       </tr>
                     ) : null}
