@@ -15,6 +15,7 @@ import {
   type FiltrosEstudiantes,
   type OrdenEstudiantes,
 } from "@/lib/estudiantes-filtros";
+import { coincideTexto, TAMANIO_PAGINA, TOPE_LISTADO } from "@/lib/buscar-estudiante";
 import { listGroups, type Group } from "@/lib/groups";
 import { useSession } from "@/lib/session-context";
 import {
@@ -182,14 +183,27 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
     if (!listo || esperandoGrupos) return;
     let cancelado = false;
 
-    listStudents({
-      texto: puedeBuscar ? textoDebounced || undefined : undefined,
+    // El backend no ignora tildes ni acepta "Nombre Apellido": con texto se piden todos los que cumplen los demás filtros y se busca y pagina acá.
+    const buscado = puedeBuscar ? textoDebounced.trim() : "";
+    const filtros = {
       grupo: puedeBuscar ? idGrupo : undefined,
       carrera: puedeBuscar ? idCarrera : undefined,
       estado: estadoLabel ? ESTADOS[estadoLabel] : undefined,
       sort: ORDENES[orden].sort,
-      page,
-    })
+    };
+
+    (buscado
+      ? listStudents({ ...filtros, size: TOPE_LISTADO }).then((res) => {
+          const coinciden = res.content.filter((e) => coincideTexto(buscado, e.nombre, e.apellido, e.documento));
+          const desde = page * TAMANIO_PAGINA;
+          return {
+            content: coinciden.slice(desde, desde + TAMANIO_PAGINA),
+            totalElements: coinciden.length,
+            last: desde + TAMANIO_PAGINA >= coinciden.length,
+          };
+        })
+      : listStudents({ ...filtros, page })
+    )
       .then((res) => {
         if (cancelado) return;
         setEstudiantes(res.content);
@@ -452,7 +466,7 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
               total={totalElements}
               noun="estudiantes"
               page={page}
-              pageSize={20}
+              pageSize={TAMANIO_PAGINA}
               hasPrevious={page > 0}
               hasNext={hasNext}
               onPrevious={() => setPage((p) => Math.max(0, p - 1))}
