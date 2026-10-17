@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Onest } from "next/font/google";
 import "./globals.css";
 
@@ -11,6 +11,13 @@ const onest = Onest({
 export const metadata: Metadata = {
   title: "SIENEP",
   description: "Sistema Integral de Estudiantes con Necesidades Educativas Personalizadas",
+  applicationName: "SIENEP",
+  appleWebApp: { capable: true, title: "SIENEP", statusBarStyle: "default" },
+};
+
+// Mismo gris que la TopBar (zinc-700), para que la barra de estado del celular no corte el encabezado.
+export const viewport: Viewport = {
+  themeColor: "#3f3f46",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

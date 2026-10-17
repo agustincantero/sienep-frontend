@@ -1,6 +1,18 @@
 {
+  "id": "/",
   "name": "SIENEP",
   "short_name": "SIENEP",
+  "description": "Sistema Integral de Estudiantes con Necesidades Educativas Personalizadas",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "categories": [
+    "education"
+  ],
+  "theme_color": "#3f3f46",
+  "background_color": "#ffffff",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
@@ -14,8 +26,5 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
-  "display": "standalone"
+  ]
 }
