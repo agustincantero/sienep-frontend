@@ -33,7 +33,8 @@ En construcción. Lo que ya funciona:
 - **Roles**: listado, alta y edición de roles con sus permisos agrupados por dominio.
 - **Auditoría**: listado de eventos (quién hizo qué, y cuándo).
 - **Catálogos**: carreras, grupos, ITRs y categorías de instancia y de recordatorio, con un listado por catálogo (`/catalogos/[catalogo]`, cada pestaña es su propia ruta) y alta y edición en páginas aparte (`/catalogos/[catalogo]/nuevo` y `/[id]/editar`). `/catalogos` redirige al primer catálogo que el usuario puede ver. Un catálogo inexistente en la URL (mal escrito o link viejo) redirige a `/catalogos` en vez de mostrar el 404: la página 404 es una pantalla de fuera de sesión y, disparada desde adentro de la app, se dibuja debajo de la TopBar.
-- **Perfil del estudiante** (`/perfil`): autoservicio con sus datos, contacto editable, cambio de contraseña y sus propias instancias e incidencias.
+- **Perfil del estudiante** (`/perfil`): autoservicio con sus datos, contacto editable, cambio de contraseña y sus propias instancias, incidencias y comentarios (`/perfil/instancias`, `/perfil/incidencias` y `/perfil/comentarios`).
+- **PWA instalable**: `src/app/manifest.webmanifest` y los metadatos de `layout.tsx` permiten instalar la app desde el navegador. No hay service worker, así que no funciona sin conexión.
 - **Autorización**: la navegación se filtra por los `permisos` del usuario, y cada página de módulo vuelve a chequear el permiso en el server (`SinPermiso` si falta).
 - **Estructura de página**: `TopBar` en toda pantalla autenticada, `Sidebar` dentro de las secciones de funcionario. Las pantallas sin sesión (login, recuperación) y la página 404 comparten otra estructura, con `Footer`.
 
@@ -92,7 +93,8 @@ Normalmente **no** se instancian a mano: ya vienen puestos por los layouts de `s
 | `StudentForm` | Alta y edición; secciones en `fieldset`s: datos personales, dirección, teléfonos, grupos (filtrado por ITR y carrera) e información de salud. | `{ mode: "crear" }` \| `{ mode: "editar", estudianteId, estudiante }` |
 | `StudentProfile` | Ficha del estudiante en tabs: datos generales, salud (confidencial, según permiso), instancias e incidencias (`StudentInstanciasPanel`), informes médicos y comentarios. | `idEstudiante`, `tabInicial?` |
 | `StudentCommentsPanel` | Comentarios normales y confidenciales, paginados. | `idEstudiante` |
-| `MedicalReportsPanel` | Informes médicos adjuntos: listar, subir, borrar. | `idEstudiante` |
+| `MedicalReportsPanel` | Informes médicos adjuntos: listar, subir, borrar. | `idEstudiante`, `estadoEstudiante` |
+| `StudentInstanciasPanel` | Instancias e incidencias del estudiante, dentro de la ficha. | propios |
 | `StudentAvatar` | Foto de perfil (proxy autenticado) o iniciales si no hay foto o la imagen falla al cargar. | `nombre`, `apellido`, `urlFoto?`, `size?` (`"sm"` \| `"lg"`) |
 | `EstadoBadge` | Chip de estado del estudiante (Activo/Inactivo/etc.), colores vía `describeEstado()` en `src/lib/students.ts`. | `estado` |
 
@@ -103,10 +105,10 @@ Reutilizables para las páginas de cualquier módulo.
 | Componente | Qué es | Props |
 |---|---|---|
 | `SectionHeader` | Encabezado de sección: título + botón de acción opcional (ej. "Nuevo…"). | `title`, `action?` (texto del botón), `onAction?` |
-| `Toolbar` | Barra de búsqueda + `select`s de filtro, controlada por props. | `placeholder`, `searchValue?`, `onSearchChange?`, `filters?` (`{ label, emptyLabel, options, value?, onChange? }[]`) |
-| `DataTable` | `<table>` de daisyUI: recibe `headers` y las filas como `children` (`<tr>…`). | `headers: string[]`, `children` |
+| `Toolbar` | Barra de búsqueda + `select`s de filtro, controlada por props. Con `searchOptions` el buscador pasa a autocompletado (`<datalist>`); `trailing` agrega un control extra al final de la fila (ej. "Ordenar por"). | `placeholder?`, `searchValue?`, `onSearchChange?`, `searchOptions?`, `filters?` (`{ label, emptyLabel, options, value?, onChange? }[]`), `trailing?` |
+| `DataTable` | `<table>` de daisyUI: recibe `headers` y las filas como `children` (`<tr>…`). Un header puede ser un string o `{ label, align? }` para columnas centradas o a la derecha. | `headers: (string \| { label, align? })[]`, `children` |
 | `ConfirmDialog` | Reemplazo de `window.confirm()` para acciones como desactivar o reenviar contraseña; variante destructiva en rojo y `aviso` opcional. | `open`, `title`, `message`, `aviso?`, `confirmLabel`, `destructive?`, `onConfirm`, `onCancel` |
-| `PaginationFooter` | Pie de listado: "Mostrando X de Y …" + Anterior / Siguiente. | `shown`, `total`, `noun`, `hasPrevious?`, `hasNext?`, `onPrevious?`, `onNext?` |
+| `PaginationFooter` | Pie de listado: "Mostrando X de Y …" + Anterior / Siguiente. Con `page` y `pageSize` (o `offset`, para páginas de tamaño variable) muestra el rango real (ej. "21-40"). | `shown`, `total`, `noun`, `page?`, `pageSize?`, `offset?`, `hasPrevious?`, `hasNext?`, `onPrevious?`, `onNext?` |
 
 ### Otros módulos
 
