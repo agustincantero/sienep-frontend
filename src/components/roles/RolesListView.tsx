@@ -155,7 +155,7 @@ export function RolesListView() {
             <span className="loading loading-spinner loading-md" />
           </div>
         ) : rolesFiltrados.length === 0 ? (
-          <p className="text-base-content/60 py-6 text-center">No se encontraron roles.</p>
+          <p className="text-base-content/70 py-6 text-center">No se encontraron roles.</p>
         ) : (
           <DataTable headers={["Rol", "Descripción", "Permisos", "Estado", ""]}>
             {rolesFiltrados.map((r) => {
@@ -163,7 +163,7 @@ export function RolesListView() {
               return (
                 <tr key={r.idRol}>
                   <td className="font-semibold text-sm">{r.nombre}</td>
-                  <td className="text-base-content/60 text-sm">{r.descripcion || "—"}</td>
+                  <td className="text-base-content/70 text-sm">{r.descripcion || "—"}</td>
                   <td>
                     <span className="badge badge-outline whitespace-nowrap">
                       {r.permisos.length} permiso{r.permisos.length === 1 ? "" : "s"}
@@ -174,7 +174,7 @@ export function RolesListView() {
                   </td>
                   <td className="whitespace-nowrap">
                     {protegido ? (
-                      <span className="text-base-content/60 text-sm">Protegido</span>
+                      <span className="text-base-content/70 text-sm">Protegido</span>
                     ) : (
                       <div className="inline-flex gap-1">
                         {puedeEditar ? (

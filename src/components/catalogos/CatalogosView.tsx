@@ -62,7 +62,7 @@ export function CatalogosView({ catalogo, exitoInicial }: { catalogo: TabCatalog
               href={hrefListado(id)}
               scroll={false}
               aria-current={catalogo === id ? "page" : undefined}
-              className={`tab gap-1.5 whitespace-nowrap ${catalogo === id ? "tab-active" : ""}`}
+              className={`tab gap-1.5 whitespace-nowrap ${catalogo === id ? "tab-active" : "text-base-content/70"}`}
             >
               <Icon size={14} aria-hidden />
               {label}

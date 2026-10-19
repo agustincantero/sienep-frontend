@@ -64,7 +64,7 @@ function FilaDeCambio({ campo, anterior, nuevo }: { campo: string; anterior: Val
       <span className="text-sm font-medium">{etiquetaCampo(campo)}</span>
       <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm min-w-0">
         <span className="sr-only">Antes:</span>
-        <ValorTexto valor={anterior} className={anterior.vacio ? "" : "line-through text-base-content/60"} />
+        <ValorTexto valor={anterior} className={anterior.vacio ? "" : "line-through text-base-content/70"} />
         <ArrowRight size={14} aria-hidden className="shrink-0 self-center text-base-content/50" />
         <span className="sr-only">Después:</span>
         <ValorTexto valor={nuevo} className={nuevo.vacio ? "" : "font-semibold"} />

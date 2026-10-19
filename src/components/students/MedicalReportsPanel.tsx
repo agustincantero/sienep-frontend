@@ -147,7 +147,7 @@ export function MedicalReportsPanel({
           <span className="loading loading-spinner loading-md" />
         </div>
       ) : informes.length === 0 ? (
-        <p className="text-base-content/60 text-sm">Todavía no hay informes adjuntos.</p>
+        <p className="text-base-content/70 text-sm">Todavía no hay informes adjuntos.</p>
       ) : (
         <ul className="divide-y divide-base-300">
           {informes.map((inf) =>
@@ -156,7 +156,7 @@ export function MedicalReportsPanel({
             inf.estado === "ELIMINADO" || !inf.urlDescarga ? (
               <li
                 key={inf.idInforme}
-                className="py-2 flex flex-wrap items-center justify-between gap-x-3 text-sm text-base-content/60"
+                className="py-2 flex flex-wrap items-center justify-between gap-x-3 text-sm text-base-content/70"
               >
                 <span className="truncate flex items-center gap-2">
                   <Ban size={14} aria-hidden className="shrink-0" />
@@ -221,7 +221,7 @@ export function MedicalReportsPanel({
           nativo del navegador corta el submit antes de correr las
           validaciones propias (patrón de nombre, tamaño de archivo). */}
       {puedeAdjuntar && !estudianteAdmiteInformes ? (
-        <p className="text-base-content/60 text-sm pt-2 border-t border-base-300">
+        <p className="text-base-content/70 text-sm pt-2 border-t border-base-300">
           El estudiante está inactivo: no se le pueden adjuntar informes nuevos.
         </p>
       ) : puedeAdjuntar ? (

@@ -146,7 +146,7 @@ export function AuditListView() {
             <span>Hay demasiadas coincidencias ({MAX_COINCIDENCIAS}+ autores). Escribí más del nombre o apellido para acotar la búsqueda.</span>
           </div>
         ) : eventos.length === 0 ? (
-          <p className="text-base-content/60 py-6 text-center">No se encontraron eventos de auditoría.</p>
+          <p className="text-base-content/70 py-6 text-center">No se encontraron eventos de auditoría.</p>
         ) : (
           <>
             <DataTable headers={["Fecha y hora", "Usuario", "Acción", "Entidad", "Usuario BD", "IP", ""]}>
@@ -163,7 +163,7 @@ export function AuditListView() {
                           <div className="flex flex-col">
                             <span className="font-medium">{evento.nombreAutor}</span>
                             {evento.documentoAutor ? (
-                              <span className="text-xs text-base-content/60">{evento.documentoAutor}</span>
+                              <span className="text-xs text-base-content/70">{evento.documentoAutor}</span>
                             ) : null}
                           </div>
                         ) : (
@@ -176,8 +176,8 @@ export function AuditListView() {
                         </span>
                       </td>
                       <td>{evento.entidad}</td>
-                      <td className="text-base-content/60">{evento.usuarioBd ?? "—"}</td>
-                      <td className="text-base-content/60">{evento.ip ?? "—"}</td>
+                      <td className="text-base-content/70">{evento.usuarioBd ?? "—"}</td>
+                      <td className="text-base-content/70">{evento.ip ?? "—"}</td>
                       <td className="whitespace-nowrap">
                         {/* LOGIN/LOGOUT no traen valores antes/después: no hay nada que detallar. */}
                         {tieneDetalle ? (

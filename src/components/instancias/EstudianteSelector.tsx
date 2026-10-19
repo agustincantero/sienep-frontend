@@ -191,7 +191,7 @@ export function EstudianteSelector({ label, fieldKey, value, onChange, error, di
                   <span className="font-medium">
                     {s.nombre} {s.apellido}
                   </span>
-                  <span className="text-xs text-base-content/60">{s.documento}</span>
+                  <span className="text-xs text-base-content/70">{s.documento}</span>
                 </button>
               </li>
             ))

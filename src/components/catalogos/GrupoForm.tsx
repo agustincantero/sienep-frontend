@@ -171,7 +171,7 @@ export function GrupoForm({ grupo }: { grupo?: Group }) {
               {errores.idCarrera}
             </p>
           ) : carreras && carreras.length === 0 ? (
-            <p className="mt-1 text-xs text-base-content/60">No hay carreras activas. Creá una carrera primero.</p>
+            <p className="mt-1 text-xs text-base-content/70">No hay carreras activas. Creá una carrera primero.</p>
           ) : null}
         </div>
       )}

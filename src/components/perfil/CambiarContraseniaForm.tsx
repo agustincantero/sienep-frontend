@@ -141,7 +141,7 @@ export function CambiarContraseniaForm({ user }: { user: AuthenticatedUser }) {
               <span>{errorForm}</span>
             </div>
           ) : null}
-          <p className="text-sm text-base-content/60">
+          <p className="text-sm text-base-content/70">
             Al guardar se cierra tu sesión en todos los dispositivos y vas a tener que entrar de nuevo.
           </p>
           <div className="flex justify-end">

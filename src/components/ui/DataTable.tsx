@@ -9,7 +9,8 @@ type DataTableProps = {
 export function DataTable({ headers, children }: DataTableProps) {
   return (
     <div className="overflow-x-auto">
-      <table className="table align-middle [&_tbody_tr]:transition-colors [&_tbody_tr]:duration-150 [&_tbody_tr:hover]:bg-base-200">
+      {/* Encabezados al 70 % porque el 60 % de daisyUI da 4,11:1 de contraste, menos del 4,5:1 de WCAG AA. */}
+      <table className="table align-middle [&_thead]:text-base-content/70 [&_tbody_tr]:transition-colors [&_tbody_tr]:duration-150 [&_tbody_tr:hover]:bg-base-200">
         <thead>
           <tr>
             {headers.map((hd) => {
@@ -19,7 +20,8 @@ export function DataTable({ headers, children }: DataTableProps) {
               const alignClass = align === "center" ? "text-center" : align === "right" ? "text-right" : undefined;
               return (
                 <th key={label} className={alignClass}>
-                  {label}
+                  {/* Columna de acciones sin título visible: se le da nombre accesible para los lectores de pantalla. */}
+                  {label || <span className="sr-only">Acciones</span>}
                 </th>
               );
             })}

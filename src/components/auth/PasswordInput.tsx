@@ -55,7 +55,7 @@ export function PasswordInput({
             disabled={disabled}
             aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
             aria-pressed={visible}
-            className="btn btn-ghost btn-circle btn-xs text-base-content/60 hover:text-base-content"
+            className="btn btn-ghost btn-circle btn-xs text-base-content/70 hover:text-base-content"
           >
             {visible ? <EyeOff size={15} aria-hidden /> : <Eye size={15} aria-hidden />}
           </button>

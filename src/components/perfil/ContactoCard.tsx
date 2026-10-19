@@ -195,7 +195,7 @@ export function ContactoCard({
           })}
           <button
             type="button"
-            className="btn btn-link btn-sm pl-0 gap-1"
+            className="btn btn-link btn-sm pl-0 gap-1 text-sky-700"
             onClick={() => setForm((f) => ({ ...f, telefonos: [...f.telefonos, ""] }))}
             disabled={guardando}
           >
