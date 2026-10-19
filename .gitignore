@@ -37,11 +37,10 @@ yarn-error.log*
 !.env.production
 !.env.example
 
-# docs/: solo se versionan el prototipo y el contrato de la API
+# docs/: solo se versionan el prototipo y el contrato de la API (los wireframes y los documentos de UX viven en ux/)
 /docs/*
 !/docs/openapi.json
 !/docs/prototipo.html
-!/docs/wireframes.pdf
 
 # claude code / agentes: nada se versiona, skills incluidas (viven local en cada máquina).
 /CLAUDE.md

@@ -157,6 +157,7 @@ En `docs/` se versionan estos insumos:
 
 - `openapi.json`: spec OpenAPI 3 de la API del backend, contra la que se codea.
 - `prototipo.html`: prototipo de UI (React + Tailwind + daisyUI, sin build) usado como referencia visual. No se copia tal cual: se porta a componentes tipados y reutilizables.
-- `wireframes.pdf`: wireframes de las pantallas.
+
+En `ux/` están los documentos de UX/UI. `Documento de Entregas UI-UX - Entrega 2.pdf` reúne los wireframes, los arquetipos y el mapa de empatía de las entregas 1 y 2, y `Documento de Entregas UI-UX - Entrega Final.pdf` es el documento de la entrega final.
 
 La documentación del backend (arquitectura, auth, cómo levantarlo) está en su propio repositorio: <https://git.utec.edu.uy/pdi-tercer-semestre-dza-grupo-1/sienep>. Los assets de marca están en `public/`; el favicon usa la convención de archivos de Next (`src/app/favicon.ico`, `icon.svg`, `apple-icon.png`, `manifest.webmanifest`).
