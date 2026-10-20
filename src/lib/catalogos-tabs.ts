@@ -1,6 +1,6 @@
-import { Bell, Building2, Calendar, GraduationCap, Users, type LucideIcon } from "lucide-react";
+import { Bell, Building2, Calendar, GraduationCap, Repeat, Users, type LucideIcon } from "lucide-react";
 
-export type TabCatalogo = "carreras" | "grupos" | "itrs" | "categorias-instancia" | "categorias-recordatorio";
+export type TabCatalogo = "carreras" | "grupos" | "itrs" | "categorias-instancia" | "categorias-recordatorio" | "frecuencias";
 
 export type DefinicionCatalogo = {
   id: TabCatalogo;
@@ -15,7 +15,7 @@ export type DefinicionCatalogo = {
 };
 
 // Pestañas de /catalogos (una ruta /catalogos/[id] cada una) y los permisos de cada una. Vive fuera de los componentes (que son "use client") porque también lo usan las páginas server-side para decidir si el usuario puede entrar.
-// Mismo orden que el prototipo (docs/prototipo.html): la jerarquía académica primero (Carrera → Grupo, ITR → Carreras) y después las dos categorías.
+// Mismo orden que el prototipo (docs/prototipo.html): la jerarquía académica primero (Carrera → Grupo, ITR → Carreras), después las dos categorías y al final las frecuencias, que completan a los recordatorios.
 export const TABS_CATALOGO: DefinicionCatalogo[] = [
   {
     id: "carreras",
@@ -65,6 +65,16 @@ export const TABS_CATALOGO: DefinicionCatalogo[] = [
       crear: "CREAR_CATEGORIA_RECORDATORIO",
       editar: "EDITAR_CATEGORIA_RECORDATORIO",
     },
+  },
+  {
+    id: "frecuencias",
+    label: "Frecuencias",
+    icon: Repeat,
+    endpoint: "/frecuencias",
+    nuevoLabel: "Nueva frecuencia",
+    editarLabel: "Editar frecuencia",
+    // FrecuenciaService no tiene permisos propios: usa los de recordatorio.
+    permisos: { ver: "VER_RECORDATORIOS", crear: "CREAR_RECORDATORIO", editar: "EDITAR_RECORDATORIO" },
   },
 ];
 

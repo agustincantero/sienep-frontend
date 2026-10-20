@@ -9,6 +9,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { CarrerasPanel } from "./CarrerasPanel";
 import { CATEGORIAS_INSTANCIA, CATEGORIAS_RECORDATORIO } from "./categorias-config";
 import { CategoriasPanel } from "./CategoriasPanel";
+import { FrecuenciasPanel } from "./FrecuenciasPanel";
 import { GruposPanel } from "./GruposPanel";
 import { ItrsPanel } from "./ItrsPanel";
 
@@ -24,6 +25,8 @@ function Panel({ tab, exitoInicial }: { tab: TabCatalogo; exitoInicial?: string 
       return <CategoriasPanel config={CATEGORIAS_INSTANCIA} exitoInicial={exitoInicial} />;
     case "categorias-recordatorio":
       return <CategoriasPanel config={CATEGORIAS_RECORDATORIO} exitoInicial={exitoInicial} />;
+    case "frecuencias":
+      return <FrecuenciasPanel exitoInicial={exitoInicial} />;
   }
 }
 

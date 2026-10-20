@@ -1,15 +1,15 @@
 "use client";
 
 import { cloneElement, isValidElement, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bell, Repeat, User } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
-import { TOPE_LISTADO } from "@/lib/buscar-estudiante";
+import { hrefListado } from "@/lib/catalogos-tabs";
 import { listCategoriasRecordatorio, type CategoriaRecordatorio } from "@/lib/categorias-recordatorio";
-import { ahoraParaInputLocal, formatFechaHora } from "@/lib/format";
+import { ahoraParaInputLocal } from "@/lib/format";
 import { listFrecuencias, type Frecuencia } from "@/lib/frecuencias";
-import { listFuncionariosActivos, type FuncionarioResumen } from "@/lib/funcionarios";
-import { listInstancias, type InstanciaComun } from "@/lib/instancias";
+import { getInstancia, type InstanciaComun } from "@/lib/instancias";
 import {
   createRecordatorio,
   TIPOS_RECORDATORIO,
@@ -20,6 +20,7 @@ import {
 } from "@/lib/recordatorios";
 import { useSession } from "@/lib/session-context";
 import { BackButton } from "@/components/layout/BackButton";
+import { etiquetaInstancia, InstanciaSelector } from "./InstanciaSelector";
 
 const TITULO_MAX = 150;
 const OCURRENCIAS_MAX = 5;
@@ -28,38 +29,28 @@ const OCURRENCIAS_MAX = 5;
 type FinRepeticion = "fecha" | "ocurrencias";
 
 type FormState = {
-  codInstancia: string;
   titulo: string;
   tipo: TipoRecordatorio | "";
   idCategoria: string;
   fechaHora: string;
-  idResponsable: string;
   idFrecuencia: string;
   fin: FinRepeticion;
   fechaFin: string;
   nroOcurrencias: string;
 };
 
-function estadoInicial(idUsuario: number, recordatorio?: Recordatorio, codInstanciaFija?: number): FormState {
+function estadoInicial(recordatorio?: Recordatorio): FormState {
   return {
-    codInstancia: recordatorio ? String(recordatorio.codInstancia) : codInstanciaFija ? String(codInstanciaFija) : "",
     titulo: recordatorio?.titulo ?? "",
     tipo: recordatorio?.tipo ?? "",
     idCategoria: recordatorio ? String(recordatorio.idCategoria) : "",
     // El backend manda "yyyy-MM-ddTHH:mm:ss"; datetime-local solo entiende hasta los minutos, así que se recorta.
     fechaHora: recordatorio?.fechaHora.slice(0, 16) ?? "",
-    // En el alta, el responsable arranca siendo quien lo crea.
-    idResponsable: String(recordatorio?.idResponsable ?? idUsuario),
     idFrecuencia: recordatorio?.idFrecuencia != null ? String(recordatorio.idFrecuencia) : "",
     fin: recordatorio?.nroOcurrencias != null && !recordatorio.fechaFin ? "ocurrencias" : "fecha",
     fechaFin: recordatorio?.fechaFin ?? "",
     nroOcurrencias: recordatorio?.nroOcurrencias != null ? String(recordatorio.nroOcurrencias) : "",
   };
-}
-
-// Texto de cada opción del combo de instancias: encabeza el identificador de negocio (el que se ve en el listado y el detalle de instancias), y después lo mínimo para reconocerla (de quién es y cuándo fue).
-function describirInstancia(i: InstanciaComun): string {
-  return `${i.idNegInstancia ?? `#${i.codInstancia}`} · ${i.titulo} — ${i.nombreEstudiante} (${formatFechaHora(i.fechaHora)})`;
 }
 
 // Mismo patrón que SeccionLegend de InstanciaForm/StudentForm.
@@ -83,14 +74,18 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
   const esEdicion = props.mode === "editar";
   const instanciaFija = props.mode === "crear" ? props.instanciaFija : undefined;
   const recordatorio = esEdicion ? props.recordatorio : undefined;
-  // GET /funcionarios pide VER_FUNCIONARIOS: sin él, el responsable queda fijo (quien lo crea, o el que ya tenía al editar).
-  const puedeElegirResponsable = permisos.includes("VER_FUNCIONARIOS");
+  // El responsable es quien crea el recordatorio, y al editar se conserva el que ya tenía: no se elige.
+  const idResponsable = recordatorio?.idResponsable ?? idUsuario;
+  const nombreResponsable = recordatorio ? recordatorio.nombreResponsable : `${nombre} ${apellido}`;
+  const puedeGestionarFrecuencias = permisos.includes("CREAR_RECORDATORIO");
 
-  const [form, setForm] = useState<FormState>(() => estadoInicial(idUsuario, recordatorio, instanciaFija?.codInstancia));
-  const [instancias, setInstancias] = useState<InstanciaComun[]>([]);
+  const [form, setForm] = useState<FormState>(() => estadoInicial(recordatorio));
+  // Instancia elegida en el buscador; fija si se llegó desde la instancia.
+  const [instancia, setInstancia] = useState<InstanciaComun | null>(instanciaFija ?? null);
+  // Al editar, la instancia no se puede cambiar: se lee solo para mostrar su identificador de negocio (RecordatorioResponseDTO no lo trae).
+  const [instanciaActual, setInstanciaActual] = useState<InstanciaComun | null>(null);
   const [categorias, setCategorias] = useState<CategoriaRecordatorio[]>([]);
-  const [frecuencias, setFrecuencias] = useState<Frecuencia[]>([]);
-  const [funcionarios, setFuncionarios] = useState<FuncionarioResumen[]>([]);
+  const [frecuencias, setFrecuencias] = useState<Frecuencia[] | null>(null);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -99,26 +94,20 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
   const vencido = recordatorio != null && recordatorio.fechaHora.slice(0, 16) <= ahora;
 
   useEffect(() => {
-    // Solo en el alta sin instancia fija hace falta el combo: al editar la instancia no se puede cambiar (el backend responde 409).
-    if (!esEdicion && !instanciaFija) {
-      listInstancias({ size: TOPE_LISTADO, sort: "fechaHora,desc" })
-        .then((p) => setInstancias(p.content))
-        .catch(() => setInstancias([]));
+    if (recordatorio) {
+      getInstancia(recordatorio.codInstancia)
+        .then(setInstanciaActual)
+        .catch(() => {});
     }
     // La categoría requiere VER_CATEGORIAS_RECORDATORIO — si el rol no lo tiene, el combo queda vacío (mismo caso que las categorías de instancia en InstanciaForm). No se rompe la pantalla por eso.
     listCategoriasRecordatorio()
       .then(setCategorias)
       .catch(() => setCategorias([]));
-    // Sin frecuencias activas (o si la llamada falla) la sección de repetición no se muestra.
+    // Sin frecuencias activas (o si la llamada falla), la sección de repetición avisa que no hay y dónde se cargan.
     listFrecuencias()
       .then(setFrecuencias)
       .catch(() => setFrecuencias([]));
-    if (puedeElegirResponsable) {
-      listFuncionariosActivos()
-        .then(setFuncionarios)
-        .catch(() => setFuncionarios([]));
-    }
-  }, [esEdicion, instanciaFija, puedeElegirResponsable]);
+  }, [recordatorio]);
 
   function campo<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -128,7 +117,7 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
   // Mismo criterio de orden que InstanciaForm.validar(): define qué campo se enfoca si falla, sigue el orden en pantalla.
   function validar(): Record<string, string> {
     const e: Record<string, string> = {};
-    if (!form.codInstancia) {
+    if (!esEdicion && !instancia) {
       e.codInstancia = "Elegí la instancia a la que pertenece.";
     }
     if (!form.titulo.trim()) {
@@ -146,9 +135,6 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
       e.fechaHora = "La fecha y hora son obligatorias.";
     } else if (form.fechaHora <= ahoraParaInputLocal()) {
       e.fechaHora = "La fecha y hora tienen que ser futuras.";
-    }
-    if (!form.idResponsable) {
-      e.idResponsable = "Elegí un responsable.";
     }
     if (form.idFrecuencia) {
       if (form.fin === "fecha") {
@@ -184,9 +170,9 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
       titulo: form.titulo.trim(),
       tipo: form.tipo as TipoRecordatorio,
       fechaHora: form.fechaHora,
-      codInstancia: Number(form.codInstancia),
+      codInstancia: recordatorio ? recordatorio.codInstancia : instancia!.codInstancia,
       idCategoria: Number(form.idCategoria),
-      idResponsable: Number(form.idResponsable),
+      idResponsable,
       // Sin frecuencia no se manda el fin: el PUT es un reemplazo total, así que omitirlos también borra una repetición que se quitó.
       idFrecuencia: repite ? Number(form.idFrecuencia) : undefined,
       fechaFin: repite && form.fin === "fecha" ? form.fechaFin : undefined,
@@ -210,23 +196,12 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
     }
   }
 
-  // Sin VER_FUNCIONARIOS (o mientras carga la lista) el combo muestra solo al responsable actual.
-  const nombreResponsableActual = recordatorio
-    ? recordatorio.nombreResponsable
-    : `${nombre} ${apellido} (vos)`;
-  const opcionesResponsable =
-    funcionarios.length > 0
-      ? funcionarios.map((f) => ({
-          id: f.idUsuario,
-          label: f.idUsuario === idUsuario ? `${f.nombre} ${f.apellido} (vos)` : `${f.nombre} ${f.apellido}`,
-        }))
-      : [{ id: Number(form.idResponsable), label: nombreResponsableActual }];
-
   // La frecuencia guardada puede haberse dado de baja: se muestra igual para no perderla al editar.
+  const activas = (frecuencias ?? []).map((f) => ({ id: f.idFrecuencia, label: f.descripcion }));
   const opcionesFrecuencia =
-    recordatorio?.idFrecuencia != null && !frecuencias.some((f) => f.idFrecuencia === recordatorio.idFrecuencia)
-      ? [...frecuencias.map((f) => ({ id: f.idFrecuencia, label: f.descripcion })), { id: recordatorio.idFrecuencia, label: recordatorio.descripcionFrecuencia ?? "Frecuencia actual" }]
-      : frecuencias.map((f) => ({ id: f.idFrecuencia, label: f.descripcion }));
+    recordatorio?.idFrecuencia != null && !activas.some((f) => f.id === recordatorio.idFrecuencia)
+      ? [...activas, { id: recordatorio.idFrecuencia, label: recordatorio.descripcionFrecuencia ?? "Frecuencia actual" }]
+      : activas;
 
   return (
     <div className="grow overflow-auto">
@@ -257,27 +232,28 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
                   {/* Inmutable después de creado (el backend responde 409), y fija si se llegó desde la instancia: se muestra deshabilitada para no perder el contexto. */}
                   <input
                     className="input w-full"
-                    value={instanciaFija ? describirInstancia(instanciaFija) : recordatorio!.tituloInstancia}
+                    value={
+                      instanciaFija
+                        ? `${etiquetaInstancia(instanciaFija)} — ${instanciaFija.nombreEstudiante}`
+                        : instanciaActual
+                          ? `${etiquetaInstancia(instanciaActual)} — ${instanciaActual.nombreEstudiante}`
+                          : recordatorio!.tituloInstancia
+                    }
                     disabled
                   />
                 </Field>
               ) : (
-                <Field label="Instancia asociada" fieldKey="codInstancia" error={errores.codInstancia}>
-                  <select
-                    className={`select w-full${errores.codInstancia ? " select-error" : ""}`}
-                    value={form.codInstancia}
-                    onChange={(e) => campo("codInstancia", e.target.value)}
-                    disabled={guardando}
-                    required
-                  >
-                    <option value="">Seleccioná una instancia</option>
-                    {instancias.map((i) => (
-                      <option key={i.codInstancia} value={i.codInstancia}>
-                        {describirInstancia(i)}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
+                <InstanciaSelector
+                  label="Instancia asociada"
+                  fieldKey="codInstancia"
+                  value={instancia}
+                  onChange={(i) => {
+                    setInstancia(i);
+                    if (errores.codInstancia) setErrores((e) => ({ ...e, codInstancia: "" }));
+                  }}
+                  error={errores.codInstancia}
+                  disabled={guardando}
+                />
               )}
               <p className="mt-1 text-xs text-base-content/60">Todo recordatorio pertenece a una instancia: no puede crearse suelto.</p>
             </div>
@@ -342,103 +318,113 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
                   required
                 />
               </Field>
-              <Field label="Responsable" fieldKey="idResponsable" error={errores.idResponsable}>
-                <select
-                  className={`select w-full${errores.idResponsable ? " select-error" : ""}`}
-                  value={form.idResponsable}
-                  onChange={(e) => campo("idResponsable", e.target.value)}
-                  disabled={guardando || !puedeElegirResponsable}
-                  required
-                >
-                  {opcionesResponsable.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
+              <Field label="Responsable" fieldKey="responsable">
+                {/* Quien lo crea (o el que ya tenía, al editar): se muestra para que quede claro a nombre de quién se agenda. */}
+                <input
+                  className="input w-full"
+                  value={idResponsable === idUsuario ? `${nombreResponsable} (vos)` : nombreResponsable}
+                  disabled
+                />
               </Field>
             </div>
           </fieldset>
 
-          {opcionesFrecuencia.length > 0 ? (
-            <fieldset className="fieldset space-y-3 p-4 rounded-box border border-base-300">
-              <SeccionLegend icon={Repeat}>Repetición</SeccionLegend>
+          <fieldset className="fieldset space-y-3 p-4 rounded-box border border-base-300">
+            <SeccionLegend icon={Repeat}>Repetición</SeccionLegend>
 
-              <Field label="Frecuencia" fieldKey="idFrecuencia">
-                <select
-                  className="select w-full"
-                  value={form.idFrecuencia}
-                  onChange={(e) => campo("idFrecuencia", e.target.value)}
-                  disabled={guardando}
-                >
-                  <option value="">No se repite</option>
-                  {opcionesFrecuencia.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+            {frecuencias == null ? (
+              <span className="loading loading-spinner loading-sm" aria-label="Cargando frecuencias" />
+            ) : opcionesFrecuencia.length === 0 ? (
+              <p className="text-sm text-base-content/60">
+                No hay frecuencias cargadas, así que el recordatorio no se repite.
+                {puedeGestionarFrecuencias ? (
+                  <>
+                    {" "}Se agregan en{" "}
+                    <Link href={hrefListado("frecuencias")} className="link link-primary">
+                      Catálogos › Frecuencias
+                    </Link>
+                    .
+                  </>
+                ) : null}
+              </p>
+            ) : (
+              <>
+                <Field label="Frecuencia" fieldKey="idFrecuencia">
+                  <select
+                    className="select w-full"
+                    value={form.idFrecuencia}
+                    onChange={(e) => campo("idFrecuencia", e.target.value)}
+                    disabled={guardando}
+                  >
+                    <option value="">No se repite</option>
+                    {opcionesFrecuencia.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
 
-              {form.idFrecuencia ? (
-                <div className="space-y-3">
-                  <div role="radiogroup" aria-label="Termina" className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        className="radio radio-sm"
-                        name="fin"
-                        checked={form.fin === "fecha"}
-                        onChange={() => campo("fin", "fecha")}
-                        disabled={guardando}
-                      />
-                      Termina en una fecha
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        className="radio radio-sm"
-                        name="fin"
-                        checked={form.fin === "ocurrencias"}
-                        onChange={() => campo("fin", "ocurrencias")}
-                        disabled={guardando}
-                      />
-                      Termina tras una cantidad de veces
-                    </label>
+                {form.idFrecuencia ? (
+                  <div className="space-y-3">
+                    <div role="radiogroup" aria-label="Termina" className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          className="radio radio-sm"
+                          name="fin"
+                          checked={form.fin === "fecha"}
+                          onChange={() => campo("fin", "fecha")}
+                          disabled={guardando}
+                        />
+                        Termina en una fecha
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          className="radio radio-sm"
+                          name="fin"
+                          checked={form.fin === "ocurrencias"}
+                          onChange={() => campo("fin", "ocurrencias")}
+                          disabled={guardando}
+                        />
+                        Termina tras una cantidad de veces
+                      </label>
+                    </div>
+
+                    {form.fin === "fecha" ? (
+                      <Field label="Se repite hasta el" fieldKey="fechaFin" error={errores.fechaFin}>
+                        <input
+                          type="date"
+                          className={`input w-full${errores.fechaFin ? " input-error" : ""}`}
+                          value={form.fechaFin}
+                          min={(form.fechaHora || ahora).slice(0, 10)}
+                          suppressHydrationWarning
+                          onChange={(e) => campo("fechaFin", e.target.value)}
+                          disabled={guardando}
+                          required
+                        />
+                      </Field>
+                    ) : (
+                      <Field label={`Cantidad de veces (1 a ${OCURRENCIAS_MAX})`} fieldKey="nroOcurrencias" error={errores.nroOcurrencias}>
+                        <input
+                          type="number"
+                          className={`input w-full${errores.nroOcurrencias ? " input-error" : ""}`}
+                          placeholder={`Cantidad de veces (1 a ${OCURRENCIAS_MAX})`}
+                          min={1}
+                          max={OCURRENCIAS_MAX}
+                          value={form.nroOcurrencias}
+                          onChange={(e) => campo("nroOcurrencias", e.target.value)}
+                          disabled={guardando}
+                          required
+                        />
+                      </Field>
+                    )}
                   </div>
-
-                  {form.fin === "fecha" ? (
-                    <Field label="Se repite hasta el" fieldKey="fechaFin" error={errores.fechaFin}>
-                      <input
-                        type="date"
-                        className={`input w-full${errores.fechaFin ? " input-error" : ""}`}
-                        value={form.fechaFin}
-                        min={(form.fechaHora || ahora).slice(0, 10)}
-                        suppressHydrationWarning
-                        onChange={(e) => campo("fechaFin", e.target.value)}
-                        disabled={guardando}
-                        required
-                      />
-                    </Field>
-                  ) : (
-                    <Field label={`Cantidad de veces (1 a ${OCURRENCIAS_MAX})`} fieldKey="nroOcurrencias" error={errores.nroOcurrencias}>
-                      <input
-                        type="number"
-                        className={`input w-full${errores.nroOcurrencias ? " input-error" : ""}`}
-                        placeholder={`Cantidad de veces (1 a ${OCURRENCIAS_MAX})`}
-                        min={1}
-                        max={OCURRENCIAS_MAX}
-                        value={form.nroOcurrencias}
-                        onChange={(e) => campo("nroOcurrencias", e.target.value)}
-                        disabled={guardando}
-                        required
-                      />
-                    </Field>
-                  )}
-                </div>
-              ) : null}
-            </fieldset>
-          ) : null}
+                ) : null}
+              </>
+            )}
+          </fieldset>
 
           <div className="flex justify-end gap-2">
             <button type="button" className="btn btn-ghost" onClick={() => router.back()} disabled={guardando}>

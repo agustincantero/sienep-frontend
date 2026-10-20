@@ -91,13 +91,15 @@ export const FUNCIONARIO_NAV: NavGroup[] = [
         href: "/catalogos",
         icon: Library,
         title: "Catálogos",
-        desc: "Carreras, grupos, ITRs y categorías.",
+        desc: "Carreras, grupos, ITRs, categorías y frecuencias.",
         permisos: [
           "VER_CARRERAS",
           "VER_GRUPOS",
           "VER_ITRS",
           "VER_CATEGORIAS_INSTANCIA",
           "VER_CATEGORIAS_RECORDATORIO",
+          // Frecuencias: comparten el permiso de ver recordatorios.
+          "VER_RECORDATORIOS",
         ],
       },
       {

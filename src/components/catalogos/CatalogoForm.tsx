@@ -2,11 +2,13 @@
 
 import type { Carrera } from "@/lib/carreras";
 import type { TabCatalogo } from "@/lib/catalogos-tabs";
+import type { Frecuencia } from "@/lib/frecuencias";
 import type { Group } from "@/lib/groups";
 import type { Itr } from "@/lib/itrs";
 import { CarreraForm } from "./CarreraForm";
 import { CATEGORIAS_INSTANCIA, CATEGORIAS_RECORDATORIO, type Categoria } from "./categorias-config";
 import { CategoriaForm } from "./CategoriaForm";
+import { FrecuenciaForm } from "./FrecuenciaForm";
 import { GrupoForm } from "./GrupoForm";
 import { ItrForm } from "./ItrForm";
 
@@ -23,5 +25,7 @@ export function CatalogoForm({ catalogo, item }: { catalogo: TabCatalogo; item?:
       return <CategoriaForm config={CATEGORIAS_INSTANCIA} categoria={item as Categoria | undefined} />;
     case "categorias-recordatorio":
       return <CategoriaForm config={CATEGORIAS_RECORDATORIO} categoria={item as Categoria | undefined} />;
+    case "frecuencias":
+      return <FrecuenciaForm frecuencia={item as Frecuencia | undefined} />;
   }
 }
