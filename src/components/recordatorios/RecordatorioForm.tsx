@@ -70,13 +70,12 @@ type RecordatorioFormProps =
 
 export function RecordatorioForm(props: RecordatorioFormProps) {
   const router = useRouter();
-  const { idUsuario, nombre, apellido, permisos } = useSession();
+  const { idUsuario, permisos } = useSession();
   const esEdicion = props.mode === "editar";
   const instanciaFija = props.mode === "crear" ? props.instanciaFija : undefined;
   const recordatorio = esEdicion ? props.recordatorio : undefined;
-  // El responsable es quien crea el recordatorio, y al editar se conserva el que ya tenía: no se elige.
+  // El backend exige idResponsable, pero no se elige ni se muestra en el formulario: es quien crea el recordatorio, y al editar se conserva el que ya tenía. Se ve en el detalle.
   const idResponsable = recordatorio?.idResponsable ?? idUsuario;
-  const nombreResponsable = recordatorio ? recordatorio.nombreResponsable : `${nombre} ${apellido}`;
   const puedeGestionarFrecuencias = permisos.includes("CREAR_RECORDATORIO");
 
   const [form, setForm] = useState<FormState>(() => estadoInicial(recordatorio));
@@ -305,28 +304,18 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
               </Field>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Fecha y hora" fieldKey="fechaHora" error={errores.fechaHora}>
-                <input
-                  type="datetime-local"
-                  className={`input w-full${errores.fechaHora ? " input-error" : ""}`}
-                  value={form.fechaHora}
-                  min={ahora}
-                  suppressHydrationWarning
-                  onChange={(e) => campo("fechaHora", e.target.value)}
-                  disabled={guardando}
-                  required
-                />
-              </Field>
-              <Field label="Responsable" fieldKey="responsable">
-                {/* Quien lo crea (o el que ya tenía, al editar): se muestra para que quede claro a nombre de quién se agenda. */}
-                <input
-                  className="input w-full"
-                  value={idResponsable === idUsuario ? `${nombreResponsable} (vos)` : nombreResponsable}
-                  disabled
-                />
-              </Field>
-            </div>
+            <Field label="Fecha y hora" fieldKey="fechaHora" error={errores.fechaHora}>
+              <input
+                type="datetime-local"
+                className={`input w-full${errores.fechaHora ? " input-error" : ""}`}
+                value={form.fechaHora}
+                min={ahora}
+                suppressHydrationWarning
+                onChange={(e) => campo("fechaHora", e.target.value)}
+                disabled={guardando}
+                required
+              />
+            </Field>
           </fieldset>
 
           <fieldset className="fieldset space-y-3 p-4 rounded-box border border-base-300">
