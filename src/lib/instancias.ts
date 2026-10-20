@@ -43,7 +43,7 @@ export function getInstancia(codInstancia: number): Promise<InstanciaComun> {
   return apiGet<InstanciaComun>(`/instancias/${codInstancia}`);
 }
 
-// Datos de alta — subconjunto de InstanciaComunRequestDTO: sin recordatorioInicial (no hay módulo de Recordatorios en el frontend todavía).
+// Datos de alta — subconjunto de InstanciaComunRequestDTO: sin recordatorioInicial (los recordatorios se agregan después, desde el detalle de la instancia).
 export type InstanciaComunCreateInput = {
   titulo: string;
   fechaHora: string;

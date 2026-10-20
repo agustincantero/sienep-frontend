@@ -10,6 +10,7 @@ import { useSession } from "@/lib/session-context";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EstadoBadge } from "./EstadoBadge";
 import { InstanciaComentarios } from "./InstanciaComentarios";
+import { InstanciaRecordatorios } from "@/components/recordatorios/InstanciaRecordatorios";
 import { BackButton } from "@/components/layout/BackButton";
 
 // Sin tabs, a diferencia de la ficha de Estudiante (StudentProfile): acá es un único panel de datos + comentarios.
@@ -25,6 +26,7 @@ export function InstanciaDetalle({
   const puedeEditar = permisos.includes("EDITAR_INSTANCIA");
   const puedeDesactivar = permisos.includes("DESACTIVAR_INSTANCIA");
   const puedeReactivar = permisos.includes("REACTIVAR_INSTANCIA");
+  const puedeVerRecordatorios = permisos.includes("VER_RECORDATORIOS");
 
   const [instancia, setInstancia] = useState<InstanciaComun | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -155,6 +157,11 @@ export function InstanciaDetalle({
         <Dl label="Fecha y hora" value={formatFechaHora(instancia.fechaHora)} />
         <Dl label="Canal" value={instancia.canal} />
         <Dl label="Responsable" value={nombreConDocumento(instancia.nombreFuncionario, instancia.documentoFuncionario)} />
+
+        {/* Sin el permiso la sección no se muestra y no se intenta la llamada, que el backend rechazaría con 403. */}
+        {puedeVerRecordatorios ? (
+          <InstanciaRecordatorios codInstancia={codInstancia} instanciaActiva={instancia.estado === "ACTIVO"} />
+        ) : null}
 
         <InstanciaComentarios codInstancia={codInstancia} />
       </div>
