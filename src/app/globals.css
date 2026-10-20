@@ -177,11 +177,11 @@ input:-webkit-autofill:focus {
   }
 }
 
-/* Botones chicos de toda la app (acciones de tablas, paginación, paneles y formularios) con texto de 13 px y 32 px de alto, en lugar de los 11 px y 24 px de daisyUI para btn-xs. */
+/* Botones chicos de toda la app con texto de 13 px y 32 px de alto. btn-xs y btn-sm quedan del mismo tamaño (daisyUI los trae en 11 px y 24 px, y 12 px y 32 px). Se usa --fontsize y no font-size para que una utilidad como text-xs sobre un botón siga teniendo efecto. */
 .btn-xs {
-  font-size: 0.8125rem;
+  --fontsize: 0.8125rem;
   --size: 2rem;
 }
 .btn-sm {
-  font-size: 0.8125rem;
+  --fontsize: 0.8125rem;
 }
