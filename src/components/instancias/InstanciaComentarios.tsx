@@ -228,7 +228,7 @@ function ComentarioBox<T extends ComentarioInstancia>({
         </div>
       ) : comentarios.length === 0 ? (
         cargaFallida ? null : (
-          <p className="text-base-content/60 text-sm mb-3">Todavía no hay comentarios.</p>
+          <p className="text-base-content/70 text-sm mb-3">Todavía no hay comentarios.</p>
         )
       ) : (
         <ul className="divide-y divide-base-300 mb-3">
@@ -239,11 +239,11 @@ function ComentarioBox<T extends ComentarioInstancia>({
             if (c.estado === "ELIMINADO") {
               return (
                 <li key={id ?? idx} className="py-2">
-                  <div className="flex justify-between gap-3 text-xs text-base-content/60 mb-0.5">
+                  <div className="flex justify-between gap-3 text-xs text-base-content/70 mb-0.5">
                     <span className="font-medium">{c.nombreAutor}</span>
                     <span>{formatFechaHora(c.createdAt)}</span>
                   </div>
-                  <p className="text-sm italic text-base-content/60 flex items-center gap-1">
+                  <p className="text-sm italic text-base-content/70 flex items-center gap-1">
                     <Ban size={13} aria-hidden />
                     Comentario eliminado el {formatFechaHora(c.updatedAt)}
                   </p>
@@ -253,7 +253,7 @@ function ComentarioBox<T extends ComentarioInstancia>({
             const contenidoActual = c.contenido ?? "";
             return (
               <li key={id ?? idx} className="py-2">
-                <div className="flex justify-between gap-3 text-xs text-base-content/60 mb-0.5">
+                <div className="flex justify-between gap-3 text-xs text-base-content/70 mb-0.5">
                   <span className="font-medium">{c.nombreAutor}</span>
                   <span>
                     {formatFechaHora(c.createdAt)}

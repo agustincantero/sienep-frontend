@@ -41,7 +41,7 @@ export function CatalogoFormLayout({
           <BackButton onClick={() => router.back()} label="Cancelar" />
 
           <h1 className="text-xl font-bold mb-1">{titulo}</h1>
-          <div className="text-sm text-base-content/60 mb-4 space-y-1">{leyenda}</div>
+          <div className="text-sm text-base-content/70 mb-4 space-y-1">{leyenda}</div>
 
           {errorGeneral ? (
             <div role="alert" className="alert alert-error alert-soft text-sm mb-4">

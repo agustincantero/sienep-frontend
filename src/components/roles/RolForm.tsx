@@ -140,7 +140,7 @@ export function RolForm(props: RolFormProps) {
         <BackButton onClick={() => router.back()} label="Cancelar" />
 
         <h1 className="text-xl font-bold mb-1">{esEdicion ? "Editar rol" : "Nuevo rol"}</h1>
-        <p className="text-sm text-base-content/60 mb-4">
+        <p className="text-sm text-base-content/70 mb-4">
           No puedes otorgarle a un rol un permiso que tú mismo no tienes: esos quedan bloqueados más abajo.
         </p>
 
@@ -178,7 +178,7 @@ export function RolForm(props: RolFormProps) {
                     {errores.nombre}
                   </p>
                 ) : mostrarPreviewNombre ? (
-                  <p id="nombre-preview" className="mt-1 text-xs text-base-content/60">
+                  <p id="nombre-preview" className="mt-1 text-xs text-base-content/70">
                     Se va a guardar como <span className="font-semibold">{nombreNormalizado}</span>.
                   </p>
                 ) : null}
@@ -273,7 +273,7 @@ export function RolForm(props: RolFormProps) {
                           <label
                             htmlFor={inputId}
                             className={`text-sm leading-tight break-all${
-                              !habilitado ? " text-base-content/60" : enRiesgo ? " text-amber-700 font-semibold" : ""
+                              !habilitado ? " text-base-content/70" : enRiesgo ? " text-amber-700 font-semibold" : ""
                             }`}
                             title={titulo}
                           >

@@ -277,7 +277,7 @@ export function InstanciasListView() {
             <span>Hay demasiadas coincidencias ({MAX_COINCIDENCIAS}+ estudiantes). Escribí más del nombre o apellido para acotar la búsqueda.</span>
           </div>
         ) : instancias.length === 0 ? (
-          <p className="text-base-content/60 py-6 text-center">No se encontraron instancias.</p>
+          <p className="text-base-content/70 py-6 text-center">No se encontraron instancias.</p>
         ) : (
           <>
             <InstanciasTabla

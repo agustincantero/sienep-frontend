@@ -75,7 +75,7 @@ export function Campo({
           {error}
         </p>
       ) : ayuda ? (
-        <p id={`${id}-ayuda`} className="mt-1 text-xs text-base-content/60">
+        <p id={`${id}-ayuda`} className="mt-1 text-xs text-base-content/70">
           {ayuda}
         </p>
       ) : null}

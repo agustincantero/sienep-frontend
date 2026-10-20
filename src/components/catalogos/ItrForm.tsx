@@ -112,7 +112,7 @@ export function ItrForm({ itr }: { itr?: Itr }) {
         <p className="text-sm font-semibold mb-2">
           Carreras que dicta
           {carreras ? (
-            <span className="font-normal text-base-content/60">
+            <span className="font-normal text-base-content/70">
               {" "}
               ({cantidadElegidas} {cantidadElegidas === 1 ? "elegida" : "elegidas"})
             </span>
@@ -130,7 +130,7 @@ export function ItrForm({ itr }: { itr?: Itr }) {
         ) : sinCatalogo ? (
           <span className="loading loading-spinner loading-sm" role="status" aria-label="Cargando carreras" />
         ) : carreras.length === 0 ? (
-          <p className="text-sm text-base-content/60">No hay carreras activas para asociar.</p>
+          <p className="text-sm text-base-content/70">No hay carreras activas para asociar.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
             {carreras.map((c) => {

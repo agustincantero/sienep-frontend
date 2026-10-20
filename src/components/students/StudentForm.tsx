@@ -371,7 +371,7 @@ export function StudentForm(props: StudentFormProps) {
 
         <h1 className="text-xl font-bold mb-1">{esEdicion ? "Editar estudiante" : "Nuevo estudiante"}</h1>
         {!esEdicion ? (
-          <p className="text-sm text-base-content/60 mb-4">
+          <p className="text-sm text-base-content/70 mb-4">
             Al guardar, el estudiante queda pendiente de activación hasta que ponga su contraseña.
           </p>
         ) : null}
@@ -566,7 +566,7 @@ export function StudentForm(props: StudentFormProps) {
             })}
             <button
               type="button"
-              className="btn btn-link btn-sm pl-0 gap-1"
+              className="btn btn-link btn-sm pl-0 gap-1 text-sky-700"
               onClick={agregarTelefono}
               disabled={guardando}
             >
@@ -603,7 +603,7 @@ export function StudentForm(props: StudentFormProps) {
                 <>
                   {gruposSeleccionados.length > 0 ? (
                     <div>
-                      <p className="text-xs font-medium text-base-content/60 mb-1">Asignados</p>
+                      <p className="text-xs font-medium text-base-content/70 mb-1">Asignados</p>
                       {/* Se muestran siempre, sin importar el filtro ITR/carrera vigente —
                           si no, cambiar el filtro para agregar otro grupo hace "desaparecer"
                           de la vista uno ya elegido, aunque siga asignado. */}
@@ -676,7 +676,7 @@ export function StudentForm(props: StudentFormProps) {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-base-content/60">No hay grupos activos para esta carrera.</p>
+                      <p className="text-sm text-base-content/70">No hay grupos activos para esta carrera.</p>
                     )
                   ) : null}
                 </>

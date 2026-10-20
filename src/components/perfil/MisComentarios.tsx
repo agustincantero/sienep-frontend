@@ -62,7 +62,7 @@ export function MisComentarios() {
               <span className="loading loading-spinner loading-sm" />
             </div>
           ) : comentarios.length === 0 ? (
-            <p className="text-base-content/60 py-1">No tenés comentarios registrados.</p>
+            <p className="text-base-content/70 py-1">No tenés comentarios registrados.</p>
           ) : (
             <>
               <ul className="divide-y divide-base-300">

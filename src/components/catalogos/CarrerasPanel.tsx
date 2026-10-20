@@ -71,7 +71,7 @@ export function CarrerasPanel({ exitoInicial }: { exitoInicial?: string }) {
                 ))}
               </div>
             ) : (
-              <span className="text-base-content/60 text-sm">Sin ITR asignado</span>
+              <span className="text-base-content/70 text-sm">Sin ITR asignado</span>
             )}
           </td>
           <td>

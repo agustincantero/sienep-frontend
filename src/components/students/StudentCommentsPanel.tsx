@@ -178,7 +178,7 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
   }
 
   if (!puedeVer) {
-    return <p className="text-base-content/60 text-sm">No tenés permiso para ver los comentarios de este estudiante.</p>;
+    return <p className="text-base-content/70 text-sm">No tenés permiso para ver los comentarios de este estudiante.</p>;
   }
 
   return (
@@ -194,7 +194,7 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
           <span className="loading loading-spinner loading-md" />
         </div>
       ) : comentarios.length === 0 ? (
-        <p className="text-base-content/60 text-sm">Todavía no hay comentarios.</p>
+        <p className="text-base-content/70 text-sm">Todavía no hay comentarios.</p>
       ) : (
         <ul className="divide-y divide-base-300 mb-3">
           {comentarios.map((c) => {

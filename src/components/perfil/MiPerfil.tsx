@@ -212,7 +212,7 @@ function PerfilEstudiante() {
           }
         />
         {fotoPendiente ? (
-          <p role="status" className="text-sm text-base-content/60">
+          <p role="status" className="text-sm text-base-content/70">
             Vista previa: la foto todavía no se guardó.
           </p>
         ) : null}
@@ -226,7 +226,7 @@ function PerfilEstudiante() {
           <Dato label="Email" value={perfil.email} />
           <Dato label="Grupos" value={perfil.grupos.join(", ")} />
         </div>
-        <p className="text-sm text-base-content/60">
+        <p className="text-sm text-base-content/70">
           Si alguno de estos datos no es correcto, pedile a la coordinación que lo actualice.
         </p>
       </SeccionCard>
@@ -263,7 +263,7 @@ function Encabezado({
         {avatar}
         <div>
           <p className="text-base font-semibold text-base-content mb-1">{nombre}</p>
-          <div className="text-sm text-base-content/60">{detalle}</div>
+          <div className="text-sm text-base-content/70">{detalle}</div>
         </div>
       </div>
       {accion ? <div className="flex gap-2">{accion}</div> : null}

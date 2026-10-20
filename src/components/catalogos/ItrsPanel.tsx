@@ -81,7 +81,7 @@ export function ItrsPanel({ exitoInicial }: { exitoInicial?: string }) {
                 ))}
               </div>
             ) : (
-              <span className="text-base-content/60 text-sm">Sin carreras asociadas</span>
+              <span className="text-base-content/70 text-sm">Sin carreras asociadas</span>
             )}
           </td>
           <td>

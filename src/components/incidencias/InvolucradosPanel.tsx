@@ -95,7 +95,7 @@ export function InvolucradosPanel({ codInstancia }: { codInstancia: number }) {
           <span className="loading loading-spinner loading-sm" />
         </div>
       ) : involucrados.length === 0 ? (
-        <p className="text-base-content/60 text-sm mb-3">Todavía no hay involucrados registrados.</p>
+        <p className="text-base-content/70 text-sm mb-3">Todavía no hay involucrados registrados.</p>
       ) : (
         <ul className="divide-y divide-base-300 mb-3">
           {involucrados.map((inv) => (

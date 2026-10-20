@@ -200,7 +200,7 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
               {/* Sin fallback "—": un guión suelto sin etiqueta al lado no comunica nada. Si no
                   tiene grupo, directamente no se muestra esta línea (el dato completo sigue
                   disponible, con su etiqueta, en la pestaña Datos generales). */}
-              {grupos ? <p className="text-sm text-base-content/60 mb-1">{grupos}</p> : null}
+              {grupos ? <p className="text-sm text-base-content/70 mb-1">{grupos}</p> : null}
               <EstadoBadge estado={estudiante.estado} />
             </div>
           </div>
@@ -248,7 +248,7 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
               key={id}
               type="button"
               role="tab"
-              className={`tab gap-1.5 ${tab === id ? "tab-active" : ""}`}
+              className={`tab gap-1.5 ${tab === id ? "tab-active" : "text-base-content/70"}`}
               onClick={() => setTab(id)}
             >
               <Icon size={14} aria-hidden />
@@ -265,7 +265,7 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
             puedeVerSalud ? (
               <SaludConfidencial estudiante={estudiante} />
             ) : (
-              <p className="text-base-content/60 text-sm">
+              <p className="text-base-content/70 text-sm">
                 No tenés permiso para ver la información de salud de este estudiante.
               </p>
             )
@@ -294,7 +294,7 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
 function Dato({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="py-2 border-b border-base-300 flex flex-wrap gap-x-4 select-none cursor-default">
-      <span className="text-base-content/60 w-40 shrink-0">{label}</span>
+      <span className="text-base-content/70 w-40 shrink-0">{label}</span>
       <span className="font-medium">{value || "—"}</span>
     </div>
   );

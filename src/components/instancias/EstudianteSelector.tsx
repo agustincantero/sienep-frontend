@@ -141,7 +141,7 @@ export function EstudianteSelector({ label, fieldKey, value, onChange, error, di
       {!disabled && (value || texto) ? (
         <button
           type="button"
-          className="btn btn-ghost btn-circle btn-xs absolute right-1 top-1/2 -translate-y-1/2 text-base-content/50 hover:text-base-content"
+          className="btn btn-ghost btn-circle btn-xs size-6 absolute right-1 top-1/2 -translate-y-1/2 text-base-content/50 hover:text-base-content"
           onClick={limpiar}
           aria-label="Quitar estudiante"
         >
@@ -191,7 +191,7 @@ export function EstudianteSelector({ label, fieldKey, value, onChange, error, di
                   <span className="font-medium">
                     {s.nombre} {s.apellido}
                   </span>
-                  <span className="text-xs text-base-content/60">{s.documento}</span>
+                  <span className="text-xs text-base-content/70">{s.documento}</span>
                 </button>
               </li>
             ))

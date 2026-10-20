@@ -150,7 +150,7 @@ export function StudentInstanciasPanel({
   }
 
   if (!puedeVer) {
-    return <p className="text-base-content/60 text-sm">No tenés permiso para ver las {tipo} de este estudiante.</p>;
+    return <p className="text-base-content/70 text-sm">No tenés permiso para ver las {tipo} de este estudiante.</p>;
   }
 
   const total = todas?.length ?? 0;
@@ -185,10 +185,10 @@ export function StudentInstanciasPanel({
               <span className="loading loading-spinner loading-md" />
             </div>
           ) : filas.length === 0 && !error ? (
-            <p className="text-base-content/60 text-sm py-2">Este estudiante no tiene {tipo} registradas.</p>
+            <p className="text-base-content/70 text-sm py-2">Este estudiante no tiene {tipo} registradas.</p>
           ) : null}
           {truncado ? (
-            <p className="text-sm text-base-content/60">
+            <p className="text-sm text-base-content/70">
               Se muestran las {MAX_POR_ESTADO} más recientes de cada estado. Para ver las anteriores, usá el listado general.
             </p>
           ) : null}

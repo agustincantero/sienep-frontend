@@ -138,7 +138,7 @@ function Listado({
           <span className="loading loading-spinner loading-sm" />
         </div>
       ) : filas.length === 0 ? (
-        <p className="text-base-content/60 py-1">{vacio}</p>
+        <p className="text-base-content/70 py-1">{vacio}</p>
       ) : (
         <>
           <DataTable headers={["Fecha", "Título", columnaExtra, "Responsable"]}>
