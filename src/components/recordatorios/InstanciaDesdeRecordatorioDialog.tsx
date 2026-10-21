@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { apiErrorMessage } from "@/lib/api";
 import { listCategoriasInstancia, type CategoriaInstancia } from "@/lib/categorias-instancia";
 import type { InstanciaComun } from "@/lib/instancias";
@@ -19,6 +19,8 @@ type Props = {
 // RF27: al cumplir un recordatorio se registra la instancia de seguimiento. El backend la crea con el mismo estudiante que la instancia de origen y con la fecha de ahora, así que acá solo se piden la categoría (de instancia), y opcionalmente título y canal. Mismo <dialog> de daisyUI que ConfirmDialog, con un form adentro.
 export function InstanciaDesdeRecordatorioDialog({ open, recordatorio, onCreada, onCancel }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
+  const tituloId = useId();
+  const descripcionId = useId();
   const [categorias, setCategorias] = useState<CategoriaInstancia[]>([]);
   const [idCategoria, setIdCategoria] = useState("");
   const [titulo, setTitulo] = useState("");
@@ -68,10 +70,10 @@ export function InstanciaDesdeRecordatorioDialog({ open, recordatorio, onCreada,
   }
 
   return (
-    <dialog ref={ref} className="modal" onClose={onCancel}>
+    <dialog ref={ref} className="modal" aria-labelledby={tituloId} aria-describedby={descripcionId} onClose={onCancel}>
       <div className="modal-box">
-        <h3 className="text-lg font-semibold">Registrar instancia de seguimiento</h3>
-        <p className="py-3 text-sm text-base-content/70 wrap-anywhere">
+        <h3 id={tituloId} className="text-lg font-semibold">Registrar instancia de seguimiento</h3>
+        <p id={descripcionId} className="py-3 text-sm text-base-content/70 wrap-anywhere">
           Se crea una instancia con fecha de ahora para el mismo estudiante de &quot;{recordatorio.tituloInstancia}&quot;, y el recordatorio queda como cumplido. Cada recordatorio genera una sola.
         </p>
 
@@ -147,7 +149,7 @@ export function InstanciaDesdeRecordatorioDialog({ open, recordatorio, onCreada,
         </div>
       </div>
       <form method="dialog" className="modal-backdrop">
-        <button>Cerrar</button>
+        <button type="submit">Cerrar</button>
       </form>
     </dialog>
   );
