@@ -19,7 +19,7 @@ type Tab = "datos" | "salud" | "instancias" | "incidencias" | "informes" | "come
 
 const TABS: { id: Tab; label: string; icon: typeof User }[] = [
   { id: "datos", label: "Datos generales", icon: User },
-  { id: "salud", label: "Salud (confidencial)", icon: HeartPulse },
+  { id: "salud", label: "Salud", icon: HeartPulse },
   { id: "instancias", label: "Instancias", icon: Calendar },
   { id: "incidencias", label: "Incidencias", icon: TriangleAlert },
   { id: "informes", label: "Informes médicos", icon: FileText },
@@ -345,7 +345,7 @@ function SaludConfidencial({ estudiante }: { estudiante: Student }) {
   return (
     <div>
       <div role="alert" className="alert alert-soft text-sm mb-3">
-        <span>Bloque confidencial — visible solo para quienes tienen permiso de ver información de salud.</span>
+        <span>Esta información solo la ven funcionarios con permiso para ver datos de salud.</span>
       </div>
       <Dato label="Información de salud" value={estudiante.informacionSalud} />
       <Dato label="Sistema de salud" value={estudiante.sistemaSalud} />

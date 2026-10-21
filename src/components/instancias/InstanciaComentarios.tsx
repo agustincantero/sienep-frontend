@@ -212,7 +212,7 @@ function ComentarioBox<T extends ComentarioInstancia>({
       <h6 className="text-sm font-semibold mb-2">{titulo}</h6>
       {confidencial ? (
         <div role="note" className="alert alert-soft text-sm mb-3">
-          <span>Bloque confidencial — visible solo para quienes tienen permiso de verlo.</span>
+          <span>Estos comentarios solo los ven funcionarios con permiso para verlos.</span>
         </div>
       ) : null}
 
