@@ -213,14 +213,14 @@ export function InstanciasListView() {
   const filters: ToolbarFilter[] = useMemo(
     () => [
       {
-        label: "Categoría (todas)",
+        label: "Categoría",
         emptyLabel: "Todas",
         options: categorias.map((c) => c.nomCategoria),
         value: nomCategoria,
         onChange: handleCategoriaChange,
       },
       {
-        label: "Estado (todos)",
+        label: "Estado",
         emptyLabel: "Todos",
         options: ["Activo", "Inactivo"],
         value: estadoLabel,

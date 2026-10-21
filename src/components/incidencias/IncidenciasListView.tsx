@@ -201,7 +201,7 @@ export function IncidenciasListView() {
   const filters: ToolbarFilter[] = useMemo(
     () => [
       {
-        label: "Estado (todos)",
+        label: "Estado",
         emptyLabel: "Todos",
         options: ["Activo", "Inactivo"],
         value: estadoLabel,

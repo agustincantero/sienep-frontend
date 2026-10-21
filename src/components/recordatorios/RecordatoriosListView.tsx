@@ -172,21 +172,21 @@ export function RecordatoriosListView() {
   const filters: ToolbarFilter[] = useMemo(
     () => [
       {
-        label: "Categoría (todas)",
+        label: "Categoría",
         emptyLabel: "Todas",
         options: categorias,
         value: nomCategoria,
         onChange: handleCategoriaChange,
       },
       {
-        label: "Cuándo (todos)",
+        label: "Cuándo",
         emptyLabel: "Todos",
         options: Object.keys(CUANDO_A_VALORES),
         value: cuandoLabel,
         onChange: handleCuandoChange,
       },
       {
-        label: "Estado (todos)",
+        label: "Estado",
         emptyLabel: "Todos",
         options: ["Activo", "Inactivo"],
         value: estadoLabel,
