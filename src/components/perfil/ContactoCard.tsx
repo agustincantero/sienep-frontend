@@ -268,7 +268,7 @@ export function ContactoCard({
             Cancelar
           </button>
           <button type="submit" className="btn btn-primary btn-sm" disabled={guardando}>
-            {guardando ? <span className="loading loading-spinner loading-xs" /> : null}
+            {guardando ? <span className="loading loading-spinner loading-xs" aria-hidden /> : null}
             Guardar cambios
           </button>
         </div>

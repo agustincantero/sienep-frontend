@@ -2,7 +2,7 @@
 
 import { cloneElement, isValidElement, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { HeartPulse, MapPin, Phone, Plus, User, Users, X } from "lucide-react";
+import { Check, HeartPulse, MapPin, Phone, Plus, User, Users, X } from "lucide-react";
 import { apiErrorMessage, ApiError } from "@/lib/api";
 import { isValidUruguayanCi } from "@/lib/document-validation";
 import { listGroups, type Group } from "@/lib/groups";
@@ -731,7 +731,7 @@ export function StudentForm(props: StudentFormProps) {
               Cancelar
             </button>
             <button type="submit" className="btn btn-primary" disabled={guardando}>
-              {guardando ? <span className="loading loading-spinner loading-sm" /> : null}
+              {guardando ? <span className="loading loading-spinner loading-sm" aria-hidden /> : null}
               {esEdicion ? "Guardar cambios" : "Guardar estudiante"}
             </button>
           </div>
@@ -811,11 +811,12 @@ function GrupoChip({
 }) {
   return (
     <label
-      className={`btn btn-sm rounded-full normal-case font-normal h-auto min-h-8 py-1 max-w-full wrap-anywhere ${
+      className={`btn btn-sm rounded-full normal-case font-normal h-auto min-h-8 py-1 max-w-full wrap-anywhere has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary ${
         seleccionado ? "btn-primary" : "btn-outline"
       }${disabled ? " btn-disabled" : ""}`}
     >
-      <input type="checkbox" className="hidden" checked={seleccionado} onChange={onToggle} disabled={disabled} />
+      <input type="checkbox" className="sr-only" checked={seleccionado} onChange={onToggle} disabled={disabled} />
+      {seleccionado ? <Check size={14} aria-hidden /> : null}
       {children}
     </label>
   );

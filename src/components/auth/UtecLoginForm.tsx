@@ -81,7 +81,7 @@ export function UtecLoginForm({ onSuccess, onVolver }: UtecLoginFormProps) {
           </div>
         ) : null}
         <button type="submit" className="btn btn-primary w-full mt-2" disabled={cargando}>
-          {cargando ? <span className="loading loading-spinner loading-sm" /> : null}
+          {cargando ? <span className="loading loading-spinner loading-sm" aria-hidden /> : null}
           {cargando ? "Ingresando…" : "Iniciar sesión"}
         </button>
         <div className="text-center">

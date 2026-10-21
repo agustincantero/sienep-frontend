@@ -82,7 +82,7 @@ export function CatalogoMarco({
           <span className="loading loading-spinner loading-md" role="status" aria-label="Cargando" />
         </div>
       ) : errorCarga ? null : cantidad === 0 ? (
-        <p className="text-base-content/70 py-6 text-center">{vacio}</p>
+        <p role="status" className="text-base-content/70 py-6 text-center">{vacio}</p>
       ) : (
         <DataTable headers={headers}>{children}</DataTable>
       )}

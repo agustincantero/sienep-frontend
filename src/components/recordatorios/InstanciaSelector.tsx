@@ -144,7 +144,7 @@ export function InstanciaSelector({ label, fieldKey, value, onChange, error, dis
       {!disabled && (value || texto) ? (
         <button
           type="button"
-          className="btn btn-ghost btn-circle btn-xs absolute right-1 top-1/2 -translate-y-1/2 text-base-content/50 hover:text-base-content"
+          className="btn btn-ghost btn-circle btn-xs absolute right-1 top-1/2 -translate-y-1/2 text-base-content/70 hover:text-base-content"
           onClick={limpiar}
           aria-label="Quitar instancia"
         >
@@ -192,7 +192,7 @@ export function InstanciaSelector({ label, fieldKey, value, onChange, error, dis
                   onClick={() => elegir(i)}
                 >
                   <span className="font-medium">{etiquetaInstancia(i)}</span>
-                  <span className="text-xs text-base-content/60">
+                  <span className="text-xs text-base-content/70">
                     {i.nombreEstudiante} · {formatFecha(i.fechaHora.slice(0, 10))}
                   </span>
                 </button>

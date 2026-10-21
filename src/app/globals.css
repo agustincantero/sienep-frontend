@@ -20,7 +20,7 @@
   --color-neutral-content: #ffffff;
 
   /* Estados: rojo / verde / azul "de verdad" en vez de los tonos oklch de daisyUI, para que no choquen con el celeste de marca. Se usan siempre con la variante `alert-soft` (fondo tenue + texto del color). */
-  --color-error: #dc2626; /* red-600 */
+  --color-error: #b91c1c; /* red-700 — el texto de los alert-error alert-soft con red-600 da 4.13:1, por debajo de AA; con red-700 da 5.45:1 */
   --color-error-content: #ffffff;
   --color-success: #15803d; /* green-700 — texto blanco sobre green-600 (#16a34a) da 3.30:1, por debajo de AA; con green-700 da 5.02:1. También sube el texto de los alert-success alert-soft (3.06:1 → 4.65:1) */
   --color-success-content: #ffffff;
@@ -48,18 +48,21 @@ body {
   --input-color: var(--color-primary);
 }
 
+/* Borde de campos con 3:1 contra el fondo (WCAG 1.4.11). daisyUI lo dibuja con base-content al 20 %, que da 1.48:1. #858585 da 3.69:1. Se excluyen los estados de error y el foco, que ya definen su propio color de borde. */
+.input:not(.input-error),
+.select:not(.select-error),
+.textarea:not(.textarea-error) {
+  --input-color: #858585;
+}
+.select:not(.select-error):is(:focus, :focus-within),
+.textarea:not(.textarea-error):focus {
+  --input-color: var(--color-base-content);
+}
+
 /* Placeholder como label visible: zinc-500 sólido, no opacity (daisyUI da ~3:1, no pasa AA). Cubre el input con `.input` propio y el anidado dentro de un wrapper `.input` (ej. PasswordInput). */
 .floating-label:not(:focus-within) :is(input.input, .input input)::placeholder {
   color: #71717a; /* zinc-500 */
   opacity: 1;
-}
-
-/* Chrome/Edge dibujan una flechita (mismo ícono que el selector de fecha) en cualquier
-   <input list="..."> con datalist — no es opcional vía atributo, solo se puede sacar por CSS.
-   Se usa para el buscador con autocompletado de Instancias/Incidencias (Toolbar), que debe
-   verse igual que el buscador de texto libre de Estudiantes, sin esa flechita. */
-input[list]::-webkit-calendar-picker-indicator {
-  display: none !important;
 }
 
 /* Autofill del navegador: solo tiñe el <input>, nunca el <div class="input"> que lo envuelve. En un input simple no se nota porque el input ocupa toda la caja, pero en PasswordInput (input + botón del ojito, hermanos dentro del wrapper) el tinte se corta donde termina el input y deja al botón con el fondo por defecto. Se fuerza un tinte propio (celeste de marca en vez del amarillo/azul que varía por navegador y sistema operativo) con el truco del box-shadow inset —es la única forma de cambiar el fondo de autofill—, y el mismo color en el wrapper vía :has() para que la caja completa quede pareja. */

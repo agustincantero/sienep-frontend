@@ -70,7 +70,7 @@ export function CatalogoFormLayout({
                 Cancelar
               </button>
               <button type="submit" className="btn btn-primary" disabled={guardando || bloquearGuardado}>
-                {guardando ? <span className="loading loading-spinner loading-sm" /> : null}
+                {guardando ? <span className="loading loading-spinner loading-sm" aria-hidden /> : null}
                 {submitLabel}
               </button>
             </div>

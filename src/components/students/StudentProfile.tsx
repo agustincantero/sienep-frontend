@@ -19,7 +19,7 @@ type Tab = "datos" | "salud" | "instancias" | "incidencias" | "informes" | "come
 
 const TABS: { id: Tab; label: string; icon: typeof User }[] = [
   { id: "datos", label: "Datos generales", icon: User },
-  { id: "salud", label: "Salud (confidencial)", icon: HeartPulse },
+  { id: "salud", label: "Salud", icon: HeartPulse },
   { id: "instancias", label: "Instancias", icon: Calendar },
   { id: "incidencias", label: "Incidencias", icon: TriangleAlert },
   { id: "informes", label: "Informes médicos", icon: FileText },
@@ -142,7 +142,7 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
   if (cargando) {
     return (
       <div className="grow overflow-auto flex justify-center py-16">
-        <span className="loading loading-spinner loading-lg" />
+        <span className="loading loading-spinner loading-lg" role="status" aria-label="Cargando" />
       </div>
     );
   }
@@ -222,7 +222,7 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
                   onClick={() => inputFotoRef.current?.click()}
                   disabled={subiendoFoto}
                 >
-                  {subiendoFoto ? <span className="loading loading-spinner loading-xs" /> : null}
+                  {subiendoFoto ? <span className="loading loading-spinner loading-xs" aria-hidden /> : null}
                   Subir foto
                 </button>
                 <button
@@ -231,7 +231,7 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
                   onClick={() => setConfirmandoPassword(true)}
                   disabled={reenviando}
                 >
-                  {reenviando ? <span className="loading loading-spinner loading-xs" /> : null}
+                  {reenviando ? <span className="loading loading-spinner loading-xs" aria-hidden /> : null}
                   {accionPassword(estudiante).boton}
                 </button>
                 <Link href={`/estudiantes/${idEstudiante}/editar`} className="btn btn-primary btn-sm">
@@ -242,12 +242,32 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
           </div>
         </div>
 
-        <div role="tablist" className="tabs tabs-border mb-4">
+        <div
+          role="tablist"
+          aria-label="Secciones de la ficha"
+          className="tabs tabs-border mb-4"
+          onKeyDown={(ev) => {
+            const i = TABS.findIndex((t) => t.id === tab);
+            let destino: number;
+            if (ev.key === "ArrowRight") destino = (i + 1) % TABS.length;
+            else if (ev.key === "ArrowLeft") destino = (i - 1 + TABS.length) % TABS.length;
+            else if (ev.key === "Home") destino = 0;
+            else if (ev.key === "End") destino = TABS.length - 1;
+            else return;
+            ev.preventDefault();
+            setTab(TABS[destino].id);
+            document.getElementById(`tab-${TABS[destino].id}`)?.focus();
+          }}
+        >
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               type="button"
               role="tab"
+              id={`tab-${id}`}
+              aria-selected={tab === id}
+              aria-controls="panel-ficha"
+              tabIndex={tab === id ? 0 : -1}
               className={`tab gap-1.5 ${tab === id ? "tab-active" : "text-base-content/70"}`}
               onClick={() => setTab(id)}
             >
@@ -258,7 +278,7 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
         </div>
 
         {/* key={tab} fuerza el remount al cambiar de tab, así la animación se repite cada vez en vez de correr una sola vez al montar la ficha. */}
-        <div key={tab} className="animate-[fade-in_180ms_ease-out]">
+        <div key={tab} id="panel-ficha" role="tabpanel" aria-labelledby={`tab-${tab}`} className="animate-[fade-in_180ms_ease-out]">
           {tab === "datos" ? (
             <DatosGenerales estudiante={estudiante} />
           ) : tab === "salud" ? (
@@ -325,7 +345,7 @@ function SaludConfidencial({ estudiante }: { estudiante: Student }) {
   return (
     <div>
       <div role="alert" className="alert alert-soft text-sm mb-3">
-        <span>Bloque confidencial — visible solo para quienes tienen permiso de ver información de salud.</span>
+        <span>Esta información solo la ven funcionarios con permiso para ver datos de salud.</span>
       </div>
       <Dato label="Información de salud" value={estudiante.informacionSalud} />
       <Dato label="Sistema de salud" value={estudiante.sistemaSalud} />

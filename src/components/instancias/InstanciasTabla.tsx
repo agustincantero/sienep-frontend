@@ -70,18 +70,10 @@ export function InstanciasTabla({
             key={i.codInstancia}
             className={
               abrible
-                ? "cursor-pointer select-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+                ? "cursor-pointer select-none"
                 : undefined
             }
-            tabIndex={abrible ? 0 : undefined}
             onClick={abrible ? () => router.push(hrefDetalle) : undefined}
-            onKeyDown={
-              abrible
-                ? (ev) => {
-                    if (ev.key === "Enter") router.push(hrefDetalle);
-                  }
-                : undefined
-            }
           >
             <CeldasDeDatos fila={i} />
             <td className="whitespace-nowrap" onClick={(ev) => ev.stopPropagation()}>

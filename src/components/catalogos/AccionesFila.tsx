@@ -47,7 +47,7 @@ export function AccionesFila({
       ) : null}
       {!activo && puedeReactivar ? (
         <button type="button" className="btn btn-ghost btn-xs gap-1" disabled={enCurso} onClick={onReactivar} aria-label={`Activar ${nombre}`}>
-          {enCurso ? <span className="loading loading-spinner loading-xs" /> : <RotateCcw size={13} aria-hidden />}
+          {enCurso ? <span className="loading loading-spinner loading-xs" aria-hidden /> : <RotateCcw size={13} aria-hidden />}
           Activar
         </button>
       ) : null}

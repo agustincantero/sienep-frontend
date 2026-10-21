@@ -172,21 +172,21 @@ export function RecordatoriosListView() {
   const filters: ToolbarFilter[] = useMemo(
     () => [
       {
-        label: "Categoría (todas)",
+        label: "Categoría",
         emptyLabel: "Todas",
         options: categorias,
         value: nomCategoria,
         onChange: handleCategoriaChange,
       },
       {
-        label: "Cuándo (todos)",
+        label: "Cuándo",
         emptyLabel: "Todos",
         options: Object.keys(CUANDO_A_VALORES),
         value: cuandoLabel,
         onChange: handleCuandoChange,
       },
       {
-        label: "Estado (todos)",
+        label: "Estado",
         emptyLabel: "Todos",
         options: ["Activo", "Inactivo"],
         value: estadoLabel,
@@ -235,10 +235,10 @@ export function RecordatoriosListView() {
 
         {cargando ? (
           <div className="flex justify-center py-10">
-            <span className="loading loading-spinner loading-md" />
+            <span className="loading loading-spinner loading-md" role="status" aria-label="Cargando" />
           </div>
         ) : filtrados.length === 0 ? (
-          <p className="text-base-content/60 py-6 text-center">No se encontraron recordatorios.</p>
+          <p role="status" className="text-base-content/70 py-6 text-center">No se encontraron recordatorios.</p>
         ) : (
           <>
             <RecordatoriosTabla

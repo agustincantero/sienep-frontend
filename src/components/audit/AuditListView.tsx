@@ -139,14 +139,14 @@ export function AuditListView() {
 
         {cargando ? (
           <div className="flex justify-center py-10">
-            <span className="loading loading-spinner loading-md" />
+            <span className="loading loading-spinner loading-md" role="status" aria-label="Cargando" />
           </div>
         ) : demasiadosAutores ? (
           <div role="status" className="alert alert-info alert-soft text-sm">
             <span>Hay demasiadas coincidencias ({MAX_COINCIDENCIAS}+ autores). Escribí más del nombre o apellido para acotar la búsqueda.</span>
           </div>
         ) : eventos.length === 0 ? (
-          <p className="text-base-content/70 py-6 text-center">No se encontraron eventos de auditoría.</p>
+          <p role="status" className="text-base-content/70 py-6 text-center">No se encontraron eventos de auditoría.</p>
         ) : (
           <>
             <DataTable headers={["Fecha y hora", "Usuario", "Acción", "Entidad", "Usuario BD", "IP", ""]}>
@@ -167,7 +167,7 @@ export function AuditListView() {
                             ) : null}
                           </div>
                         ) : (
-                          <span className="text-base-content/50 italic">Acción directa en BD</span>
+                          <span className="text-base-content/70 italic">Acción directa en BD</span>
                         )}
                       </td>
                       <td>

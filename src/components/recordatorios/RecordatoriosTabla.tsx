@@ -56,22 +56,14 @@ export function RecordatoriosTabla({
             key={r.codRecordatorio}
             className={
               abrible
-                ? "cursor-pointer select-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+                ? "cursor-pointer select-none"
                 : undefined
             }
-            tabIndex={abrible ? 0 : undefined}
             onClick={abrible ? () => router.push(hrefDetalle) : undefined}
-            onKeyDown={
-              abrible
-                ? (ev) => {
-                    if (ev.key === "Enter") router.push(hrefDetalle);
-                  }
-                : undefined
-            }
           >
             <td className="font-semibold">
               <span className="inline-flex items-center gap-1.5">
-                {pendiente ? <Bell size={13} className="text-base-content/60 shrink-0" aria-label="Pendiente" /> : null}
+                {pendiente ? <Bell size={13} className="text-base-content/70 shrink-0" role="img" aria-label="Pendiente" /> : null}
                 {r.titulo}
               </span>
             </td>
@@ -90,7 +82,7 @@ export function RecordatoriosTabla({
             </td>
             <td className="whitespace-nowrap" onClick={(ev) => ev.stopPropagation()}>
               <div className="inline-flex gap-1">
-                {abrible && !sinInstancia ? (
+                {abrible ? (
                   <Link href={hrefDetalle} className="btn btn-ghost btn-xs gap-1">
                     <Eye size={13} aria-hidden />
                     Ver detalle

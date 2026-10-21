@@ -171,7 +171,7 @@ export function FrecuenciaForm({ frecuencia }: { frecuencia?: Frecuencia }) {
       ) : null}
 
       {vistaPrevia ? (
-        <p className="text-xs text-base-content/60">
+        <p className="text-xs text-base-content/70">
           Se va a repetir: <span className="font-semibold">{vistaPrevia.toLowerCase()}</span>.
         </p>
       ) : null}

@@ -331,7 +331,7 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
           trailing={
             <label className="floating-label">
               <select
-                className="select w-full border-neutral-800/30"
+                className="select w-full"
                 value={orden}
                 onChange={(e) => handleOrdenChange(e.target.value as OrdenEstudiantes)}
               >
@@ -374,10 +374,10 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
 
         {cargando ? (
           <div className="flex justify-center py-10">
-            <span className="loading loading-spinner loading-md" />
+            <span className="loading loading-spinner loading-md" role="status" aria-label="Cargando" />
           </div>
         ) : estudiantes.length === 0 ? (
-          <p className="text-base-content/70 py-6 text-center">No se encontraron estudiantes.</p>
+          <p role="status" className="text-base-content/70 py-6 text-center">No se encontraron estudiantes.</p>
         ) : (
           <>
             <DataTable headers={["Nombre", "Documento", "Grupo", "Estado", ""]}>
@@ -386,18 +386,10 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
                   key={e.idUsuario}
                   className={
                     puedeVerFicha
-                      ? "cursor-pointer select-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+                      ? "cursor-pointer select-none"
                       : undefined
                   }
-                  tabIndex={puedeVerFicha ? 0 : undefined}
                   onClick={puedeVerFicha ? () => router.push(`/estudiantes/${e.idUsuario}`) : undefined}
-                  onKeyDown={
-                    puedeVerFicha
-                      ? (ev) => {
-                          if (ev.key === "Enter") router.push(`/estudiantes/${e.idUsuario}`);
-                        }
-                      : undefined
-                  }
                 >
                   <td className="font-semibold">
                     <div className="flex items-center gap-2">

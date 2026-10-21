@@ -138,7 +138,7 @@ function PerfilEstudiante() {
     return (
       <SeccionCard icon={User} titulo="Datos personales">
         <div className="flex justify-center py-6">
-          <span className="loading loading-spinner loading-md" />
+          <span className="loading loading-spinner loading-md" role="status" aria-label="Cargando" />
         </div>
       </SeccionCard>
     );
@@ -194,7 +194,7 @@ function PerfilEstudiante() {
                     Cancelar
                   </button>
                   <button type="button" className="btn btn-primary btn-sm" onClick={guardarFoto} disabled={subiendoFoto}>
-                    {subiendoFoto ? <span className="loading loading-spinner loading-xs" /> : null}
+                    {subiendoFoto ? <span className="loading loading-spinner loading-xs" aria-hidden /> : null}
                     Guardar foto
                   </button>
                 </>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -26,6 +26,8 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
+  const tituloId = useId();
+  const mensajeId = useId();
 
   useEffect(() => {
     const dialog = ref.current;
@@ -35,10 +37,10 @@ export function ConfirmDialog({
   }, [open]);
 
   return (
-    <dialog ref={ref} className="modal" onClose={onCancel}>
+    <dialog ref={ref} className="modal" aria-labelledby={tituloId} aria-describedby={mensajeId} onClose={onCancel}>
       <div className="modal-box">
-        <h3 className="text-lg font-semibold">{title}</h3>
-        <p className="py-3 text-sm text-base-content/70 wrap-anywhere">{message}</p>
+        <h3 id={tituloId} className="text-lg font-semibold">{title}</h3>
+        <p id={mensajeId} className="py-3 text-sm text-base-content/70 wrap-anywhere">{message}</p>
         {aviso ? (
           <div role="alert" className="alert alert-warning alert-soft text-sm">
             <span>{aviso}</span>
@@ -58,7 +60,7 @@ export function ConfirmDialog({
         </div>
       </div>
       <form method="dialog" className="modal-backdrop">
-        <button>Cerrar</button>
+        <button type="submit">Cerrar</button>
       </form>
     </dialog>
   );

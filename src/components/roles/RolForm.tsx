@@ -293,7 +293,7 @@ export function RolForm(props: RolFormProps) {
               Cancelar
             </button>
             <button type="submit" className="btn btn-primary" disabled={guardando || permisosSinTenencia.length > 0}>
-              {guardando ? <span className="loading loading-spinner loading-sm" /> : null}
+              {guardando ? <span className="loading loading-spinner loading-sm" aria-hidden /> : null}
               {esEdicion ? "Guardar cambios" : "Crear rol"}
             </button>
           </div>

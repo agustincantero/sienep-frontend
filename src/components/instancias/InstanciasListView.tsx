@@ -213,14 +213,14 @@ export function InstanciasListView() {
   const filters: ToolbarFilter[] = useMemo(
     () => [
       {
-        label: "Categoría (todas)",
+        label: "Categoría",
         emptyLabel: "Todas",
         options: categorias.map((c) => c.nomCategoria),
         value: nomCategoria,
         onChange: handleCategoriaChange,
       },
       {
-        label: "Estado (todos)",
+        label: "Estado",
         emptyLabel: "Todos",
         options: ["Activo", "Inactivo"],
         value: estadoLabel,
@@ -270,14 +270,14 @@ export function InstanciasListView() {
 
         {cargando ? (
           <div className="flex justify-center py-10">
-            <span className="loading loading-spinner loading-md" />
+            <span className="loading loading-spinner loading-md" role="status" aria-label="Cargando" />
           </div>
         ) : demasiadasCoincidencias ? (
           <div role="status" className="alert alert-info alert-soft text-sm">
             <span>Hay demasiadas coincidencias ({MAX_COINCIDENCIAS}+ estudiantes). Escribí más del nombre o apellido para acotar la búsqueda.</span>
           </div>
         ) : instancias.length === 0 ? (
-          <p className="text-base-content/70 py-6 text-center">No se encontraron instancias.</p>
+          <p role="status" className="text-base-content/70 py-6 text-center">No se encontraron instancias.</p>
         ) : (
           <>
             <InstanciasTabla

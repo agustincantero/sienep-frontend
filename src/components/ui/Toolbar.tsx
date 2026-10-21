@@ -15,8 +15,6 @@ type ToolbarProps = {
   placeholder?: string;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
-  // Convierte el buscador en un autocompletado (<datalist>) en vez de texto libre: para filtros que en realidad resuelven a un id, pero deben ocupar el mismo lugar que un buscador de texto real.
-  searchOptions?: string[];
   filters?: ToolbarFilter[];
   // Control extra al final de la fila (ej. el "Ordenar por" de estudiantes), del mismo ancho que un filtro y pegado a la derecha.
   // Con esto la fila pasa a un layout propio (ver layoutConTrailing) para que entre todo en una sola fila en pantallas anchas.
@@ -27,8 +25,7 @@ type ToolbarProps = {
 // formularios de auth): el control va PRIMERO y el <span> con la etiqueta después, ambos hijos
 // directos del <label>. Así cada campo tiene nombre accesible propio y no depende del placeholder.
 // En un <select> la etiqueta queda siempre flotando (no hay placeholder-shown que la anime).
-export function Toolbar({ placeholder, searchValue, onSearchChange, searchOptions, filters, trailing }: ToolbarProps) {
-  const datalistId = searchOptions ? "toolbar-search-options" : undefined;
+export function Toolbar({ placeholder, searchValue, onSearchChange, filters, trailing }: ToolbarProps) {
   const layout = trailing ? layoutConTrailing : layoutBase;
   return (
     <div className={`grid gap-2 mb-3 ${layout.grid}`}>
@@ -40,32 +37,22 @@ export function Toolbar({ placeholder, searchValue, onSearchChange, searchOption
           <div className="relative">
             <label className="floating-label">
               <input
-                className="input w-full pl-9 pr-8 border-neutral-800/30"
+                className="input w-full pl-9 pr-8"
                 placeholder={placeholder}
                 value={searchValue}
                 onChange={(e) => onSearchChange(e.target.value)}
-                list={datalistId}
               />
               <span>{placeholder}</span>
             </label>
-            {/* Sin opciones mientras el input está vacío: un <input list> con datalist le muestra al navegador TODAS las opciones al hacer foco/click, incluso sin texto. Se evita vaciando el datalist hasta que haya algo tipeado. */}
-            {datalistId && searchValue ? (
-              <datalist id={datalistId}>
-                {/* Set: dos estudiantes pueden llamarse igual y la key repetida rompe el render. */}
-                {[...new Set(searchOptions!)].map((opt) => (
-                  <option key={opt} value={opt} />
-                ))}
-              </datalist>
-            ) : null}
             {/* Fuera del <label>: `.floating-label > span` de daisyUI posiciona la etiqueta, así que el
                 ícono va en un <div>; y el botón de limpiar no debe sumarse al nombre accesible del input. */}
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50 pointer-events-none">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/70 pointer-events-none">
               <Search size={14} aria-hidden />
             </div>
             {searchValue ? (
               <button
                 type="button"
-                className="btn btn-ghost btn-circle btn-xs size-6 absolute right-1 top-1/2 -translate-y-1/2 text-base-content/50 hover:text-base-content"
+                className="btn btn-ghost btn-circle btn-xs size-6 absolute right-1 top-1/2 -translate-y-1/2 text-base-content/70 hover:text-base-content"
                 onClick={() => onSearchChange("")}
                 aria-label="Limpiar búsqueda"
               >
@@ -79,7 +66,7 @@ export function Toolbar({ placeholder, searchValue, onSearchChange, searchOption
         <div className={layout.filter} key={f.label}>
           <label className="floating-label">
             <select
-              className="select w-full border-neutral-800/30"
+              className="select w-full"
               value={f.value}
               onChange={(e) => f.onChange?.(e.target.value)}
             >

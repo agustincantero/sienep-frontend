@@ -201,7 +201,7 @@ export function IncidenciasListView() {
   const filters: ToolbarFilter[] = useMemo(
     () => [
       {
-        label: "Estado (todos)",
+        label: "Estado",
         emptyLabel: "Todos",
         options: ["Activo", "Inactivo"],
         value: estadoLabel,
@@ -250,14 +250,14 @@ export function IncidenciasListView() {
 
         {cargando ? (
           <div className="flex justify-center py-10">
-            <span className="loading loading-spinner loading-md" />
+            <span className="loading loading-spinner loading-md" role="status" aria-label="Cargando" />
           </div>
         ) : demasiadasCoincidencias ? (
           <div role="status" className="alert alert-info alert-soft text-sm">
             <span>Hay demasiadas coincidencias ({MAX_COINCIDENCIAS}+ estudiantes). Escribí más del nombre o apellido para acotar la búsqueda.</span>
           </div>
         ) : incidencias.length === 0 ? (
-          <p className="text-base-content/70 py-6 text-center">No se encontraron incidencias.</p>
+          <p role="status" className="text-base-content/70 py-6 text-center">No se encontraron incidencias.</p>
         ) : (
           <>
             <InstanciasTabla

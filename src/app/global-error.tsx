@@ -19,7 +19,7 @@ export default function GlobalError({ error, retry }: { error: Error & { digest?
             <p className="text-sm text-base-content/70">
               Ocurrió un error inesperado. Probá de nuevo, si el problema sigue, avisale a un administrador.
             </p>
-            {error.digest ? <p className="text-xs text-base-content/50">Código del error: {error.digest}</p> : null}
+            {error.digest ? <p className="text-xs text-base-content/70">Código del error: {error.digest}</p> : null}
             <button type="button" className="btn btn-primary btn-sm mt-3" onClick={() => retry()}>
               Reintentar
             </button>

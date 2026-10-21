@@ -59,7 +59,7 @@ export function MisComentarios() {
             </div>
           ) : cargando ? (
             <div className="flex justify-center py-4">
-              <span className="loading loading-spinner loading-sm" />
+              <span className="loading loading-spinner loading-sm" role="status" aria-label="Cargando" />
             </div>
           ) : comentarios.length === 0 ? (
             <p className="text-base-content/70 py-1">No tenés comentarios registrados.</p>
@@ -70,7 +70,7 @@ export function MisComentarios() {
                   <li key={c.id} className="py-2">
                     <div className="flex items-baseline gap-2 flex-wrap">
                       <span className="font-semibold">{c.nombreAutor}</span>
-                      <span className="text-xs text-base-content/50">{formatFechaHora(c.createdAt)}</span>
+                      <span className="text-xs text-base-content/70">{formatFechaHora(c.createdAt)}</span>
                     </div>
                     <p className="whitespace-pre-wrap mt-1">{c.contenido.replace(CITA_REGEX, "")}</p>
                   </li>

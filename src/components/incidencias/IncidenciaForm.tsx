@@ -231,7 +231,7 @@ export function IncidenciaForm(props: IncidenciaFormProps) {
               Cancelar
             </button>
             <button type="submit" className="btn btn-primary" disabled={guardando}>
-              {guardando ? <span className="loading loading-spinner loading-sm" /> : null}
+              {guardando ? <span className="loading loading-spinner loading-sm" aria-hidden /> : null}
               {esEdicion ? "Guardar cambios" : "Guardar incidencia"}
             </button>
           </div>

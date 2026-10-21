@@ -144,7 +144,7 @@ export function MedicalReportsPanel({
 
       {cargando ? (
         <div className="flex justify-center py-6">
-          <span className="loading loading-spinner loading-md" />
+          <span className="loading loading-spinner loading-md" role="status" aria-label="Cargando" />
         </div>
       ) : informes.length === 0 ? (
         <p className="text-base-content/70 text-sm">Todavía no hay informes adjuntos.</p>
@@ -181,7 +181,7 @@ export function MedicalReportsPanel({
                 className="link link-hover text-sm truncate flex items-center gap-2 py-2"
                 title="Ver (se abre en una pestaña nueva)"
               >
-                <Paperclip size={14} aria-hidden className="text-base-content/50 shrink-0" />
+                <Paperclip size={14} aria-hidden className="text-base-content/70 shrink-0" />
                 {inf.nombre}
               </a>
               {/* Acciones juntas a la derecha: el <li> usa justify-between. */}
@@ -204,7 +204,7 @@ export function MedicalReportsPanel({
                     aria-label={`Eliminar informe "${inf.nombre}"`}
                   >
                     {eliminandoId === inf.idInforme ? (
-                      <span className="loading loading-spinner loading-xs" />
+                      <span className="loading loading-spinner loading-xs" role="status" aria-label="Cargando" />
                     ) : (
                       <Trash2 size={14} aria-hidden />
                     )}
@@ -274,7 +274,7 @@ export function MedicalReportsPanel({
           </div>
           <button type="submit" className="btn btn-primary btn-sm gap-1" disabled={subiendo}>
             {subiendo ? (
-              <span className="loading loading-spinner loading-xs" />
+              <span className="loading loading-spinner loading-xs" role="status" aria-label="Cargando" />
             ) : (
               <Upload size={14} aria-hidden />
             )}

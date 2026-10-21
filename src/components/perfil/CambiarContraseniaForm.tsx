@@ -90,7 +90,7 @@ export function CambiarContraseniaForm({ user }: { user: AuthenticatedUser }) {
           </div>
           <div className="flex justify-end">
             <button type="button" className="btn btn-primary" onClick={irAlLogin} disabled={saliendo}>
-              {saliendo ? <span className="loading loading-spinner loading-sm" /> : null}
+              {saliendo ? <span className="loading loading-spinner loading-sm" aria-hidden /> : null}
               Ir al inicio de sesión
             </button>
           </div>
@@ -146,7 +146,7 @@ export function CambiarContraseniaForm({ user }: { user: AuthenticatedUser }) {
           </p>
           <div className="flex justify-end">
             <button type="submit" className="btn btn-primary" disabled={guardando}>
-              {guardando ? <span className="loading loading-spinner loading-sm" /> : null}
+              {guardando ? <span className="loading loading-spinner loading-sm" aria-hidden /> : null}
               Cambiar contraseña
             </button>
           </div>
