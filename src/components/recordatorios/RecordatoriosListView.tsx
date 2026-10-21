@@ -238,7 +238,7 @@ export function RecordatoriosListView() {
             <span className="loading loading-spinner loading-md" />
           </div>
         ) : filtrados.length === 0 ? (
-          <p className="text-base-content/60 py-6 text-center">No se encontraron recordatorios.</p>
+          <p className="text-base-content/70 py-6 text-center">No se encontraron recordatorios.</p>
         ) : (
           <>
             <RecordatoriosTabla

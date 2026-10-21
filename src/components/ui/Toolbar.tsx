@@ -59,13 +59,13 @@ export function Toolbar({ placeholder, searchValue, onSearchChange, searchOption
             ) : null}
             {/* Fuera del <label>: `.floating-label > span` de daisyUI posiciona la etiqueta, así que el
                 ícono va en un <div>; y el botón de limpiar no debe sumarse al nombre accesible del input. */}
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50 pointer-events-none">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/70 pointer-events-none">
               <Search size={14} aria-hidden />
             </div>
             {searchValue ? (
               <button
                 type="button"
-                className="btn btn-ghost btn-circle btn-xs size-6 absolute right-1 top-1/2 -translate-y-1/2 text-base-content/50 hover:text-base-content"
+                className="btn btn-ghost btn-circle btn-xs size-6 absolute right-1 top-1/2 -translate-y-1/2 text-base-content/70 hover:text-base-content"
                 onClick={() => onSearchChange("")}
                 aria-label="Limpiar búsqueda"
               >

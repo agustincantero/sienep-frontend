@@ -39,7 +39,7 @@ function formatValor(valor: unknown): Valor {
 }
 
 function ValorTexto({ valor, className = "" }: { valor: Valor; className?: string }) {
-  return <span className={`wrap-anywhere ${valor.vacio ? "italic text-base-content/50" : ""} ${className}`}>{valor.texto}</span>;
+  return <span className={`wrap-anywhere ${valor.vacio ? "italic text-base-content/70" : ""} ${className}`}>{valor.texto}</span>;
 }
 
 // Lista de pares campo/valor para los campos que no cambiaron (o para todo el registro en un alta o una baja).
@@ -65,7 +65,7 @@ function FilaDeCambio({ campo, anterior, nuevo }: { campo: string; anterior: Val
       <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm min-w-0">
         <span className="sr-only">Antes:</span>
         <ValorTexto valor={anterior} className={anterior.vacio ? "" : "line-through text-base-content/70"} />
-        <ArrowRight size={14} aria-hidden className="shrink-0 self-center text-base-content/50" />
+        <ArrowRight size={14} aria-hidden className="shrink-0 self-center text-base-content/70" />
         <span className="sr-only">Después:</span>
         <ValorTexto valor={nuevo} className={nuevo.vacio ? "" : "font-semibold"} />
       </span>

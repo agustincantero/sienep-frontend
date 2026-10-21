@@ -60,7 +60,7 @@ export function InstanciaRecordatorios({ codInstancia, instanciaActiva }: { codI
           <span className="loading loading-spinner loading-sm" />
         </div>
       ) : recordatorios.length === 0 ? (
-        error ? null : <p className="text-base-content/60 text-sm mb-3">Todavía no hay recordatorios.</p>
+        error ? null : <p className="text-base-content/70 text-sm mb-3">Todavía no hay recordatorios.</p>
       ) : (
         <RecordatoriosTabla filas={recordatorios} query="?desde=instancia" sinInstancia puedeEditar={puedeEditar} />
       )}

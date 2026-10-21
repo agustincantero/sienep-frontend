@@ -28,7 +28,7 @@ export function ErrorPantalla({ error, retry, variante }: ErrorPantallaProps) {
         Ocurrió un error inesperado. Probá de nuevo; si el problema sigue, avisale a un administrador.
       </p>
       {error.digest ? (
-        <p className="text-xs text-base-content/50">Código del error: {error.digest}</p>
+        <p className="text-xs text-base-content/70">Código del error: {error.digest}</p>
       ) : null}
       <div className={esAuth ? "flex flex-col gap-4 w-full mt-3" : "flex flex-col items-center gap-3 mt-3"}>
         <button type="button" className={esAuth ? "btn btn-primary w-full" : "btn btn-primary btn-sm"} onClick={() => retry()}>

@@ -181,7 +181,7 @@ export function MedicalReportsPanel({
                 className="link link-hover text-sm truncate flex items-center gap-2 py-2"
                 title="Ver (se abre en una pestaña nueva)"
               >
-                <Paperclip size={14} aria-hidden className="text-base-content/50 shrink-0" />
+                <Paperclip size={14} aria-hidden className="text-base-content/70 shrink-0" />
                 {inf.nombre}
               </a>
               {/* Acciones juntas a la derecha: el <li> usa justify-between. */}

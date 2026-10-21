@@ -167,7 +167,7 @@ export function AuditListView() {
                             ) : null}
                           </div>
                         ) : (
-                          <span className="text-base-content/50 italic">Acción directa en BD</span>
+                          <span className="text-base-content/70 italic">Acción directa en BD</span>
                         )}
                       </td>
                       <td>

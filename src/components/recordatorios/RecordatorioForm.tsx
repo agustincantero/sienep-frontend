@@ -254,7 +254,7 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
                   disabled={guardando}
                 />
               )}
-              <p className="mt-1 text-xs text-base-content/60">Todo recordatorio pertenece a una instancia: no puede crearse suelto.</p>
+              <p className="mt-1 text-xs text-base-content/70">Todo recordatorio pertenece a una instancia: no puede crearse suelto.</p>
             </div>
 
             <Field label="Título" fieldKey="titulo" error={errores.titulo}>
@@ -324,7 +324,7 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
             {frecuencias == null ? (
               <span className="loading loading-spinner loading-sm" aria-label="Cargando frecuencias" />
             ) : opcionesFrecuencia.length === 0 ? (
-              <p className="text-sm text-base-content/60">
+              <p className="text-sm text-base-content/70">
                 No hay frecuencias cargadas, así que el recordatorio no se repite.
                 {puedeGestionarFrecuencias ? (
                   <>

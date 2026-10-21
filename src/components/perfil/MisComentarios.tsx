@@ -70,7 +70,7 @@ export function MisComentarios() {
                   <li key={c.id} className="py-2">
                     <div className="flex items-baseline gap-2 flex-wrap">
                       <span className="font-semibold">{c.nombreAutor}</span>
-                      <span className="text-xs text-base-content/50">{formatFechaHora(c.createdAt)}</span>
+                      <span className="text-xs text-base-content/70">{formatFechaHora(c.createdAt)}</span>
                     </div>
                     <p className="whitespace-pre-wrap mt-1">{c.contenido.replace(CITA_REGEX, "")}</p>
                   </li>
