@@ -270,7 +270,7 @@ export function InstanciasListView() {
 
         {cargando ? (
           <div className="flex justify-center py-10">
-            <span className="loading loading-spinner loading-md" />
+            <span className="loading loading-spinner loading-md" role="status" aria-label="Cargando" />
           </div>
         ) : demasiadasCoincidencias ? (
           <div role="status" className="alert alert-info alert-soft text-sm">

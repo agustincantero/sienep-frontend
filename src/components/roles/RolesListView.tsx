@@ -152,7 +152,7 @@ export function RolesListView() {
 
         {cargando ? (
           <div className="flex justify-center py-10">
-            <span className="loading loading-spinner loading-md" />
+            <span className="loading loading-spinner loading-md" role="status" aria-label="Cargando" />
           </div>
         ) : rolesFiltrados.length === 0 ? (
           <p className="text-base-content/70 py-6 text-center">No se encontraron roles.</p>

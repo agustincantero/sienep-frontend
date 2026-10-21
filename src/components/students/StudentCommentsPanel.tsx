@@ -191,7 +191,7 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
 
       {cargando ? (
         <div className="flex justify-center py-6">
-          <span className="loading loading-spinner loading-md" />
+          <span className="loading loading-spinner loading-md" role="status" aria-label="Cargando" />
         </div>
       ) : comentarios.length === 0 ? (
         <p className="text-base-content/70 text-sm">Todavía no hay comentarios.</p>
@@ -311,7 +311,7 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
               <span />
             )}
             <button type="submit" className="btn btn-primary btn-sm" disabled={publicando}>
-              {publicando ? <span className="loading loading-spinner loading-xs" /> : null}
+              {publicando ? <span className="loading loading-spinner loading-xs" aria-hidden /> : null}
               Comentar
             </button>
           </div>

@@ -59,7 +59,7 @@ export function MisComentarios() {
             </div>
           ) : cargando ? (
             <div className="flex justify-center py-4">
-              <span className="loading loading-spinner loading-sm" />
+              <span className="loading loading-spinner loading-sm" role="status" aria-label="Cargando" />
             </div>
           ) : comentarios.length === 0 ? (
             <p className="text-base-content/70 py-1">No tenés comentarios registrados.</p>

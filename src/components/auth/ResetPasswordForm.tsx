@@ -136,7 +136,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
           className="btn btn-primary w-full mt-2"
           disabled={cargando}
         >
-          {cargando ? <span className="loading loading-spinner loading-sm" /> : null}
+          {cargando ? <span className="loading loading-spinner loading-sm" aria-hidden /> : null}
           {cargando ? "Guardando…" : "Guardar nueva contraseña"}
         </button>
       </form>

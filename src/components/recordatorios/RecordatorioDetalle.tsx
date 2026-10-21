@@ -104,7 +104,7 @@ export function RecordatorioDetalle({
   if (cargando) {
     return (
       <div className="grow overflow-auto flex justify-center py-16">
-        <span className="loading loading-spinner loading-lg" />
+        <span className="loading loading-spinner loading-lg" role="status" aria-label="Cargando" />
       </div>
     );
   }

@@ -224,7 +224,7 @@ function ComentarioBox<T extends ComentarioInstancia>({
 
       {cargando ? (
         <div className="flex justify-center py-4">
-          <span className="loading loading-spinner loading-sm" />
+          <span className="loading loading-spinner loading-sm" role="status" aria-label="Cargando" />
         </div>
       ) : comentarios.length === 0 ? (
         cargaFallida ? null : (
@@ -296,7 +296,7 @@ function ComentarioBox<T extends ComentarioInstancia>({
                         className="btn btn-primary btn-xs gap-1"
                         disabled={guardando || contenidoEditado.trim() === contenidoActual}
                       >
-                        {guardando ? <span className="loading loading-spinner loading-xs" /> : null}
+                        {guardando ? <span className="loading loading-spinner loading-xs" aria-hidden /> : null}
                         Guardar
                       </button>
                     </div>
@@ -362,7 +362,7 @@ function ComentarioBox<T extends ComentarioInstancia>({
             ) : null}
           </div>
           <button type="submit" className="btn btn-primary btn-sm gap-1" disabled={enviando}>
-            {enviando ? <span className="loading loading-spinner loading-xs" /> : <Send size={14} aria-hidden />}
+            {enviando ? <span className="loading loading-spinner loading-xs" aria-hidden /> : <Send size={14} aria-hidden />}
             Comentar
           </button>
         </form>

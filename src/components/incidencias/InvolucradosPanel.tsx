@@ -92,7 +92,7 @@ export function InvolucradosPanel({ codInstancia }: { codInstancia: number }) {
 
       {cargando ? (
         <div className="flex justify-center py-4">
-          <span className="loading loading-spinner loading-sm" />
+          <span className="loading loading-spinner loading-sm" role="status" aria-label="Cargando" />
         </div>
       ) : involucrados.length === 0 ? (
         <p className="text-base-content/70 text-sm mb-3">Todavía no hay involucrados registrados.</p>

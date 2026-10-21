@@ -57,7 +57,7 @@ export function InstanciaRecordatorios({ codInstancia, instanciaActiva }: { codI
 
       {cargando ? (
         <div className="flex justify-center py-4">
-          <span className="loading loading-spinner loading-sm" />
+          <span className="loading loading-spinner loading-sm" role="status" aria-label="Cargando" />
         </div>
       ) : recordatorios.length === 0 ? (
         error ? null : <p className="text-base-content/70 text-sm mb-3">Todavía no hay recordatorios.</p>

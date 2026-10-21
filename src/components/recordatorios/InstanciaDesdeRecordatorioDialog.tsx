@@ -141,7 +141,7 @@ export function InstanciaDesdeRecordatorioDialog({ open, recordatorio, onCreada,
             Cancelar
           </button>
           <button type="submit" form="form-seguimiento" className="btn btn-primary" disabled={guardando}>
-            {guardando ? <span className="loading loading-spinner loading-sm" /> : null}
+            {guardando ? <span className="loading loading-spinner loading-sm" aria-hidden /> : null}
             Crear instancia
           </button>
         </div>

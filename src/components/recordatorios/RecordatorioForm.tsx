@@ -322,7 +322,7 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
             <SeccionLegend icon={Repeat}>Repetición</SeccionLegend>
 
             {frecuencias == null ? (
-              <span className="loading loading-spinner loading-sm" aria-label="Cargando frecuencias" />
+              <span className="loading loading-spinner loading-sm" role="status" aria-label="Cargando frecuencias" />
             ) : opcionesFrecuencia.length === 0 ? (
               <p className="text-sm text-base-content/70">
                 No hay frecuencias cargadas, así que el recordatorio no se repite.
@@ -420,7 +420,7 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
               Cancelar
             </button>
             <button type="submit" className="btn btn-primary" disabled={guardando}>
-              {guardando ? <span className="loading loading-spinner loading-sm" /> : null}
+              {guardando ? <span className="loading loading-spinner loading-sm" aria-hidden /> : null}
               {esEdicion ? "Guardar cambios" : "Guardar recordatorio"}
             </button>
           </div>

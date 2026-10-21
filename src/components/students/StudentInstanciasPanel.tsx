@@ -182,7 +182,7 @@ export function StudentInstanciasPanel({
           ) : null}
           {cargando ? (
             <div className="flex justify-center py-6">
-              <span className="loading loading-spinner loading-md" />
+              <span className="loading loading-spinner loading-md" role="status" aria-label="Cargando" />
             </div>
           ) : filas.length === 0 && !error ? (
             <p className="text-base-content/70 text-sm py-2">Este estudiante no tiene {tipo} registradas.</p>

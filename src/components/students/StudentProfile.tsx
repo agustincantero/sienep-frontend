@@ -142,7 +142,7 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
   if (cargando) {
     return (
       <div className="grow overflow-auto flex justify-center py-16">
-        <span className="loading loading-spinner loading-lg" />
+        <span className="loading loading-spinner loading-lg" role="status" aria-label="Cargando" />
       </div>
     );
   }
@@ -222,7 +222,7 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
                   onClick={() => inputFotoRef.current?.click()}
                   disabled={subiendoFoto}
                 >
-                  {subiendoFoto ? <span className="loading loading-spinner loading-xs" /> : null}
+                  {subiendoFoto ? <span className="loading loading-spinner loading-xs" aria-hidden /> : null}
                   Subir foto
                 </button>
                 <button
@@ -231,7 +231,7 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
                   onClick={() => setConfirmandoPassword(true)}
                   disabled={reenviando}
                 >
-                  {reenviando ? <span className="loading loading-spinner loading-xs" /> : null}
+                  {reenviando ? <span className="loading loading-spinner loading-xs" aria-hidden /> : null}
                   {accionPassword(estudiante).boton}
                 </button>
                 <Link href={`/estudiantes/${idEstudiante}/editar`} className="btn btn-primary btn-sm">

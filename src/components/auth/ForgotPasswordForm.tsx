@@ -78,7 +78,7 @@ export function ForgotPasswordForm() {
             className="btn btn-primary w-full mt-2"
             disabled={cargando}
           >
-            {cargando ? <span className="loading loading-spinner loading-sm" /> : null}
+            {cargando ? <span className="loading loading-spinner loading-sm" aria-hidden /> : null}
             {cargando ? "Enviando…" : "Enviar enlace"}
           </button>
           <div className="text-center">

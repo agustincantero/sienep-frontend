@@ -731,7 +731,7 @@ export function StudentForm(props: StudentFormProps) {
               Cancelar
             </button>
             <button type="submit" className="btn btn-primary" disabled={guardando}>
-              {guardando ? <span className="loading loading-spinner loading-sm" /> : null}
+              {guardando ? <span className="loading loading-spinner loading-sm" aria-hidden /> : null}
               {esEdicion ? "Guardar cambios" : "Guardar estudiante"}
             </button>
           </div>
