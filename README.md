@@ -30,15 +30,16 @@ En construcción. Lo que ya funciona:
 - **Inicio** (`/`): panel post-login con accesos a los módulos, filtrados según el `tipo` de usuario (funcionario/estudiante) y sus `permisos`.
 - **Estudiantes**: listado con búsqueda/filtros/paginación, alta, ficha (datos, comentarios normales y confidenciales, informes médicos adjuntos), edición, foto de perfil, asignación de grupo e ITR, desactivar/reactivar y reenvío de contraseña temporal. La ficha también muestra las instancias e incidencias del estudiante.
 - **Instancias** e **Incidencias**: listado con filtros, alta, detalle y edición; las instancias llevan comentarios y las incidencias, involucrados.
+- **Recordatorios**: listado con búsqueda y filtros por categoría, "cuándo" (vencidos, hoy, futuros) y estado, alta, detalle, edición, repetición opcional (frecuencia hasta una fecha o una cantidad de veces), desactivar/reactivar y "Registrar seguimiento", que crea la instancia de seguimiento y deja el recordatorio cumplido (RF27). La instancia se elige con un buscador (identificador, título o estudiante) y el responsable es quien crea el recordatorio. Todo recordatorio pertenece a una instancia: el detalle de la instancia lista los suyos y permite crear uno nuevo con ella ya elegida. El backend solo filtra `/recordatorios` por estado, así que la búsqueda, los demás filtros y la paginación se resuelven en el cliente.
 - **Roles**: listado, alta y edición de roles con sus permisos agrupados por dominio.
 - **Auditoría**: listado de eventos (quién hizo qué, y cuándo).
-- **Catálogos**: carreras, grupos, ITRs y categorías de instancia y de recordatorio, con un listado por catálogo (`/catalogos/[catalogo]`, cada pestaña es su propia ruta) y alta y edición en páginas aparte (`/catalogos/[catalogo]/nuevo` y `/[id]/editar`). `/catalogos` redirige al primer catálogo que el usuario puede ver. Un catálogo inexistente en la URL (mal escrito o link viejo) redirige a `/catalogos` en vez de mostrar el 404: la página 404 es una pantalla de fuera de sesión y, disparada desde adentro de la app, se dibuja debajo de la TopBar.
+- **Catálogos**: carreras, grupos, ITRs, categorías de instancia y de recordatorio, y frecuencias de repetición de los recordatorios (que usan los permisos de recordatorio, porque el backend no tiene permisos propios para frecuencias), con un listado por catálogo (`/catalogos/[catalogo]`, cada pestaña es su propia ruta) y alta y edición en páginas aparte (`/catalogos/[catalogo]/nuevo` y `/[id]/editar`). `/catalogos` redirige al primer catálogo que el usuario puede ver. Un catálogo inexistente en la URL (mal escrito o link viejo) redirige a `/catalogos` en vez de mostrar el 404: la página 404 es una pantalla de fuera de sesión y, disparada desde adentro de la app, se dibuja debajo de la TopBar.
 - **Perfil del estudiante** (`/perfil`): autoservicio con sus datos, contacto editable, cambio de contraseña y sus propias instancias, incidencias y comentarios (`/perfil/instancias`, `/perfil/incidencias` y `/perfil/comentarios`).
 - **PWA instalable**: `src/app/manifest.webmanifest` y los metadatos de `layout.tsx` permiten instalar la app desde el navegador. No hay service worker, así que no funciona sin conexión.
 - **Autorización**: la navegación se filtra por los `permisos` del usuario, y cada página de módulo vuelve a chequear el permiso en el server (`SinPermiso` si falta).
 - **Estructura de página**: `TopBar` en toda pantalla autenticada, `Sidebar` dentro de las secciones de funcionario. Las pantallas sin sesión (login, recuperación) y la página 404 comparten otra estructura, con `Footer`.
 
-Módulos planeados (11): Autenticación, Estudiantes, Instancias, Incidencias, Recordatorios, Funcionarios, Roles, Catálogos, Auditoría, Reportes, Perfil Estudiante. Todavía no tienen páginas propias Recordatorios, Funcionarios y Reportes (sus ítems del menú ya existen y dan 404). La capa de datos quedó resuelta con un cliente `fetch` propio en `src/lib/api.ts` (`apiGet`/`apiPost`/`apiPut`/`apiPatch`/`apiDelete`, más variantes `*Form` para `multipart/form-data`).
+Módulos planeados (11): Autenticación, Estudiantes, Instancias, Incidencias, Recordatorios, Funcionarios, Roles, Catálogos, Auditoría, Reportes, Perfil Estudiante. Todavía no tienen páginas propias Funcionarios y Reportes (sus ítems del menú ya existen y dan 404). La capa de datos quedó resuelta con un cliente `fetch` propio en `src/lib/api.ts` (`apiGet`/`apiPost`/`apiPut`/`apiPatch`/`apiDelete`, más variantes `*Form` para `multipart/form-data`).
 
 ## UI y estilos
 
@@ -49,9 +50,9 @@ Módulos planeados (11): Autenticación, Estudiantes, Instancias, Incidencias, R
 
 ## Estructura del código
 
-- `src/app/`: rutas de Next.js (App Router). `(auth)/` tiene el login y la recuperación de contraseña; `(app)/` es el área autenticada, con `(secciones)/` para las páginas de módulo (`estudiantes/`, `instancias/`, `incidencias/`, `roles/`, `auditoria/`, `catalogos/` y `perfil/`); `api/` es el proxy al backend.
-- `src/components/`: `auth/` (pantallas sin sesión), `layout/` (TopBar, Sidebar, Footer y demás piezas de la estructura de página), `ui/` (bloques reutilizables) y una carpeta por módulo (`students/`, `instancias/`, `incidencias/`, `roles/`, `audit/`, `catalogos/`, `perfil/`).
-- `src/lib/`: acceso a la API y lógica de dominio. `api.ts`, `auth.ts`, `auth-handlers.ts`, `auth-paths.ts`, `session.ts`, `backend.ts`, `current-user.ts` y `session-context.tsx` manejan la sesión y las llamadas HTTP; `nav-items.ts` define la navegación y `permisos.ts` agrupa el catálogo de permisos; el resto son tipos y funciones por módulo (`students.ts`, `instancias.ts`, `incidencias.ts`, `roles.ts`, `audit.ts`, `catalogos-tabs.ts`, etc.).
+- `src/app/`: rutas de Next.js (App Router). `(auth)/` tiene el login y la recuperación de contraseña; `(app)/` es el área autenticada, con `(secciones)/` para las páginas de módulo (`estudiantes/`, `instancias/`, `incidencias/`, `recordatorios/`, `roles/`, `auditoria/`, `catalogos/` y `perfil/`); `api/` es el proxy al backend.
+- `src/components/`: `auth/` (pantallas sin sesión), `layout/` (TopBar, Sidebar, Footer y demás piezas de la estructura de página), `ui/` (bloques reutilizables) y una carpeta por módulo (`students/`, `instancias/`, `incidencias/`, `recordatorios/`, `roles/`, `audit/`, `catalogos/`, `perfil/`).
+- `src/lib/`: acceso a la API y lógica de dominio. `api.ts`, `auth.ts`, `auth-handlers.ts`, `auth-paths.ts`, `session.ts`, `backend.ts`, `current-user.ts` y `session-context.tsx` manejan la sesión y las llamadas HTTP; `nav-items.ts` define la navegación y `permisos.ts` agrupa el catálogo de permisos; el resto son tipos y funciones por módulo (`students.ts`, `instancias.ts`, `incidencias.ts`, `recordatorios.ts`, `frecuencias.ts`, `roles.ts`, `audit.ts`, `catalogos-tabs.ts`, etc.).
 
 ## Componentes disponibles
 
@@ -112,7 +113,7 @@ Reutilizables para las páginas de cualquier módulo.
 
 ### Otros módulos
 
-`instancias/`, `incidencias/`, `roles/`, `audit/`, `catalogos/` y `perfil/` siguen el mismo patrón: la `page.tsx` (Server Component) chequea el permiso y delega en un `*ListView` / `*Detalle` / `*Form` cliente que usa `src/lib/<modulo>.ts`. Se reutilizan entre módulos `EstadoBadge`, `InstanciasTabla`, `InstanciaComentarios` y `EstudianteSelector` (de `instancias/`).
+`instancias/`, `incidencias/`, `recordatorios/`, `roles/`, `audit/`, `catalogos/` y `perfil/` siguen el mismo patrón: la `page.tsx` (Server Component) chequea el permiso y delega en un `*ListView` / `*Detalle` / `*Form` cliente que usa `src/lib/<modulo>.ts`. Se reutilizan entre módulos `EstadoBadge`, `InstanciasTabla`, `InstanciaComentarios` y `EstudianteSelector` (de `instancias/`); `RecordatoriosTabla` (de `recordatorios/`) se usa en el listado y en el detalle de la instancia.
 
 ### Íconos
 

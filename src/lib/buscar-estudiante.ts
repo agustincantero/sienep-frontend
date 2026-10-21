@@ -1,4 +1,5 @@
 import { apiGet } from "./api";
+import { listInstancias } from "./instancias";
 import { listStudents, type Page, type StudentSummary } from "./students";
 
 // Tope de estudiantes que se consultan a la vez cuando el texto coincide con varios; más que eso obliga a acotar la búsqueda.
@@ -67,6 +68,11 @@ function conVigencia<T>(pedir: () => Promise<T>): () => Promise<T> {
 
 // Todos los estudiantes (hasta TOPE_LISTADO).
 export const todosLosEstudiantes = conVigencia(() => listStudents({ size: TOPE_LISTADO }).then((p) => p.content));
+
+// Instancias activas (hasta TOPE_LISTADO), de la más reciente a la más antigua: base del buscador de instancias (InstanciaSelector). /instancias no filtra por texto ni identificador, así que se busca acá.
+export const todasLasInstanciasActivas = conVigencia(() =>
+  listInstancias({ size: TOPE_LISTADO, sort: "fechaHora,desc" }).then((p) => p.content),
+);
 
 // Sin `estado` el backend lista solo los ACTIVOS; los autores de auditoría pueden estar dados de baja, así que se piden ambos estados y se juntan.
 const ESTADOS_AUTOR = ["ACTIVO", "INACTIVO"];
