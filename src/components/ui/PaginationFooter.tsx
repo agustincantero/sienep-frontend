@@ -40,7 +40,7 @@ export function PaginationFooter({
       <span className="text-base-content/70 text-sm" aria-live="polite">
         Mostrando {rango} de {total} {noun}
       </span>
-      <nav>
+      <nav aria-label={`Paginación de ${noun}`}>
         <ul className="join mb-0">
           <li className="list-none inline-block">
             <button
