@@ -37,7 +37,7 @@ export function PaginationFooter({
 
   return (
     <div className="flex items-center justify-between mt-2">
-      <span className="text-base-content/70 text-sm">
+      <span className="text-base-content/70 text-sm" aria-live="polite">
         Mostrando {rango} de {total} {noun}
       </span>
       <nav>

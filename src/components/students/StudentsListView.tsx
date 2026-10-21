@@ -377,7 +377,7 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
             <span className="loading loading-spinner loading-md" role="status" aria-label="Cargando" />
           </div>
         ) : estudiantes.length === 0 ? (
-          <p className="text-base-content/70 py-6 text-center">No se encontraron estudiantes.</p>
+          <p role="status" className="text-base-content/70 py-6 text-center">No se encontraron estudiantes.</p>
         ) : (
           <>
             <DataTable headers={["Nombre", "Documento", "Grupo", "Estado", ""]}>
