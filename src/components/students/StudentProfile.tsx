@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Calendar, FileText, HeartPulse, MessageSquare, TriangleAlert, User } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFecha } from "@/lib/format";
+import { nombrePais } from "@/lib/paises";
 import { getStudent, resendStudentPassword, uploadStudentPhoto, type Student } from "@/lib/students";
 import { useSession } from "@/lib/session-context";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -331,7 +332,7 @@ function DatosGenerales({ estudiante }: { estudiante: Student }) {
 
   return (
     <div>
-      <Dato label="Documento" value={`${estudiante.documento} (${estudiante.paisDocumento})`} />
+      <Dato label="Documento" value={`${estudiante.documento} (${nombrePais(estudiante.paisDocumento)})`} />
       <Dato label="Email" value={estudiante.email} />
       <Dato label="Fecha de nacimiento" value={formatFecha(estudiante.fechaNacimiento)} />
       <Dato label="Teléfono" value={estudiante.telefonos.join(", ")} />
