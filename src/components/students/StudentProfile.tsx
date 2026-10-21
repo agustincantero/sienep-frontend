@@ -242,12 +242,32 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
           </div>
         </div>
 
-        <div role="tablist" className="tabs tabs-border mb-4">
+        <div
+          role="tablist"
+          aria-label="Secciones de la ficha"
+          className="tabs tabs-border mb-4"
+          onKeyDown={(ev) => {
+            const i = TABS.findIndex((t) => t.id === tab);
+            let destino: number;
+            if (ev.key === "ArrowRight") destino = (i + 1) % TABS.length;
+            else if (ev.key === "ArrowLeft") destino = (i - 1 + TABS.length) % TABS.length;
+            else if (ev.key === "Home") destino = 0;
+            else if (ev.key === "End") destino = TABS.length - 1;
+            else return;
+            ev.preventDefault();
+            setTab(TABS[destino].id);
+            document.getElementById(`tab-${TABS[destino].id}`)?.focus();
+          }}
+        >
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               type="button"
               role="tab"
+              id={`tab-${id}`}
+              aria-selected={tab === id}
+              aria-controls="panel-ficha"
+              tabIndex={tab === id ? 0 : -1}
               className={`tab gap-1.5 ${tab === id ? "tab-active" : "text-base-content/70"}`}
               onClick={() => setTab(id)}
             >
@@ -258,7 +278,7 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
         </div>
 
         {/* key={tab} fuerza el remount al cambiar de tab, así la animación se repite cada vez en vez de correr una sola vez al montar la ficha. */}
-        <div key={tab} className="animate-[fade-in_180ms_ease-out]">
+        <div key={tab} id="panel-ficha" role="tabpanel" aria-labelledby={`tab-${tab}`} className="animate-[fade-in_180ms_ease-out]">
           {tab === "datos" ? (
             <DatosGenerales estudiante={estudiante} />
           ) : tab === "salud" ? (
