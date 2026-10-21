@@ -63,7 +63,7 @@ export function RecordatoriosTabla({
           >
             <td className="font-semibold">
               <span className="inline-flex items-center gap-1.5">
-                {pendiente ? <Bell size={13} className="text-base-content/70 shrink-0" aria-label="Pendiente" /> : null}
+                {pendiente ? <Bell size={13} className="text-base-content/70 shrink-0" role="img" aria-label="Pendiente" /> : null}
                 {r.titulo}
               </span>
             </td>
