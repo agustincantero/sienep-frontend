@@ -331,7 +331,7 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
           trailing={
             <label className="floating-label">
               <select
-                className="select w-full border-neutral-800/30"
+                className="select w-full"
                 value={orden}
                 onChange={(e) => handleOrdenChange(e.target.value as OrdenEstudiantes)}
               >

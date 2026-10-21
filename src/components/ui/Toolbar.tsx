@@ -40,7 +40,7 @@ export function Toolbar({ placeholder, searchValue, onSearchChange, searchOption
           <div className="relative">
             <label className="floating-label">
               <input
-                className="input w-full pl-9 pr-8 border-neutral-800/30"
+                className="input w-full pl-9 pr-8"
                 placeholder={placeholder}
                 value={searchValue}
                 onChange={(e) => onSearchChange(e.target.value)}
@@ -79,7 +79,7 @@ export function Toolbar({ placeholder, searchValue, onSearchChange, searchOption
         <div className={layout.filter} key={f.label}>
           <label className="floating-label">
             <select
-              className="select w-full border-neutral-800/30"
+              className="select w-full"
               value={f.value}
               onChange={(e) => f.onChange?.(e.target.value)}
             >

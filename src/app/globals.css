@@ -48,6 +48,17 @@ body {
   --input-color: var(--color-primary);
 }
 
+/* Borde de campos con 3:1 contra el fondo (WCAG 1.4.11). daisyUI lo dibuja con base-content al 20 %, que da 1.48:1. #858585 da 3.69:1. Se excluyen los estados de error y el foco, que ya definen su propio color de borde. */
+.input:not(.input-error),
+.select:not(.select-error),
+.textarea:not(.textarea-error) {
+  --input-color: #858585;
+}
+.select:not(.select-error):is(:focus, :focus-within),
+.textarea:not(.textarea-error):focus {
+  --input-color: var(--color-base-content);
+}
+
 /* Placeholder como label visible: zinc-500 sólido, no opacity (daisyUI da ~3:1, no pasa AA). Cubre el input con `.input` propio y el anidado dentro de un wrapper `.input` (ej. PasswordInput). */
 .floating-label:not(:focus-within) :is(input.input, .input input)::placeholder {
   color: #71717a; /* zinc-500 */
