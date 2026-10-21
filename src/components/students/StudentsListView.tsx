@@ -386,18 +386,10 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
                   key={e.idUsuario}
                   className={
                     puedeVerFicha
-                      ? "cursor-pointer select-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+                      ? "cursor-pointer select-none"
                       : undefined
                   }
-                  tabIndex={puedeVerFicha ? 0 : undefined}
                   onClick={puedeVerFicha ? () => router.push(`/estudiantes/${e.idUsuario}`) : undefined}
-                  onKeyDown={
-                    puedeVerFicha
-                      ? (ev) => {
-                          if (ev.key === "Enter") router.push(`/estudiantes/${e.idUsuario}`);
-                        }
-                      : undefined
-                  }
                 >
                   <td className="font-semibold">
                     <div className="flex items-center gap-2">
