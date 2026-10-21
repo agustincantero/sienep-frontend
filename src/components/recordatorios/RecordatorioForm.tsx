@@ -254,7 +254,7 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
                   disabled={guardando}
                 />
               )}
-              <p className="mt-1 text-xs text-base-content/70">Todo recordatorio pertenece a una instancia: no puede crearse suelto.</p>
+              <p className="mt-1 text-xs text-base-content/70">Todo recordatorio tiene que estar asociado a una instancia.</p>
             </div>
 
             <Field label="Título" fieldKey="titulo" error={errores.titulo}>
