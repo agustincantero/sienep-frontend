@@ -170,7 +170,7 @@ export function InstanciaForm(props: InstanciaFormProps) {
 
   return (
     <div className="grow overflow-auto">
-      <div className="max-w-[600px] mx-auto w-full px-4 py-5">
+      <div className="max-w-[720px] mx-auto w-full px-4 py-5">
         <BackButton onClick={() => router.back()} label="Cancelar" />
 
         <h1 className="text-xl font-bold mb-4">{esEdicion ? "Editar instancia" : "Nueva instancia"}</h1>

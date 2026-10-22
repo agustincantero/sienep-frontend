@@ -93,7 +93,7 @@ export function InstanciaDetalle({
   if (errorCarga || !instancia) {
     return (
       <div className="grow overflow-auto">
-        <div className="max-w-[700px] mx-auto w-full px-4 py-5">
+        <div className="max-w-[980px] mx-auto w-full px-4 py-5">
           <BackButton href="/instancias" label="Volver a instancias" />
           <div role="alert" className="alert alert-error alert-soft text-sm">
             <span>{errorCarga || "Instancia no encontrada."}</span>
@@ -105,7 +105,7 @@ export function InstanciaDetalle({
 
   return (
     <div className="grow overflow-auto">
-      <div className="max-w-[700px] mx-auto w-full px-4 py-5">
+      <div className="max-w-[980px] mx-auto w-full px-4 py-5">
         <BackButton href={volverAEstudiante ? `/estudiantes/${instancia.idEstudiante}?tab=instancias` : "/instancias"} label={volverAEstudiante ? "Volver al estudiante" : "Volver a instancias"} />
 
         {error ? (

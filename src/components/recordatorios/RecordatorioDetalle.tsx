@@ -112,7 +112,7 @@ export function RecordatorioDetalle({
   if (errorCarga || !recordatorio) {
     return (
       <div className="grow overflow-auto">
-        <div className="max-w-[700px] mx-auto w-full px-4 py-5">
+        <div className="max-w-[980px] mx-auto w-full px-4 py-5">
           <BackButton href="/recordatorios" label="Volver a recordatorios" />
           <div role="alert" className="alert alert-error alert-soft text-sm">
             <span>{errorCarga || "Recordatorio no encontrado."}</span>
@@ -127,7 +127,7 @@ export function RecordatorioDetalle({
 
   return (
     <div className="grow overflow-auto">
-      <div className="max-w-[700px] mx-auto w-full px-4 py-5">
+      <div className="max-w-[980px] mx-auto w-full px-4 py-5">
         <BackButton
           href={volverAInstancia ? `/instancias/${recordatorio.codInstancia}` : "/recordatorios"}
           label={volverAInstancia ? "Volver a la instancia" : "Volver a recordatorios"}

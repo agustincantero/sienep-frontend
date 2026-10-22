@@ -35,7 +35,7 @@ export default async function EditarInstanciaPage({
     // ante un id invalido no rompe con un 500, sino que se queda dentro del layout de la app.
     return (
       <div className="grow overflow-auto">
-        <div className="max-w-[600px] mx-auto w-full px-4 py-5">
+        <div className="max-w-[720px] mx-auto w-full px-4 py-5">
           <BackButton href="/instancias" label="Volver a instancias" />
           <div role="alert" className="alert alert-error alert-soft text-sm">
             <span>{err instanceof BackendError ? err.message : "No se pudo cargar la instancia."}</span>

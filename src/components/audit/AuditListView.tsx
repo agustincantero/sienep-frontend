@@ -121,7 +121,7 @@ export function AuditListView() {
 
   return (
     <div className="grow overflow-auto">
-      <div className="max-w-[1160px] mx-auto w-full px-4 py-5">
+      <div className="max-w-[1200px] mx-auto w-full px-4 py-5">
         <SectionHeader title="Auditoría" />
 
         <Toolbar
