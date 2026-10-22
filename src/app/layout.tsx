@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Onest } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-// Onest (Google Fonts): tipografía única de toda la web, variable font.
-const onest = Onest({
+// Onest (licencia OFL), tipografía única de toda la web. Autoalojada (subset latin, variable 100-900) para que el build no dependa de Google Fonts.
+const onest = localFont({
+  src: "./fonts/Onest-latin.woff2",
   variable: "--font-onest",
-  subsets: ["latin"],
+  weight: "100 900",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
