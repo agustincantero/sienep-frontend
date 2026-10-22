@@ -200,10 +200,10 @@ export function IncidenciaForm(props: IncidenciaFormProps) {
                   required
                 />
               </Field>
-              <Field label="Canal" fieldKey="canal" error={errores.canal}>
+              <Field label="Canal" fieldKey="canal" error={errores.canal} ayuda="Por ejemplo, presencial o telefónico.">
                 <input
                   className={`input w-full${errores.canal ? " input-error" : ""}`}
-                  placeholder="Presencial, telefónico…"
+                  placeholder="Canal"
                   value={form.canal}
                   maxLength={CANAL_MAX}
                   onChange={(e) => campo("canal", e.target.value)}
@@ -245,20 +245,23 @@ export function IncidenciaForm(props: IncidenciaFormProps) {
 function Field({
   label,
   error,
+  ayuda,
   fieldKey,
   children,
 }: {
   label: string;
   error?: string;
+  ayuda?: string;
   fieldKey: string;
   children: React.ReactElement;
 }) {
   const errorId = `${fieldKey}-error`;
+  const ayudaId = `${fieldKey}-ayuda`;
   const control = isValidElement(children)
     ? cloneElement(children as React.ReactElement<Record<string, unknown>>, {
         id: fieldKey,
         "aria-invalid": error ? true : undefined,
-        "aria-describedby": error ? errorId : undefined,
+        "aria-describedby": [ayuda ? ayudaId : "", error ? errorId : ""].filter(Boolean).join(" ") || undefined,
       })
     : children;
 
@@ -268,6 +271,11 @@ function Field({
         {control}
         <span>{label}</span>
       </label>
+      {ayuda ? (
+        <p id={ayudaId} className="mt-1 text-xs text-base-content/70">
+          {ayuda}
+        </p>
+      ) : null}
       {error ? (
         <p id={errorId} className="mt-1 text-xs text-error">
           {error}

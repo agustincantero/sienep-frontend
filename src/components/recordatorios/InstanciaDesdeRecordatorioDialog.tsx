@@ -114,28 +114,40 @@ export function InstanciaDesdeRecordatorioDialog({ open, recordatorio, onCreada,
               </p>
             ) : null}
           </div>
-          <label className="floating-label">
-            <input
-              className="input w-full"
-              placeholder={tituloPorDefecto}
-              value={titulo}
-              maxLength={TITULO_MAX}
-              onChange={(e) => setTitulo(e.target.value)}
-              disabled={guardando}
-            />
-            <span>Título (opcional)</span>
-          </label>
-          <label className="floating-label">
-            <input
-              className="input w-full"
-              placeholder="Presencial, telefónico, videollamada…"
-              value={canal}
-              maxLength={CANAL_MAX}
-              onChange={(e) => setCanal(e.target.value)}
-              disabled={guardando}
-            />
-            <span>Canal (opcional)</span>
-          </label>
+          <div>
+            <label className="floating-label">
+              <input
+                className="input w-full"
+                placeholder="Título (opcional)"
+                aria-describedby="seguimiento-titulo-ayuda"
+                value={titulo}
+                maxLength={TITULO_MAX}
+                onChange={(e) => setTitulo(e.target.value)}
+                disabled={guardando}
+              />
+              <span>Título (opcional)</span>
+            </label>
+            <p id="seguimiento-titulo-ayuda" className="mt-1 text-xs text-base-content/70">
+              Si lo dejás vacío se usa &quot;{tituloPorDefecto}&quot;.
+            </p>
+          </div>
+          <div>
+            <label className="floating-label">
+              <input
+                className="input w-full"
+                placeholder="Canal (opcional)"
+                aria-describedby="seguimiento-canal-ayuda"
+                value={canal}
+                maxLength={CANAL_MAX}
+                onChange={(e) => setCanal(e.target.value)}
+                disabled={guardando}
+              />
+              <span>Canal (opcional)</span>
+            </label>
+            <p id="seguimiento-canal-ayuda" className="mt-1 text-xs text-base-content/70">
+              Por ejemplo, presencial, telefónico o videollamada.
+            </p>
+          </div>
         </form>
 
         <div className="modal-action">

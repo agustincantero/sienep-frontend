@@ -30,6 +30,7 @@ type EstudianteSelectorProps = {
 export function EstudianteSelector({ label, fieldKey, value, onChange, error, disabled }: EstudianteSelectorProps) {
   const listId = useId();
   const errorId = `${fieldKey}-error`;
+  const ayudaId = `${fieldKey}-ayuda`;
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Texto tipeado mientras no hay nadie elegido; con alguien elegido el input muestra su etiqueta.
@@ -104,101 +105,105 @@ export function EstudianteSelector({ label, fieldKey, value, onChange, error, di
   }
 
   return (
-    <div
-      className="relative"
-      onBlur={(ev) => {
-        if (!ev.currentTarget.contains(ev.relatedTarget as Node | null)) setAbierto(false);
-      }}
-    >
-      <label className="floating-label">
-        <input
-          ref={inputRef}
-          id={fieldKey}
-          role="combobox"
-          aria-expanded={visible}
-          aria-controls={listId}
-          aria-autocomplete="list"
-          aria-activedescendant={visible && indiceActivo >= 0 ? `${listId}-${indiceActivo}` : undefined}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? errorId : undefined}
-          autoComplete="off"
-          className={`input w-full pr-8${error ? " input-error" : ""}`}
-          placeholder="Nombre, apellido o documento"
-          value={value ? etiqueta(value) : texto}
-          readOnly={value !== null}
-          disabled={disabled}
-          onFocus={() => setAbierto(true)}
-          onChange={(ev) => {
-            setTexto(ev.target.value);
-            setActivo(-1);
-            setAbierto(true);
-          }}
-          onKeyDown={handleKeyDown}
-        />
-        <span>{label}</span>
-      </label>
+    <div>
+      <div
+        className="relative"
+        onBlur={(ev) => {
+          if (!ev.currentTarget.contains(ev.relatedTarget as Node | null)) setAbierto(false);
+        }}
+      >
+        <label className="floating-label">
+          <input
+            ref={inputRef}
+            id={fieldKey}
+            role="combobox"
+            aria-expanded={visible}
+            aria-controls={listId}
+            aria-autocomplete="list"
+            aria-activedescendant={visible && indiceActivo >= 0 ? `${listId}-${indiceActivo}` : undefined}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? `${ayudaId} ${errorId}` : ayudaId}
+            autoComplete="off"
+            className={`input w-full pr-8${error ? " input-error" : ""}`}
+            placeholder={label}
+            value={value ? etiqueta(value) : texto}
+            readOnly={value !== null}
+            disabled={disabled}
+            onFocus={() => setAbierto(true)}
+            onChange={(ev) => {
+              setTexto(ev.target.value);
+              setActivo(-1);
+              setAbierto(true);
+            }}
+            onKeyDown={handleKeyDown}
+          />
+          <span>{label}</span>
+        </label>
 
-      {!disabled && (value || texto) ? (
-        <button
-          type="button"
-          className="btn btn-ghost btn-circle btn-xs size-6 absolute right-1 top-1/2 -translate-y-1/2 text-base-content/70 hover:text-base-content"
-          onClick={limpiar}
-          aria-label="Quitar estudiante"
-        >
-          <X size={13} aria-hidden />
-        </button>
-      ) : null}
+        {!disabled && (value || texto) ? (
+          <button
+            type="button"
+            className="btn btn-ghost btn-circle btn-xs size-6 absolute right-1 top-1/2 -translate-y-1/2 text-base-content/70 hover:text-base-content"
+            onClick={limpiar}
+            aria-label="Quitar estudiante"
+          >
+            <X size={13} aria-hidden />
+          </button>
+        ) : null}
 
-      {visible ? (
-        <ul
-          id={listId}
-          role="listbox"
-          aria-label={`Resultados de ${label}`}
-          className="menu bg-base-100 rounded-box border border-base-300 shadow-md absolute left-0 right-0 top-full z-20 mt-1 p-1 max-h-72 overflow-auto flex-nowrap"
-        >
-          {!hayConsulta ? (
-            <li className="menu-disabled" role="presentation">
-              <span className="text-sm">Escribí al menos {MIN_CARACTERES} letras del nombre, apellido o documento.</span>
-            </li>
-          ) : buscando ? (
-            <li className="menu-disabled" role="presentation">
-              <span className="text-sm">
-                <span className="loading loading-spinner loading-xs" aria-hidden />
-                Buscando…
-              </span>
-            </li>
-          ) : respuestaVigente?.error ? (
-            <li className="menu-disabled" role="presentation">
-              <span className="text-sm text-error">{respuestaVigente.error}</span>
-            </li>
-          ) : filas.length === 0 ? (
-            <li className="menu-disabled" role="presentation">
-              <span className="text-sm">No se encontraron estudiantes.</span>
-            </li>
-          ) : (
-            filas.map((s, idx) => (
-              <li key={s.idUsuario} role="presentation">
-                <button
-                  type="button"
-                  id={`${listId}-${idx}`}
-                  role="option"
-                  aria-selected={idx === indiceActivo}
-                  className={`flex items-baseline justify-between gap-3${idx === indiceActivo ? " menu-active" : ""}`}
-                  // Sin esto el click le saca el foco al input, y el blur cerraría la lista antes de elegir.
-                  onMouseDown={(ev) => ev.preventDefault()}
-                  onClick={() => elegir(s)}
-                >
-                  <span className="font-medium">
-                    {s.nombre} {s.apellido}
-                  </span>
-                  <span className="text-xs text-base-content/70">{s.documento}</span>
-                </button>
+        {visible ? (
+          <ul
+            id={listId}
+            role="listbox"
+            aria-label={`Resultados de ${label}`}
+            className="menu bg-base-100 rounded-box border border-base-300 shadow-md absolute left-0 right-0 top-full z-20 mt-1 p-1 max-h-72 overflow-auto flex-nowrap"
+          >
+            {!hayConsulta ? (
+              <li className="menu-disabled" role="presentation">
+                <span className="text-sm">Escribí al menos {MIN_CARACTERES} letras del nombre, apellido o documento.</span>
               </li>
-            ))
-          )}
-        </ul>
-      ) : null}
-
+            ) : buscando ? (
+              <li className="menu-disabled" role="presentation">
+                <span className="text-sm">
+                  <span className="loading loading-spinner loading-xs" aria-hidden />
+                  Buscando…
+                </span>
+              </li>
+            ) : respuestaVigente?.error ? (
+              <li className="menu-disabled" role="presentation">
+                <span className="text-sm text-error">{respuestaVigente.error}</span>
+              </li>
+            ) : filas.length === 0 ? (
+              <li className="menu-disabled" role="presentation">
+                <span className="text-sm">No se encontraron estudiantes.</span>
+              </li>
+            ) : (
+              filas.map((s, idx) => (
+                <li key={s.idUsuario} role="presentation">
+                  <button
+                    type="button"
+                    id={`${listId}-${idx}`}
+                    role="option"
+                    aria-selected={idx === indiceActivo}
+                    className={`flex items-baseline justify-between gap-3${idx === indiceActivo ? " menu-active" : ""}`}
+                    // Sin esto el click le saca el foco al input, y el blur cerraría la lista antes de elegir.
+                    onMouseDown={(ev) => ev.preventDefault()}
+                    onClick={() => elegir(s)}
+                  >
+                    <span className="font-medium">
+                      {s.nombre} {s.apellido}
+                    </span>
+                    <span className="text-xs text-base-content/70">{s.documento}</span>
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
+        ) : null}
+      </div>
+      <p id={ayudaId} className="mt-1 text-xs text-base-content/70">
+        Buscá por nombre, apellido o documento.
+      </p>
       {error ? (
         <p id={errorId} className="mt-1 text-xs text-error">
           {error}

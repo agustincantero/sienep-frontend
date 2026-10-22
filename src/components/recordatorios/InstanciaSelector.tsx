@@ -30,6 +30,7 @@ type InstanciaSelectorProps = {
 export function InstanciaSelector({ label, fieldKey, value, onChange, error, disabled }: InstanciaSelectorProps) {
   const listId = useId();
   const errorId = `${fieldKey}-error`;
+  const ayudaId = `${fieldKey}-ayuda`;
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Texto tipeado mientras no hay ninguna elegida; con una elegida el input muestra su etiqueta.
@@ -106,102 +107,106 @@ export function InstanciaSelector({ label, fieldKey, value, onChange, error, dis
   }
 
   return (
-    <div
-      className="relative"
-      onBlur={(ev) => {
-        if (!ev.currentTarget.contains(ev.relatedTarget as Node | null)) setAbierto(false);
-      }}
-    >
-      <label className="floating-label">
-        <input
-          ref={inputRef}
-          id={fieldKey}
-          role="combobox"
-          aria-expanded={visible}
-          aria-controls={listId}
-          aria-autocomplete="list"
-          aria-activedescendant={visible && indiceActivo >= 0 ? `${listId}-${indiceActivo}` : undefined}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? errorId : undefined}
-          autoComplete="off"
-          className={`input w-full pr-8${error ? " input-error" : ""}`}
-          placeholder="Identificador, título o estudiante"
-          value={value ? etiquetaInstancia(value) : texto}
-          title={value ? `${etiquetaInstancia(value)} — ${value.nombreEstudiante}` : undefined}
-          readOnly={value !== null}
-          disabled={disabled}
-          onFocus={() => setAbierto(true)}
-          onChange={(ev) => {
-            setTexto(ev.target.value);
-            setActivo(-1);
-            setAbierto(true);
-          }}
-          onKeyDown={handleKeyDown}
-        />
-        <span>{label}</span>
-      </label>
+    <div>
+      <div
+        className="relative"
+        onBlur={(ev) => {
+          if (!ev.currentTarget.contains(ev.relatedTarget as Node | null)) setAbierto(false);
+        }}
+      >
+        <label className="floating-label">
+          <input
+            ref={inputRef}
+            id={fieldKey}
+            role="combobox"
+            aria-expanded={visible}
+            aria-controls={listId}
+            aria-autocomplete="list"
+            aria-activedescendant={visible && indiceActivo >= 0 ? `${listId}-${indiceActivo}` : undefined}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? `${ayudaId} ${errorId}` : ayudaId}
+            autoComplete="off"
+            className={`input w-full pr-8${error ? " input-error" : ""}`}
+            placeholder={label}
+            value={value ? etiquetaInstancia(value) : texto}
+            title={value ? `${etiquetaInstancia(value)} — ${value.nombreEstudiante}` : undefined}
+            readOnly={value !== null}
+            disabled={disabled}
+            onFocus={() => setAbierto(true)}
+            onChange={(ev) => {
+              setTexto(ev.target.value);
+              setActivo(-1);
+              setAbierto(true);
+            }}
+            onKeyDown={handleKeyDown}
+          />
+          <span>{label}</span>
+        </label>
 
-      {!disabled && (value || texto) ? (
-        <button
-          type="button"
-          className="btn btn-ghost btn-circle btn-xs absolute right-1 top-1/2 -translate-y-1/2 text-base-content/70 hover:text-base-content"
-          onClick={limpiar}
-          aria-label="Quitar instancia"
-        >
-          <X size={13} aria-hidden />
-        </button>
-      ) : null}
+        {!disabled && (value || texto) ? (
+          <button
+            type="button"
+            className="btn btn-ghost btn-circle btn-xs absolute right-1 top-1/2 -translate-y-1/2 text-base-content/70 hover:text-base-content"
+            onClick={limpiar}
+            aria-label="Quitar instancia"
+          >
+            <X size={13} aria-hidden />
+          </button>
+        ) : null}
 
-      {visible ? (
-        <ul
-          id={listId}
-          role="listbox"
-          aria-label={`Resultados de ${label}`}
-          className="menu bg-base-100 rounded-box border border-base-300 shadow-md absolute left-0 right-0 top-full z-20 mt-1 p-1 max-h-72 overflow-auto flex-nowrap"
-        >
-          {!hayConsulta ? (
-            <li className="menu-disabled" role="presentation">
-              <span className="text-sm">Escribí al menos {MIN_CARACTERES} letras del identificador, el título o el estudiante.</span>
-            </li>
-          ) : buscando ? (
-            <li className="menu-disabled" role="presentation">
-              <span className="text-sm">
-                <span className="loading loading-spinner loading-xs" aria-hidden />
-                Buscando…
-              </span>
-            </li>
-          ) : respuestaVigente?.error ? (
-            <li className="menu-disabled" role="presentation">
-              <span className="text-sm text-error">{respuestaVigente.error}</span>
-            </li>
-          ) : filas.length === 0 ? (
-            <li className="menu-disabled" role="presentation">
-              <span className="text-sm">No se encontraron instancias.</span>
-            </li>
-          ) : (
-            filas.map((i, idx) => (
-              <li key={i.codInstancia} role="presentation">
-                <button
-                  type="button"
-                  id={`${listId}-${idx}`}
-                  role="option"
-                  aria-selected={idx === indiceActivo}
-                  className={`flex flex-col items-start gap-0.5${idx === indiceActivo ? " menu-active" : ""}`}
-                  // Sin esto el click le saca el foco al input, y el blur cerraría la lista antes de elegir.
-                  onMouseDown={(ev) => ev.preventDefault()}
-                  onClick={() => elegir(i)}
-                >
-                  <span className="font-medium">{etiquetaInstancia(i)}</span>
-                  <span className="text-xs text-base-content/70">
-                    {i.nombreEstudiante} · {formatFecha(i.fechaHora.slice(0, 10))}
-                  </span>
-                </button>
+        {visible ? (
+          <ul
+            id={listId}
+            role="listbox"
+            aria-label={`Resultados de ${label}`}
+            className="menu bg-base-100 rounded-box border border-base-300 shadow-md absolute left-0 right-0 top-full z-20 mt-1 p-1 max-h-72 overflow-auto flex-nowrap"
+          >
+            {!hayConsulta ? (
+              <li className="menu-disabled" role="presentation">
+                <span className="text-sm">Escribí al menos {MIN_CARACTERES} letras del identificador, el título o el estudiante.</span>
               </li>
-            ))
-          )}
-        </ul>
-      ) : null}
-
+            ) : buscando ? (
+              <li className="menu-disabled" role="presentation">
+                <span className="text-sm">
+                  <span className="loading loading-spinner loading-xs" aria-hidden />
+                  Buscando…
+                </span>
+              </li>
+            ) : respuestaVigente?.error ? (
+              <li className="menu-disabled" role="presentation">
+                <span className="text-sm text-error">{respuestaVigente.error}</span>
+              </li>
+            ) : filas.length === 0 ? (
+              <li className="menu-disabled" role="presentation">
+                <span className="text-sm">No se encontraron instancias.</span>
+              </li>
+            ) : (
+              filas.map((i, idx) => (
+                <li key={i.codInstancia} role="presentation">
+                  <button
+                    type="button"
+                    id={`${listId}-${idx}`}
+                    role="option"
+                    aria-selected={idx === indiceActivo}
+                    className={`flex flex-col items-start gap-0.5${idx === indiceActivo ? " menu-active" : ""}`}
+                    // Sin esto el click le saca el foco al input, y el blur cerraría la lista antes de elegir.
+                    onMouseDown={(ev) => ev.preventDefault()}
+                    onClick={() => elegir(i)}
+                  >
+                    <span className="font-medium">{etiquetaInstancia(i)}</span>
+                    <span className="text-xs text-base-content/70">
+                      {i.nombreEstudiante} · {formatFecha(i.fechaHora.slice(0, 10))}
+                    </span>
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
+        ) : null}
+      </div>
+      <p id={ayudaId} className="mt-1 text-xs text-base-content/70">
+        Buscá por identificador, título o estudiante.
+      </p>
       {error ? (
         <p id={errorId} className="mt-1 text-xs text-error">
           {error}

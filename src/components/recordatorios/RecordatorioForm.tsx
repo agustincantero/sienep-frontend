@@ -254,7 +254,9 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
                   disabled={guardando}
                 />
               )}
-              <p className="mt-1 text-xs text-base-content/70">Todo recordatorio tiene que estar asociado a una instancia.</p>
+              {esEdicion || instanciaFija ? (
+                <p className="mt-1 text-xs text-base-content/70">Todo recordatorio tiene que estar asociado a una instancia.</p>
+              ) : null}
             </div>
 
             <Field label="Título" fieldKey="titulo" error={errores.titulo}>
