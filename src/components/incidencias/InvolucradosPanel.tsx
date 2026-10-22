@@ -121,6 +121,7 @@ export function InvolucradosPanel({ codInstancia }: { codInstancia: number }) {
           <input
             className="input input-sm join-item w-full"
             placeholder="Nombre del involucrado"
+            aria-label="Nombre del involucrado"
             value={nombre}
             maxLength={NOMBRE_MAX}
             onChange={(e) => setNombre(e.target.value)}

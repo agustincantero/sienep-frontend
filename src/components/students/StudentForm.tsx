@@ -536,6 +536,7 @@ export function StudentForm(props: StudentFormProps) {
                       id={key}
                       className={`input w-full max-w-xs${errorTel ? " input-error" : ""}`}
                       placeholder="099123456"
+                      aria-label={`Teléfono ${idx + 1}`}
                       value={tel}
                       maxLength={12}
                       onChange={(e) => cambiarTelefono(idx, e.target.value)}

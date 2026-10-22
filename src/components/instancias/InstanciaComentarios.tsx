@@ -344,6 +344,7 @@ function ComentarioBox<T extends ComentarioInstancia>({
             <textarea
               className={`textarea w-full${errorContenido ? " textarea-error" : ""}`}
               placeholder="Escribir un comentario…"
+              aria-label="Escribir un comentario"
               rows={2}
               maxLength={CONTENIDO_MAX}
               value={contenido}
