@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, HeartPulse, MapPin, Phone, Plus, User, Users, X } from "lucide-react";
 import { apiErrorMessage, ApiError } from "@/lib/api";
 import { isValidUruguayanCi } from "@/lib/document-validation";
+import { PAISES, PAISES_FRECUENTES } from "@/lib/paises";
 import { listGroups, type Group } from "@/lib/groups";
 import { listItrs, type Itr } from "@/lib/itrs";
 import { BackButton } from "@/components/layout/BackButton";
@@ -22,18 +23,6 @@ import {
   type StudentCreateInput,
   type StudentUpdateInput,
 } from "@/lib/students";
-
-// Subconjunto corto de países frecuentes para SIENEP — el enum real del
-// backend tiene ~195 códigos ISO3, mapearlos todos a nombres no vale la pena acá.
-const PAISES = [
-  { codigo: "URY", nombre: "Uruguay" },
-  { codigo: "ARG", nombre: "Argentina" },
-  { codigo: "BRA", nombre: "Brasil" },
-  { codigo: "PRY", nombre: "Paraguay" },
-  { codigo: "CHL", nombre: "Chile" },
-  { codigo: "BOL", nombre: "Bolivia" },
-  { codigo: "PER", nombre: "Perú" },
-];
 
 const DOCUMENTO_REGEX = /^[A-Za-z0-9]+$/;
 
@@ -434,11 +423,21 @@ export function StudentForm(props: StudentFormProps) {
                   onChange={(e) => campo("paisDocumento", e.target.value)}
                   disabled={guardando || esEdicion}
                 >
-                  {PAISES.map((p) => (
-                    <option key={p.codigo} value={p.codigo}>
-                      {p.nombre}
-                    </option>
-                  ))}
+                  <optgroup label="Frecuentes">
+                    {PAISES_FRECUENTES.map((p) => (
+                      <option key={p.codigo} value={p.codigo}>
+                        {p.nombre}
+                      </option>
+                    ))}
+                  </optgroup>
+                  {/* Los frecuentes se repiten acá a propósito, para que cada país también esté en su lugar alfabético. */}
+                  <optgroup label="Todos los países">
+                    {PAISES.map((p) => (
+                      <option key={p.codigo} value={p.codigo}>
+                        {p.nombre}
+                      </option>
+                    ))}
+                  </optgroup>
                 </select>
               </Field>
               <Field
