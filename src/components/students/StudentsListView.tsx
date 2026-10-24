@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Eye, FilterX, Pencil, Plus, UserCheck, UserX } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import {
@@ -17,6 +18,7 @@ import {
 } from "@/lib/estudiantes-filtros";
 import { coincideTexto, TAMANIO_PAGINA, TOPE_LISTADO } from "@/lib/buscar-estudiante";
 import { listGroups, type Group } from "@/lib/groups";
+import { claves } from "@/lib/query-keys";
 import { useSession } from "@/lib/session-context";
 import {
   deactivateStudent,
@@ -53,6 +55,12 @@ function guardarFiltros(query: string) {
     // Sin sessionStorage (modo privado, bloqueado): los filtros siguen funcionando, solo no se recuerdan.
   }
 }
+
+// Resultado ya listo para mostrar: la página pedida al backend, o la porción que se arma acá cuando hay texto.
+type Listado = { content: StudentSummary[]; totalElements: number; last: boolean };
+
+// Constante (y no un `[]` nuevo en cada render) para que useMemo no recalcule mientras no llegan los grupos.
+const SIN_GRUPOS: Group[] = [];
 
 // RF08: búsqueda y filtros combinables, con orden y paginación. Los filtros, el orden y la página viven en la
 // URL (filtrosIniciales viene de la page), así sobreviven a recargar, al "atrás" y a compartir el link.
@@ -143,27 +151,20 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
     guardarFiltros(queryActual);
   }, [listo, queryActual]);
 
-  const [grupos, setGrupos] = useState<Group[]>([]);
+  // Catálogo de grupos. Si falla se sigue sin él (los filtros de grupo y carrera quedan vacíos), no se bloquea el listado.
+  const gruposQuery = useQuery({ queryKey: claves.grupos, queryFn: () => listGroups() });
+  const grupos = gruposQuery.data ?? SIN_GRUPOS;
   // false hasta que termina la carga de grupos (con o sin error): los filtros de grupo y carrera viajan por id,
   // y el id recién se puede resolver con el catálogo cargado.
-  const [gruposCargados, setGruposCargados] = useState(false);
-  const [estudiantes, setEstudiantes] = useState<StudentSummary[]>([]);
-  const [totalElements, setTotalElements] = useState(0);
-  const [hasNext, setHasNext] = useState(false);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
+  const gruposCargados = !gruposQuery.isPending;
+  const queryClient = useQueryClient();
   const [exito, setExito] = useState("");
-  const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
+  // Error de una ACCIÓN (baja o alta); el de la carga del listado sale de la query.
+  const [errorAccion, setErrorAccion] = useState("");
+  const [consultandoBajaId, setConsultandoBajaId] = useState<number | null>(null);
   const [idADesactivar, setIdADesactivar] = useState<number | null>(null);
   // RF06 — procesos abiertos del estudiante a desactivar ("2 instancias agendadas y ..."), o null si no tiene.
   const [procesosABaja, setProcesosABaja] = useState<string | null>(null);
-
-  useEffect(() => {
-    listGroups()
-      .then(setGrupos)
-      .catch(() => setGrupos([]))
-      .finally(() => setGruposCargados(true));
-  }, []);
 
   // Las carreras no tienen catálogo propio en esta pantalla: se derivan de
   // los grupos ya cargados (cada Grupo trae idCarrera/nomCarrera).
@@ -179,104 +180,104 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
   // espera: si saliera ahora iría sin el id y listaría estudiantes de otros grupos/carreras.
   const esperandoGrupos = puedeBuscar && !gruposCargados && (nomGrupo !== "" || nomCarrera !== "");
 
-  useEffect(() => {
-    if (!listo || esperandoGrupos) return;
-    let cancelado = false;
+  // El backend no ignora tildes ni acepta "Nombre Apellido": con texto se piden todos los que cumplen los demás filtros y se busca y pagina acá.
+  const buscado = puedeBuscar ? textoDebounced.trim() : "";
+  const filtrosBackend = {
+    grupo: puedeBuscar ? idGrupo : undefined,
+    carrera: puedeBuscar ? idCarrera : undefined,
+    estado: estadoLabel ? ESTADOS[estadoLabel] : undefined,
+    sort: ORDENES[orden].sort,
+  };
+  const claveLista = claves.estudiantes.lista({ ...filtrosBackend, buscado, page });
 
-    // El backend no ignora tildes ni acepta "Nombre Apellido": con texto se piden todos los que cumplen los demás filtros y se busca y pagina acá.
-    const buscado = puedeBuscar ? textoDebounced.trim() : "";
-    const filtros = {
-      grupo: puedeBuscar ? idGrupo : undefined,
-      carrera: puedeBuscar ? idCarrera : undefined,
-      estado: estadoLabel ? ESTADOS[estadoLabel] : undefined,
-      sort: ORDENES[orden].sort,
-    };
+  // keepPreviousData: al cambiar un filtro o de página se sigue viendo el listado anterior hasta que llega el nuevo, en vez de volver al spinner.
+  const listado = useQuery({
+    queryKey: claveLista,
+    enabled: listo && !esperandoGrupos,
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<Listado> => {
+      if (!buscado) return listStudents({ ...filtrosBackend, page });
+      const res = await listStudents({ ...filtrosBackend, size: TOPE_LISTADO });
+      const coinciden = res.content.filter((e) => coincideTexto(buscado, e.nombre, e.apellido, e.documento));
+      const desde = page * TAMANIO_PAGINA;
+      return {
+        content: coinciden.slice(desde, desde + TAMANIO_PAGINA),
+        totalElements: coinciden.length,
+        last: desde + TAMANIO_PAGINA >= coinciden.length,
+      };
+    },
+  });
+  const cargando = listado.isPending;
+  const estudiantes = listado.data?.content ?? [];
+  const totalElements = listado.data?.totalElements ?? 0;
+  const hasNext = listado.data ? !listado.data.last : false;
+  const error = errorAccion || (listado.error ? apiErrorMessage(listado.error, "No se pudieron cargar los estudiantes.") : "");
 
-    (buscado
-      ? listStudents({ ...filtros, size: TOPE_LISTADO }).then((res) => {
-          const coinciden = res.content.filter((e) => coincideTexto(buscado, e.nombre, e.apellido, e.documento));
-          const desde = page * TAMANIO_PAGINA;
-          return {
-            content: coinciden.slice(desde, desde + TAMANIO_PAGINA),
-            totalElements: coinciden.length,
-            last: desde + TAMANIO_PAGINA >= coinciden.length,
-          };
-        })
-      : listStudents({ ...filtros, page })
-    )
-      .then((res) => {
-        if (cancelado) return;
-        setEstudiantes(res.content);
-        setTotalElements(res.totalElements);
-        setHasNext(!res.last);
-        setError("");
-      })
-      .catch((err) => {
-        if (cancelado) return;
-        setError(apiErrorMessage(err, "No se pudieron cargar los estudiantes."));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
+  // La baja y el alta se reflejan en la fila ya mostrada en vez de volver a pedir el listado: así, con el filtro por defecto (solo activos), el estudiante recién desactivado sigue a la vista con su botón "Activar" por si fue un error.
+  function marcarEstado(id: number, estado: string) {
+    queryClient.setQueryData<Listado>(claveLista, (prev) =>
+      prev ? { ...prev, content: prev.content.map((e) => (e.idUsuario === id ? { ...e, estado } : e)) } : prev,
+    );
+  }
 
-    return () => {
-      cancelado = true;
-    };
-  }, [listo, esperandoGrupos, textoDebounced, idGrupo, idCarrera, estadoLabel, orden, page, puedeBuscar]);
+  const desactivar = useMutation({
+    // confirmar=true solo si se le mostraron los procesos abiertos: si aparecieron otros entre la consulta y
+    // la confirmación, el backend responde 409 y su mensaje se muestra como error.
+    mutationFn: ({ id, confirmar }: { id: number; confirmar: boolean }) => deactivateStudent(id, confirmar),
+    onSuccess: (_, { id }) => marcarEstado(id, "INACTIVO"),
+    onError: (err) => setErrorAccion(apiErrorMessage(err, "No se pudo desactivar el estudiante.")),
+  });
+
+  const reactivar = useMutation({
+    mutationFn: (id: number) => reactivateStudent(id),
+    onSuccess: (_, id) => {
+      marcarEstado(id, "ACTIVO");
+      const estudiante = estudiantes.find((e) => e.idUsuario === id);
+      setExito(
+        estudiante ? `Estudiante activado: ${estudiante.nombre} ${estudiante.apellido}.` : "Estudiante activado.",
+      );
+    },
+    onError: (err) => setErrorAccion(apiErrorMessage(err, "No se pudo reactivar el estudiante.")),
+  });
+
+  const accionEnCursoId = desactivar.isPending
+    ? desactivar.variables.id
+    : reactivar.isPending
+      ? reactivar.variables
+      : consultandoBajaId;
 
   const estudianteADesactivar = estudiantes.find((e) => e.idUsuario === idADesactivar);
 
   // Antes de abrir la confirmación se consultan los procesos abiertos, para avisarlos en el mismo diálogo. Si la
   // consulta falla, el diálogo se abre igual: el backend vuelve a verificar y responde 409 si hacía falta avisar.
   async function iniciarBaja(id: number) {
-    setAccionEnCursoId(id);
-    setError("");
+    setConsultandoBajaId(id);
+    setErrorAccion("");
     try {
-      setProcesosABaja(describirProcesosAbiertos(await getProcesosAbiertos(id)));
+      const procesos = await queryClient.fetchQuery({
+        queryKey: claves.estudiantes.procesosAbiertos(id),
+        queryFn: () => getProcesosAbiertos(id),
+      });
+      setProcesosABaja(describirProcesosAbiertos(procesos));
     } catch {
       setProcesosABaja(null);
     } finally {
-      setAccionEnCursoId(null);
+      setConsultandoBajaId(null);
     }
     setIdADesactivar(id);
   }
 
-  async function confirmarDesactivar() {
+  function confirmarDesactivar() {
     if (idADesactivar == null) return;
     const id = idADesactivar;
-    const confirmar = procesosABaja !== null;
     setIdADesactivar(null);
-    setAccionEnCursoId(id);
     setExito("");
-    try {
-      // confirmar=true solo si se le mostraron los procesos abiertos: si aparecieron otros entre la consulta y
-      // la confirmación, el backend responde 409 y su mensaje se muestra como error.
-      await deactivateStudent(id, confirmar);
-      setEstudiantes((prev) => prev.map((e) => (e.idUsuario === id ? { ...e, estado: "INACTIVO" } : e)));
-    } catch (err) {
-      setError(apiErrorMessage(err, "No se pudo desactivar el estudiante."));
-    } finally {
-      setAccionEnCursoId(null);
-    }
+    desactivar.mutate({ id, confirmar: procesosABaja !== null });
   }
 
-  async function handleReactivar(id: number) {
-    const estudiante = estudiantes.find((e) => e.idUsuario === id);
-    setAccionEnCursoId(id);
+  function handleReactivar(id: number) {
     setExito("");
-    try {
-      await reactivateStudent(id);
-      setEstudiantes((prev) => prev.map((e) => (e.idUsuario === id ? { ...e, estado: "ACTIVO" } : e)));
-      setExito(
-        estudiante
-          ? `Estudiante activado: ${estudiante.nombre} ${estudiante.apellido}.`
-          : "Estudiante activado.",
-      );
-    } catch (err) {
-      setError(apiErrorMessage(err, "No se pudo reactivar el estudiante."));
-    } finally {
-      setAccionEnCursoId(null);
-    }
+    reactivar.mutate(id);
   }
 
   const filters: ToolbarFilter[] = puedeBuscar
@@ -377,7 +378,8 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
             <span className="loading loading-spinner loading-md" />
           </div>
         ) : estudiantes.length === 0 ? (
-          <p className="text-base-content/60 py-6 text-center">No se encontraron estudiantes.</p>
+          // Con error, el banner de arriba ya lo explica: "no se encontraron" sería engañoso.
+          error ? null : <p className="text-base-content/60 py-6 text-center">No se encontraron estudiantes.</p>
         ) : (
           <>
             <DataTable headers={["Nombre", "Documento", "Grupo", "Estado", ""]}>

@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ban, Download, Paperclip, Trash2, Upload } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFechaHora } from "@/lib/format";
+import { claves } from "@/lib/query-keys";
 import {
   attachMedicalReport,
   deleteMedicalReport,
@@ -34,51 +36,45 @@ export function MedicalReportsPanel({
   const puedeAdjuntar = permisos.includes("ADJUNTAR_INFORME");
   const puedeEliminar = permisos.includes("ELIMINAR_INFORME");
 
-  const [informes, setInformes] = useState<MedicalReport[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
+  const queryClient = useQueryClient();
+  const claveInformes = claves.estudiantes.informes(idEstudiante);
+  // Si cambia el estudiante cambia la clave, y la respuesta vieja no pisa la nueva.
+  const lista = useQuery({
+    queryKey: claveInformes,
+    queryFn: () => listMedicalReports(idEstudiante),
+  });
+  const informes = lista.data?.content ?? [];
+  const cargando = lista.isPending;
+  // errorAccion: falló adjuntar o eliminar. Se muestra junto con el de la carga de la lista, al lado del contenido ya cargado.
+  const [errorAccion, setErrorAccion] = useState("");
+  const error = errorAccion || (lista.error ? apiErrorMessage(lista.error, "No se pudieron cargar los informes.") : "");
   const [nombre, setNombre] = useState("");
   const [archivo, setArchivo] = useState<File | null>(null);
   const [errorNombre, setErrorNombre] = useState("");
   const [errorArchivo, setErrorArchivo] = useState("");
-  const [subiendo, setSubiendo] = useState(false);
-  const [eliminandoId, setEliminandoId] = useState<number | null>(null);
   const [informeAEliminar, setInformeAEliminar] = useState<MedicalReport | null>(null);
 
-  // idEstudianteRef: cargar() se llama tanto desde el efecto (al cambiar de
-  // estudiante) como a mano después de adjuntar un informe. Si el usuario
-  // navega a otra ficha mientras el primer pedido sigue en vuelo, esta
-  // referencia evita que la respuesta vieja pise el estado del nuevo.
-  const idEstudianteRef = useRef(idEstudiante);
-  useEffect(() => {
-    idEstudianteRef.current = idEstudiante;
-  }, [idEstudiante]);
-
-  function cargar() {
-    const idAlPedir = idEstudiante;
-    listMedicalReports(idAlPedir)
-      .then((res) => {
-        if (idEstudianteRef.current !== idAlPedir) return;
-        setInformes(res.content);
-        setError("");
-      })
-      .catch((err) => {
-        if (idEstudianteRef.current !== idAlPedir) return;
-        setError(apiErrorMessage(err, "No se pudieron cargar los informes."));
-      })
-      .finally(() => {
-        if (idEstudianteRef.current === idAlPedir) setCargando(false);
-      });
-  }
-
-  useEffect(cargar, [idEstudiante]);
+  // Después de adjuntar o eliminar se vuelve a pedir la lista: el informe eliminado no desaparece, vuelve como marca.
+  const adjuntar = useMutation({
+    mutationFn: ({ nombre, archivo }: { nombre: string; archivo: File }) =>
+      attachMedicalReport(idEstudiante, nombre, archivo),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: claveInformes }),
+    onError: (err) => setErrorAccion(apiErrorMessage(err, "No se pudo adjuntar el informe.")),
+  });
+  const eliminar = useMutation({
+    mutationFn: (id: number) => deleteMedicalReport(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: claveInformes }),
+    onError: (err) => setErrorAccion(apiErrorMessage(err, "No se pudo eliminar el informe.")),
+  });
+  const subiendo = adjuntar.isPending;
+  const eliminandoId = eliminar.isPending ? eliminar.variables : null;
 
   function handleArchivoChange(nuevo: File | null) {
     setArchivo(nuevo);
     if (errorArchivo) setErrorArchivo("");
   }
 
-  async function handleAdjuntar(ev: React.FormEvent<HTMLFormElement>) {
+  function handleAdjuntar(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
     // React invalida ev.currentTarget apenas termina la parte síncrona del
     // handler — hay que guardar la referencia al form ANTES del await.
@@ -103,35 +99,24 @@ export function MedicalReportsPanel({
     setErrorArchivo(eArchivo);
     if (eNombre || eArchivo) return;
 
-    setError("");
-    setSubiendo(true);
-    try {
-      await attachMedicalReport(idEstudiante, nombreTrim, archivo as File);
-      setNombre("");
-      setArchivo(null);
-      form.reset();
-      cargar();
-    } catch (err) {
-      setError(apiErrorMessage(err, "No se pudo adjuntar el informe."));
-    } finally {
-      setSubiendo(false);
-    }
+    setErrorAccion("");
+    adjuntar.mutate(
+      { nombre: nombreTrim, archivo: archivo as File },
+      {
+        onSuccess: () => {
+          setNombre("");
+          setArchivo(null);
+          form.reset();
+        },
+      },
+    );
   }
 
-  async function confirmarEliminar() {
+  function confirmarEliminar() {
     if (!informeAEliminar) return;
     const id = informeAEliminar.idInforme;
     setInformeAEliminar(null);
-    setEliminandoId(id);
-    try {
-      await deleteMedicalReport(id);
-      // Recarga en vez de sacarlo de la lista: el informe eliminado vuelve como marca.
-      cargar();
-    } catch (err) {
-      setError(apiErrorMessage(err, "No se pudo eliminar el informe."));
-    } finally {
-      setEliminandoId(null);
-    }
+    eliminar.mutate(id);
   }
 
   return (

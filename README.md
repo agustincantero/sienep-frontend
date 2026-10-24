@@ -12,6 +12,7 @@ Forma parte del **Proyecto Final de Tecnicatura** del cuarto semestre de la **Li
 - [Estado del proyecto](#estado-del-proyecto)
 - [UI y estilos](#ui-y-estilos)
 - [Estructura del código](#estructura-del-código)
+- [Cómo se piden y se guardan los datos](#cómo-se-piden-y-se-guardan-los-datos)
 - [Componentes disponibles](#componentes-disponibles)
 - [Configuración y ejecución](#configuración-y-ejecución)
 - [Documentación de referencia](#documentación-de-referencia)
@@ -38,7 +39,7 @@ En construcción. Lo que ya funciona:
 - **Autorización**: la navegación se filtra por los `permisos` del usuario, y cada página de módulo vuelve a chequear el permiso en el server (`SinPermiso` si falta).
 - **Estructura de página**: `TopBar` en toda pantalla autenticada, `Sidebar` dentro de las secciones de funcionario. Las pantallas sin sesión (login, recuperación) y la página 404 comparten otra estructura, con `Footer`.
 
-Módulos planeados (11): Autenticación, Estudiantes, Instancias, Incidencias, Recordatorios, Funcionarios, Roles, Catálogos, Auditoría, Reportes, Perfil Estudiante. Todavía no tienen páginas propias Recordatorios, Funcionarios y Reportes (sus ítems del menú ya existen y dan 404). La capa de datos quedó resuelta con un cliente `fetch` propio en `src/lib/api.ts` (`apiGet`/`apiPost`/`apiPut`/`apiPatch`/`apiDelete`, más variantes `*Form` para `multipart/form-data`).
+Módulos planeados (11): Autenticación, Estudiantes, Instancias, Incidencias, Recordatorios, Funcionarios, Roles, Catálogos, Auditoría, Reportes, Perfil Estudiante. Todavía no tienen páginas propias Recordatorios, Funcionarios y Reportes (sus ítems del menú ya existen y dan 404). La capa de datos es un cliente `fetch` propio en `src/lib/api.ts` (`apiGet`/`apiPost`/`apiPut`/`apiPatch`/`apiDelete`, más variantes `*Form` para `multipart/form-data`) usado a través de TanStack Query (ver [Cómo se piden y se guardan los datos](#cómo-se-piden-y-se-guardan-los-datos)).
 
 ## UI y estilos
 
@@ -52,6 +53,33 @@ Módulos planeados (11): Autenticación, Estudiantes, Instancias, Incidencias, R
 - `src/app/`: rutas de Next.js (App Router). `(auth)/` tiene el login y la recuperación de contraseña; `(app)/` es el área autenticada, con `(secciones)/` para las páginas de módulo (`estudiantes/`, `instancias/`, `incidencias/`, `roles/`, `auditoria/`, `catalogos/` y `perfil/`); `api/` es el proxy al backend.
 - `src/components/`: `auth/` (pantallas sin sesión), `layout/` (TopBar, Sidebar, Footer y demás piezas de la estructura de página), `ui/` (bloques reutilizables) y una carpeta por módulo (`students/`, `instancias/`, `incidencias/`, `roles/`, `audit/`, `catalogos/`, `perfil/`).
 - `src/lib/`: acceso a la API y lógica de dominio. `api.ts`, `auth.ts`, `auth-handlers.ts`, `auth-paths.ts`, `session.ts`, `backend.ts`, `current-user.ts` y `session-context.tsx` manejan la sesión y las llamadas HTTP; `nav-items.ts` define la navegación y `permisos.ts` agrupa el catálogo de permisos; el resto son tipos y funciones por módulo (`students.ts`, `instancias.ts`, `incidencias.ts`, `roles.ts`, `audit.ts`, `catalogos-tabs.ts`, etc.).
+
+## Cómo se piden y se guardan los datos
+
+Regla única: **leer = `useQuery`, escribir = `useMutation`**, siempre en componentes cliente. Las `page.tsx` solo chequean el permiso y le pasan los parámetros de la URL al componente; no piden datos. La `queryFn` y la `mutationFn` llaman a las funciones de `src/lib/<modulo>.ts` (`getStudent`, `deactivateStudent`, …), que no cambian. Hoy lo aplica el módulo de Estudiantes; el resto de los módulos sigue con `useEffect` y se migra de a uno.
+
+```tsx
+// Leer: la clave identifica el dato; si algo de la clave cambia, vuelve a pedir solo.
+const { data: estudiante, isPending, error } = useQuery({
+  queryKey: claves.estudiantes.ficha(id),
+  queryFn: () => getStudent(id),
+});
+
+// Escribir: después de guardar, se invalida (o se actualiza) lo que está en pantalla.
+const desactivar = useMutation({
+  mutationFn: (id: number) => deactivateStudent(id),
+  onSuccess: () => queryClient.invalidateQueries({ queryKey: claves.estudiantes.todos }),
+  onError: (err) => setError(apiErrorMessage(err, "No se pudo desactivar.")),
+});
+desactivar.mutate(id); // desactivar.isPending sirve para deshabilitar el botón
+```
+
+- **Claves**: se arman siempre en `src/lib/query-keys.ts`, nunca a mano en el componente. Todo lo que cambia el resultado (id, filtro, página) va en la clave; si falta, dos pantallas distintas comparten datos. Van de lo general a lo particular, así que invalidar `["estudiantes"]` alcanza a todo lo del módulo.
+- **Configuración** (`src/components/providers/QueryProvider.tsx`): sin reintentos, sin recarga al volver a la pestaña y sin cache entre pantallas (`gcTime: 0`), para que cada pantalla muestre el dato actual del backend. El 401 sigue manejándose en `src/lib/api.ts`.
+- **Esperar para pedir**: `enabled: false` mientras falte algo (ej. el catálogo de grupos o un permiso); `placeholderData: keepPreviousData` para mantener el listado anterior mientras llega el nuevo al cambiar un filtro o la página.
+- **Listas estables**: no usar `data ?? []` como dependencia de un `useMemo`/`useEffect` (crea un array nuevo en cada render); usar una constante de módulo (ej. `SIN_GRUPOS`).
+- **Lectura puntual al hacer click** (ej. los procesos abiertos antes de una baja): `queryClient.fetchQuery(...)`.
+- **Server Components**: solo para la sesión (`getCurrentUser`/`tienePermiso`, en `src/lib/backend.ts`). Los datos de las pantallas no se piden en el servidor.
 
 ## Componentes disponibles
 
@@ -91,6 +119,7 @@ Normalmente **no** se instancian a mano: ya vienen puestos por los layouts de `s
 |---|---|---|
 | `StudentsListView` | Vista de listado: `Toolbar` + `DataTable` + `PaginationFooter` conectados a `GET /estudiantes`. | - |
 | `StudentForm` | Alta y edición; secciones en `fieldset`s: datos personales, dirección, teléfonos, grupos (filtrado por ITR y carrera) e información de salud. | `{ mode: "crear" }` \| `{ mode: "editar", estudianteId, estudiante }` |
+| `StudentFormEditar` | Pide la ficha con `useQuery` y monta `StudentForm` en modo edición cuando llega (el form arma su estado inicial una sola vez). | `idEstudiante` |
 | `StudentProfile` | Ficha del estudiante en tabs: datos generales, salud (confidencial, según permiso), instancias e incidencias (`StudentInstanciasPanel`), informes médicos y comentarios. | `idEstudiante`, `tabInicial?` |
 | `StudentCommentsPanel` | Comentarios normales y confidenciales, paginados. | `idEstudiante` |
 | `MedicalReportsPanel` | Informes médicos adjuntos: listar, subir, borrar. | `idEstudiante`, `estadoEstudiante` |

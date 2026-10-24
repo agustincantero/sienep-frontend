@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { deactivateIncidencia, listIncidencias, reactivateIncidencia } from "@/lib/incidencias";
 import { deactivateInstancia, listInstancias, reactivateInstancia } from "@/lib/instancias";
+import { claves } from "@/lib/query-keys";
 import { useSession } from "@/lib/session-context";
 import type { Page } from "@/lib/students";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -57,6 +59,9 @@ type Fila = {
   estado: string;
 };
 
+// Lo que se guarda en la cache: el historial completo ya ordenado y si quedó recortado por MAX_POR_ESTADO.
+type Historial = { filas: Fila[]; truncado: boolean };
+
 // Más recientes primero: es lo primero que se busca al revisar el historial de un estudiante.
 const ORDEN = "fechaHora,desc";
 
@@ -78,75 +83,68 @@ export function StudentInstanciasPanel({
   const { permisos } = useSession();
   const puedeVer = permisos.includes(config.permisoVer);
 
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
-  // Historial completo (activas + inactivas), ya ordenado; null mientras carga la primera vez.
-  const [todas, setTodas] = useState<Fila[] | null>(null);
-  // true si el estudiante tiene más de MAX_POR_ESTADO en algún estado y no se trajeron todas.
-  const [truncado, setTruncado] = useState(false);
-  const [cargando, setCargando] = useState(puedeVer);
-  const [error, setError] = useState("");
-  const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
+  const [errorAccion, setErrorAccion] = useState("");
   const [idADesactivar, setIdADesactivar] = useState<number | null>(null);
 
-  // cancelado: si cambia el estudiante mientras un pedido sigue en vuelo, la respuesta vieja no pisa la nueva (mismo criterio que StudentProfile).
-  useEffect(() => {
-    if (!puedeVer) return;
-    let cancelado = false;
-    const pedir = (estado: string): Promise<Page<Fila>> =>
-      config.listar({ idEstudiante, estado, size: MAX_POR_ESTADO, sort: ORDEN });
-    Promise.all([pedir("ACTIVO"), pedir("INACTIVO")])
-      .then(([activas, inactivas]) => {
-        if (cancelado) return;
-        const juntas = [...activas.content, ...inactivas.content].sort((a, b) =>
-          b.fechaHora.localeCompare(a.fechaHora),
-        );
-        setTodas(juntas);
-        setTruncado(!activas.last || !inactivas.last);
-        setPage(0);
-        setError("");
-      })
-      .catch((err: unknown) => {
-        if (cancelado) return;
-        setError(apiErrorMessage(err, `No se pudieron cargar las ${tipo} del estudiante.`));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [config, tipo, idEstudiante, puedeVer]);
+  // Historial completo (activas + inactivas), ya ordenado. Si cambia el estudiante cambia la clave, y la respuesta vieja no pisa la nueva.
+  const claveHistorial = claves.estudiantes.historial(idEstudiante, tipo);
+  const historial = useQuery({
+    queryKey: claveHistorial,
+    enabled: puedeVer,
+    queryFn: async (): Promise<Historial> => {
+      const pedir = (estado: string): Promise<Page<Fila>> =>
+        config.listar({ idEstudiante, estado, size: MAX_POR_ESTADO, sort: ORDEN });
+      const [activas, inactivas] = await Promise.all([pedir("ACTIVO"), pedir("INACTIVO")]);
+      return {
+        filas: [...activas.content, ...inactivas.content].sort((a, b) => b.fechaHora.localeCompare(a.fechaHora)),
+        // true si el estudiante tiene más de MAX_POR_ESTADO en algún estado y no se trajeron todas.
+        truncado: !activas.last || !inactivas.last,
+      };
+    },
+  });
+  // null mientras carga la primera vez.
+  const todas = historial.data?.filas ?? null;
+  const truncado = historial.data?.truncado ?? false;
+  const cargando = historial.isPending;
+  const error = errorAccion || (historial.error ? apiErrorMessage(historial.error, `No se pudieron cargar las ${tipo} del estudiante.`) : "");
 
   // Baja/alta lógica igual que en los listados generales: se actualiza el estado de la fila en el lugar.
   function cambiarEstado(id: number, estado: string) {
-    setTodas((prev) => (prev ? prev.map((f) => (f.codInstancia === id ? { ...f, estado } : f)) : prev));
+    queryClient.setQueryData<Historial>(claveHistorial, (prev) =>
+      prev ? { ...prev, filas: prev.filas.map((f) => (f.codInstancia === id ? { ...f, estado } : f)) } : prev,
+    );
   }
 
-  async function confirmarDesactivar() {
+  const desactivar = useMutation({
+    mutationFn: (id: number) => config.desactivar(id),
+    onSuccess: (_, id) => cambiarEstado(id, "INACTIVO"),
+    onError: (err) => setErrorAccion(apiErrorMessage(err, `No se pudo desactivar la ${config.singular}.`)),
+  });
+
+  const reactivar = useMutation({
+    // El resultado no se usa: se descarta para que las dos variantes (instancia/incidencia) tengan el mismo tipo.
+    mutationFn: async (id: number) => {
+      await config.reactivar(id);
+    },
+    onSuccess: (_, id) => cambiarEstado(id, "ACTIVO"),
+    onError: (err) => setErrorAccion(apiErrorMessage(err, `No se pudo reactivar la ${config.singular}.`)),
+  });
+
+  const accionEnCursoId = desactivar.isPending ? desactivar.variables : reactivar.isPending ? reactivar.variables : null;
+
+  function confirmarDesactivar() {
     if (idADesactivar == null) return;
     const id = idADesactivar;
     setIdADesactivar(null);
-    setAccionEnCursoId(id);
-    try {
-      await config.desactivar(id);
-      cambiarEstado(id, "INACTIVO");
-    } catch (err) {
-      setError(apiErrorMessage(err, `No se pudo desactivar la ${config.singular}.`));
-    } finally {
-      setAccionEnCursoId(null);
-    }
+    setErrorAccion("");
+    desactivar.mutate(id);
   }
 
-  async function handleReactivar(id: number) {
-    setAccionEnCursoId(id);
-    try {
-      await config.reactivar(id);
-      cambiarEstado(id, "ACTIVO");
-    } catch (err) {
-      setError(apiErrorMessage(err, `No se pudo reactivar la ${config.singular}.`));
-    } finally {
-      setAccionEnCursoId(null);
-    }
+  function handleReactivar(id: number) {
+    setErrorAccion("");
+    reactivar.mutate(id);
   }
 
   if (!puedeVer) {

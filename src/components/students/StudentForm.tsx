@@ -2,11 +2,13 @@
 
 import { cloneElement, isValidElement, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { HeartPulse, MapPin, Phone, Plus, User, Users, X } from "lucide-react";
 import { apiErrorMessage, ApiError } from "@/lib/api";
 import { isValidUruguayanCi } from "@/lib/document-validation";
 import { listGroups, type Group } from "@/lib/groups";
 import { listItrs, type Itr } from "@/lib/itrs";
+import { claves } from "@/lib/query-keys";
 import { BackButton } from "@/components/layout/BackButton";
 import {
   NRO_PUERTA_INVALIDO_MSG,
@@ -36,6 +38,10 @@ const PAISES = [
 ];
 
 const DOCUMENTO_REGEX = /^[A-Za-z0-9]+$/;
+
+// Constantes (y no un `[]` nuevo en cada render): los useMemo y useEffect de abajo dependen de la identidad de estas listas.
+const SIN_GRUPOS: Group[] = [];
+const SIN_ITRS: Itr[] = [];
 
 type FormState = {
   nombre: string;
@@ -115,30 +121,56 @@ export function StudentForm(props: StudentFormProps) {
   const [form, setForm] = useState<FormState>(() =>
     estadoInicial(esEdicion ? props.estudiante : undefined),
   );
-  const [grupos, setGrupos] = useState<Group[]>([]);
-  const [itrs, setItrs] = useState<Itr[]>([]);
+  const queryClient = useQueryClient();
+  // Si /grupos falla queda la lista vacía; si /itrs falla la sección de grupos cae a la lista plana (ver más abajo)
+  // en vez de quedar sin forma de asignar: asignar un grupo solo debe depender de que /grupos responda.
+  const gruposQuery = useQuery({ queryKey: claves.grupos, queryFn: () => listGroups() });
+  const itrsQuery = useQuery({ queryKey: claves.itrs, queryFn: () => listItrs() });
+  const grupos = gruposQuery.data ?? SIN_GRUPOS;
+  const itrs = itrsQuery.data ?? SIN_ITRS;
   // Distingue "todavía no llegó /itrs" de "llegó vacío o falló": sin esto, la sección
   // de grupos mostraría un instante la lista plana de respaldo antes de pasar al selector.
-  const [itrsListos, setItrsListos] = useState(false);
+  const itrsListos = !itrsQuery.isPending;
   const [filtroItr, setFiltroItr] = useState<number | "">("");
   const [filtroCarrera, setFiltroCarrera] = useState<number | "">("");
   const autoseleccionoFiltro = useRef(false);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState("");
-  const [guardando, setGuardando] = useState(false);
   const errorGeneralRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    listGroups()
-      .then(setGrupos)
-      .catch(() => setGrupos([]));
-    // Si /itrs falla, la sección de grupos cae a la lista plana (ver más abajo) en vez de
-    // quedar sin forma de asignar: asignar un grupo solo debe depender de que /grupos responda.
-    listItrs()
-      .then(setItrs)
-      .catch(() => setItrs([]))
-      .finally(() => setItrsListos(true));
-  }, []);
+  const guardar = useMutation({
+    mutationFn: (dto: StudentCreateInput | StudentUpdateInput): Promise<Student> =>
+      props.mode === "editar" ? updateStudent(props.estudianteId, dto) : createStudent(dto as StudentCreateInput),
+    onSuccess: (estudiante) => {
+      if (props.mode === "editar") {
+        // El PUT devuelve la ficha actualizada: se deja en la cache para que la ficha, al abrirse, no muestre un instante los datos de antes de editar.
+        queryClient.setQueryData(claves.estudiantes.ficha(props.estudianteId), estudiante);
+        router.push(`/estudiantes/${props.estudianteId}`);
+        return;
+      }
+      // advertencia: el alta se guardó bien pero el email con la contraseña
+      // temporal no se pudo mandar (ver EstudianteService.crear en el backend).
+      // Solo viaja en ESTA respuesta, no en consultas posteriores — hay que
+      // pasarlo a la ficha por query param para no perderlo.
+      router.push(
+        estudiante.advertencia
+          ? `/estudiantes/${estudiante.idUsuario}?aviso=${encodeURIComponent(estudiante.advertencia)}`
+          : `/estudiantes/${estudiante.idUsuario}`,
+      );
+    },
+    onError: (err) => {
+      if (err instanceof ApiError && err.status === 409) {
+        // EstudianteService.crear() tira dos 409 distintos según el campo
+        // duplicado ("...ese documento." / "...ese email.") — se detecta por
+        // el texto para marcar el error solo en el campo que corresponde.
+        const campo = err.message.toLowerCase().includes("documento") ? "documento" : "email";
+        setErrores((e) => ({ ...e, [campo]: err.message }));
+      } else {
+        setErrorGeneral(apiErrorMessage(err, "No se pudo guardar el estudiante. Probá de nuevo."));
+      }
+    },
+  });
+  const guardando = guardar.isPending;
 
   // Las carreras no tienen catálogo propio acá: se derivan de los grupos ya
   // cargados (mismo criterio que StudentsListView — cada Grupo trae
@@ -178,6 +210,7 @@ export function StudentForm(props: StudentFormProps) {
     if (!esEdicion || grupos.length === 0) return;
     const nombresActuales = new Set(props.estudiante.grupos);
     const ids = grupos.filter((g) => nombresActuales.has(g.nomGrupo)).map((g) => g.idGrupo);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sincroniza el form con un dato que llega del backend (los grupos del estudiante vienen como nombres y solo se pueden resolver a id con el catálogo cargado)
     setForm((f) => ({ ...f, idGrupos: ids }));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo debe correr cuando el catálogo de grupos llega
   }, [grupos]);
@@ -192,6 +225,7 @@ export function StudentForm(props: StudentFormProps) {
     const primerGrupo = gruposSeleccionados[0];
     const itrDeLaCarrera = itrs.find((i) => i.carreras.includes(primerGrupo.nomCarrera));
     autoseleccionoFiltro.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- una sola vez (autoseleccionoFiltro), cuando llegan los catálogos
     setFiltroCarrera(primerGrupo.idCarrera);
     if (itrDeLaCarrera) setFiltroItr(itrDeLaCarrera.idItr);
   }, [gruposSeleccionados, itrs]);
@@ -328,40 +362,11 @@ export function StudentForm(props: StudentFormProps) {
       idGrupos: form.idGrupos,
     } satisfies StudentUpdateInput;
 
-    setGuardando(true);
-    try {
-      if (esEdicion) {
-        await updateStudent(props.estudianteId, datosComunes);
-        router.push(`/estudiantes/${props.estudianteId}`);
-      } else {
-        const dto: StudentCreateInput = {
-          ...datosComunes,
-          documento: form.documento.trim(),
-          paisDocumento: form.paisDocumento,
-        };
-        const creado = await createStudent(dto);
-        // advertencia: el alta se guardó bien pero el email con la contraseña
-        // temporal no se pudo mandar (ver EstudianteService.crear en el backend).
-        // Solo viaja en ESTA respuesta, no en consultas posteriores — hay que
-        // pasarlo a la ficha por query param para no perderlo.
-        const destino = creado.advertencia
-          ? `/estudiantes/${creado.idUsuario}?aviso=${encodeURIComponent(creado.advertencia)}`
-          : `/estudiantes/${creado.idUsuario}`;
-        router.push(destino);
-      }
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        // EstudianteService.crear() tira dos 409 distintos según el campo
-        // duplicado ("...ese documento." / "...ese email.") — se detecta por
-        // el texto para marcar el error solo en el campo que corresponde.
-        const campo = err.message.toLowerCase().includes("documento") ? "documento" : "email";
-        setErrores((e) => ({ ...e, [campo]: err.message }));
-      } else {
-        setErrorGeneral(apiErrorMessage(err, "No se pudo guardar el estudiante. Probá de nuevo."));
-      }
-    } finally {
-      setGuardando(false);
-    }
+    guardar.mutate(
+      esEdicion
+        ? datosComunes
+        : { ...datosComunes, documento: form.documento.trim(), paisDocumento: form.paisDocumento },
+    );
   }
 
   return (

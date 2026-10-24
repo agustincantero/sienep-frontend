@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 import { getCurrentUser, type AuthenticatedUser } from "@/lib/current-user";
 import { SessionProvider } from "@/lib/session-context";
 import { SessionUnavailable } from "./SessionUnavailable";
@@ -34,7 +35,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <SessionProvider user={user}>
-      <AppShell>{children}</AppShell>
+      <QueryProvider>
+        <AppShell>{children}</AppShell>
+      </QueryProvider>
     </SessionProvider>
   );
 }

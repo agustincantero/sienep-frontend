@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiErrorMessage } from "@/lib/api";
 import {
   createConfidentialComment,
@@ -10,6 +11,7 @@ import {
   type StudentComment,
 } from "@/lib/comments";
 import { formatFechaHora } from "@/lib/format";
+import { claves } from "@/lib/query-keys";
 import { useSession } from "@/lib/session-context";
 
 // Comentarios normales (ComentarioNormalEstudiante) y observaciones
@@ -62,68 +64,59 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
   const puedeCrear = puedeCrearNormal || puedeCrearConfidencial;
   const idNuevo = useId();
 
-  const [comentarios, setComentarios] = useState<ComentarioConTipo[]>([]);
-  const [cargando, setCargando] = useState(puedeVer);
-  // error: falla al cargar la lista O al publicar — se muestra junto al
+  const queryClient = useQueryClient();
+  const claveComentarios = claves.estudiantes.comentarios(idEstudiante);
+  // Si cambia el estudiante cambia la clave, y la respuesta vieja no pisa la nueva.
+  const lista = useQuery({
+    queryKey: claveComentarios,
+    enabled: puedeVer,
+    queryFn: async (): Promise<ComentarioConTipo[]> => {
+      const pedidos: Promise<ComentarioConTipo[]>[] = [];
+      if (puedeVerNormal) {
+        pedidos.push(
+          listNormalComments(idEstudiante).then((res) => res.content.map((c) => ({ ...c, tipo: "normal" as const }))),
+        );
+      }
+      if (puedeVerConfidencial) {
+        pedidos.push(
+          listConfidentialComments(idEstudiante).then((res) =>
+            res.content.map((c) => ({ ...c, tipo: "confidencial" as const })),
+          ),
+        );
+      }
+      // Más viejo primero, más nuevo al final (como un hilo de conversación):
+      // el formulario de alta vive justo debajo de la lista, así que el
+      // último comentario queda pegado a donde se escribe el siguiente.
+      return (await Promise.all(pedidos)).flat().sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    },
+  });
+  const comentarios = lista.data ?? [];
+  const cargando = lista.isPending;
+  // errorPublicar: falló publicar. Se muestra junto con el de la carga de la lista, al lado del
   // contenido ya cargado, mismo patrón que MedicalReportsPanel.
-  const [error, setError] = useState("");
+  const [errorPublicar, setErrorPublicar] = useState("");
+  const error = errorPublicar || (lista.error ? apiErrorMessage(lista.error, "No se pudieron cargar los comentarios.") : "");
   const [contenidoNuevo, setContenidoNuevo] = useState("");
   const [esConfidencialNuevo, setEsConfidencialNuevo] = useState(false);
   const [citando, setCitando] = useState<ComentarioConTipo | null>(null);
   const [errorNuevo, setErrorNuevo] = useState("");
-  const [publicando, setPublicando] = useState(false);
   // Comentario al que se acaba de saltar desde una cita: se resalta un rato
   // para que quede claro cuál es, sin depender del hash de la URL.
   const [resaltado, setResaltado] = useState<string | null>(null);
 
-  // Mismo motivo que en MedicalReportsPanel: si el usuario navega a otra
-  // ficha mientras un pedido sigue en vuelo, la respuesta vieja no debe
-  // pisar el estado del estudiante nuevo.
-  const idEstudianteRef = useRef(idEstudiante);
-  useEffect(() => {
-    idEstudianteRef.current = idEstudiante;
-  }, [idEstudiante]);
-
-  // Nunca se llama si !puedeVer: el formulario de alta (único otro punto que
-  // la invoca) ni siquiera se renderiza en ese caso, ver el return de abajo.
-  function cargar() {
-    const idAlPedir = idEstudiante;
-    const pedidos: Promise<ComentarioConTipo[]>[] = [];
-    if (puedeVerNormal) {
-      pedidos.push(
-        listNormalComments(idAlPedir).then((res) => res.content.map((c) => ({ ...c, tipo: "normal" as const }))),
-      );
-    }
-    if (puedeVerConfidencial) {
-      pedidos.push(
-        listConfidentialComments(idAlPedir).then((res) =>
-          res.content.map((c) => ({ ...c, tipo: "confidencial" as const })),
-        ),
-      );
-    }
-    Promise.all(pedidos)
-      .then((listas) => {
-        if (idEstudianteRef.current !== idAlPedir) return;
-        // Más viejo primero, más nuevo al final (como un hilo de conversación):
-        // el formulario de alta vive justo debajo de la lista, así que el
-        // último comentario queda pegado a donde se escribe el siguiente.
-        const todos = listas.flat().sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-        setComentarios(todos);
-        setError("");
-      })
-      .catch((err) => {
-        if (idEstudianteRef.current !== idAlPedir) return;
-        setError(apiErrorMessage(err, "No se pudieron cargar los comentarios."));
-      })
-      .finally(() => {
-        if (idEstudianteRef.current === idAlPedir) setCargando(false);
-      });
-  }
-
-  useEffect(() => {
-    if (puedeVer) cargar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- puedeVer* no cambian durante la vida del componente, solo idEstudiante
-  }, [idEstudiante]);
+  const publicar = useMutation({
+    mutationFn: ({ esConfidencial, contenido }: { esConfidencial: boolean; contenido: string }) =>
+      esConfidencial ? createConfidentialComment(idEstudiante, contenido) : createNormalComment(idEstudiante, contenido),
+    onSuccess: () => {
+      setContenidoNuevo("");
+      setEsConfidencialNuevo(false);
+      setCitando(null);
+      // Se vuelve a pedir la lista: el comentario nuevo trae autor y fecha que arma el backend.
+      queryClient.invalidateQueries({ queryKey: claveComentarios });
+    },
+    onError: (err) => setErrorPublicar(apiErrorMessage(err, "No se pudo publicar el comentario.")),
+  });
+  const publicando = publicar.isPending;
 
   // Si el citado es confidencial, el default es marcar la respuesta también
   // como confidencial — citar su contenido (aunque sea parcialmente, en la
@@ -147,7 +140,7 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
     setTimeout(() => setResaltado((actual) => (actual === claveDestino ? null : actual)), 1500);
   }
 
-  async function handleComentar(ev: React.FormEvent<HTMLFormElement>) {
+  function handleComentar(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
     const textoNuevo = contenidoNuevo.trim();
     if (!textoNuevo) {
@@ -155,26 +148,13 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
       return;
     }
     setErrorNuevo("");
-    setError("");
-    setPublicando(true);
+    setErrorPublicar("");
     const prefijoCita = citando ? `[[cita:${citando.tipo}:${citando.id}]]\n` : "";
-    try {
-      // Con los dos permisos, manda lo que haya elegido en el checkbox. Con
-      // uno solo, no hay checkbox (ver el form más abajo) y va directo al
-      // único tipo que el usuario puede crear.
-      const esConfidencial = puedeCrearNormal && puedeCrearConfidencial ? esConfidencialNuevo : puedeCrearConfidencial;
-      const contenidoFinal = prefijoCita + textoNuevo;
-      if (esConfidencial) await createConfidentialComment(idEstudiante, contenidoFinal);
-      else await createNormalComment(idEstudiante, contenidoFinal);
-      setContenidoNuevo("");
-      setEsConfidencialNuevo(false);
-      setCitando(null);
-      cargar();
-    } catch (err) {
-      setError(apiErrorMessage(err, "No se pudo publicar el comentario."));
-    } finally {
-      setPublicando(false);
-    }
+    // Con los dos permisos, manda lo que haya elegido en el checkbox. Con
+    // uno solo, no hay checkbox (ver el form más abajo) y va directo al
+    // único tipo que el usuario puede crear.
+    const esConfidencial = puedeCrearNormal && puedeCrearConfidencial ? esConfidencialNuevo : puedeCrearConfidencial;
+    publicar.mutate({ esConfidencial, contenido: prefijoCita + textoNuevo });
   }
 
   if (!puedeVer) {

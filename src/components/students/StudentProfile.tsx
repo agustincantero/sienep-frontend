@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calendar, FileText, HeartPulse, MessageSquare, TriangleAlert, User } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFecha } from "@/lib/format";
+import { claves } from "@/lib/query-keys";
 import { getStudent, resendStudentPassword, uploadStudentPhoto, type Student } from "@/lib/students";
 import { useSession } from "@/lib/session-context";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -55,20 +57,43 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
   const puedeVerSalud = permisos.includes("VER_BLOQUE_CONFIDENCIAL");
   const puedeEditar = permisos.includes("EDITAR_ESTUDIANTE");
 
-  const [estudiante, setEstudiante] = useState<Student | null>(null);
-  const [cargando, setCargando] = useState(true);
-  // errorCarga: falló el GET inicial, no hay estudiante que mostrar (bloquea
-  // la página). error: falló una ACCIÓN posterior (foto, reenviar
-  // contraseña) — se muestra junto a los datos ya cargados, no los tapa.
-  const [errorCarga, setErrorCarga] = useState("");
+  const queryClient = useQueryClient();
+  // Si cambia idEstudiante (navegación rápida entre dos fichas) la clave cambia y Query descarta la respuesta vieja solo.
+  const {
+    data: estudiante,
+    isPending: cargando,
+    error: errorCarga,
+  } = useQuery({
+    queryKey: claves.estudiantes.ficha(idEstudiante),
+    queryFn: () => getStudent(idEstudiante),
+  });
+  // error: falló una ACCIÓN (foto, reenviar contraseña) — se muestra junto a los datos ya
+  // cargados, no los tapa. Si falla el GET inicial (errorCarga) no hay estudiante que mostrar
+  // y se bloquea la página.
   const [error, setError] = useState("");
   const [tab, setTab] = useState<Tab>(esTab(tabInicial) ? tabInicial : "datos");
-  const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [aviso, setAviso] = useState("");
   const [exito, setExito] = useState("");
-  const [reenviando, setReenviando] = useState(false);
   const [confirmandoPassword, setConfirmandoPassword] = useState(false);
   const inputFotoRef = useRef<HTMLInputElement>(null);
+
+  const subirFoto = useMutation({
+    mutationFn: (foto: File) => uploadStudentPhoto(idEstudiante, foto),
+    // El PUT devuelve el estudiante actualizado: se pone directo en la cache en vez de volver a pedirlo.
+    onSuccess: (actualizado) => queryClient.setQueryData(claves.estudiantes.ficha(idEstudiante), actualizado),
+    onError: (err) => setError(apiErrorMessage(err, "No se pudo subir la foto.")),
+    onSettled: () => {
+      if (inputFotoRef.current) inputFotoRef.current.value = "";
+    },
+  });
+
+  const reenviarPassword = useMutation({
+    mutationFn: () => resendStudentPassword(idEstudiante),
+    onSuccess: () => setExito(estudiante ? accionPassword(estudiante).exito : "Contraseña enviada por email."),
+    onError: (err) => setError(apiErrorMessage(err, "No se pudo enviar el email. Probá de nuevo.")),
+  });
+  const subiendoFoto = subirFoto.isPending;
+  const reenviando = reenviarPassword.isPending;
 
   // El aviso de "no se pudo enviar el email" viaja como query param desde
   // StudentForm (solo existe en la respuesta de creación, no en el GET de
@@ -86,57 +111,16 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
     }
   }, []);
 
-  // cancelado: si idEstudiante cambia mientras un GET anterior todavía está
-  // en vuelo (navegación rápida entre dos fichas), esa respuesta vieja no
-  // debe pisar los datos del estudiante nuevo que ya está cargando.
-  useEffect(() => {
-    let cancelado = false;
-    getStudent(idEstudiante)
-      .then((s) => {
-        if (cancelado) return;
-        setEstudiante(s);
-        setErrorCarga("");
-      })
-      .catch((err) => {
-        if (cancelado) return;
-        setErrorCarga(apiErrorMessage(err, "No se pudo cargar el estudiante."));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [idEstudiante]);
-
-  async function handleFoto(ev: React.ChangeEvent<HTMLInputElement>) {
+  function handleFoto(ev: React.ChangeEvent<HTMLInputElement>) {
     const foto = ev.target.files?.[0];
-    if (!foto) return;
-    setSubiendoFoto(true);
-    try {
-      const actualizado = await uploadStudentPhoto(idEstudiante, foto);
-      setEstudiante(actualizado);
-    } catch (err) {
-      setError(apiErrorMessage(err, "No se pudo subir la foto."));
-    } finally {
-      setSubiendoFoto(false);
-      if (inputFotoRef.current) inputFotoRef.current.value = "";
-    }
+    if (foto) subirFoto.mutate(foto);
   }
 
-  async function confirmarReenviarPassword() {
+  function confirmarReenviarPassword() {
     setConfirmandoPassword(false);
-    setReenviando(true);
     setError("");
     setExito("");
-    try {
-      await resendStudentPassword(idEstudiante);
-      setExito(estudiante ? accionPassword(estudiante).exito : "Contraseña enviada por email.");
-    } catch (err) {
-      setError(apiErrorMessage(err, "No se pudo enviar el email. Probá de nuevo."));
-    } finally {
-      setReenviando(false);
-    }
+    reenviarPassword.mutate();
   }
 
   if (cargando) {
@@ -153,7 +137,7 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
         <div className="max-w-[980px] mx-auto w-full px-4 py-5">
           <BackButton href="/estudiantes" label="Volver a estudiantes" />
           <div role="alert" className="alert alert-error alert-soft text-sm">
-            <span>{errorCarga || "Estudiante no encontrado."}</span>
+            <span>{apiErrorMessage(errorCarga, "No se pudo cargar el estudiante.")}</span>
           </div>
         </div>
       </div>
