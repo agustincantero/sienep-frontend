@@ -204,7 +204,7 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
 
   return (
     <div className="grow overflow-auto">
-      <div className="max-w-[600px] mx-auto w-full px-4 py-5">
+      <div className="max-w-[720px] mx-auto w-full px-4 py-5">
         <BackButton onClick={() => router.back()} label="Cancelar" />
 
         <h1 className="text-xl font-bold mb-4">{esEdicion ? "Editar recordatorio" : "Nuevo recordatorio"}</h1>
@@ -254,7 +254,9 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
                   disabled={guardando}
                 />
               )}
-              <p className="mt-1 text-xs text-base-content/70">Todo recordatorio tiene que estar asociado a una instancia.</p>
+              {esEdicion || instanciaFija ? (
+                <p className="mt-1 text-xs text-base-content/70">Todo recordatorio tiene que estar asociado a una instancia.</p>
+              ) : null}
             </div>
 
             <Field label="Título" fieldKey="titulo" error={errores.titulo}>

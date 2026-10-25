@@ -35,9 +35,8 @@ export function CatalogoFormLayout({
 
   return (
     <div className="grow overflow-auto">
-      {/* Mismo contenedor que el listado (CatalogosView) y la columna de 600px adentro, alineada a la izquierda: así el contenido no salta al medio al pasar del listado al formulario. */}
-      <div className="max-w-[1200px] mx-auto w-full px-4 py-5">
-        <div className="max-w-[600px]">
+      <div className="max-w-[720px] mx-auto w-full px-4 py-5">
+        <div>
           <BackButton onClick={() => router.back()} label="Cancelar" />
 
           <h1 className="text-xl font-bold mb-1">{titulo}</h1>

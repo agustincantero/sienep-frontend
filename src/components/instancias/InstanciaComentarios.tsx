@@ -262,21 +262,24 @@ function ComentarioBox<T extends ComentarioInstancia>({
                 </div>
                 {id != null && id === idEnEdicion ? (
                   <form onSubmit={handleGuardarEdicion} noValidate className="space-y-2">
-                    <textarea
-                      className={`textarea w-full${errorEdicion ? " textarea-error" : ""}`}
-                      aria-label="Editar comentario"
-                      rows={2}
-                      maxLength={CONTENIDO_MAX}
-                      value={contenidoEditado}
-                      onChange={(e) => {
-                        setContenidoEditado(e.target.value);
-                        if (errorEdicion) setErrorEdicion("");
-                      }}
-                      disabled={guardando}
-                      aria-invalid={errorEdicion ? true : undefined}
-                      aria-describedby={errorEdicion ? idErrorEdicion : undefined}
-                      autoFocus
-                    />
+                    <label className="floating-label">
+                      <textarea
+                        className={`textarea w-full${errorEdicion ? " textarea-error" : ""}`}
+                        placeholder="Editar comentario"
+                        rows={2}
+                        maxLength={CONTENIDO_MAX}
+                        value={contenidoEditado}
+                        onChange={(e) => {
+                          setContenidoEditado(e.target.value);
+                          if (errorEdicion) setErrorEdicion("");
+                        }}
+                        disabled={guardando}
+                        aria-invalid={errorEdicion ? true : undefined}
+                        aria-describedby={errorEdicion ? idErrorEdicion : undefined}
+                        autoFocus
+                      />
+                      <span>Editar comentario</span>
+                    </label>
                     {errorEdicion ? (
                       <p id={idErrorEdicion} className="text-xs text-error">
                         {errorEdicion}
@@ -341,20 +344,23 @@ function ComentarioBox<T extends ComentarioInstancia>({
       {puedeCrear ? (
         <form onSubmit={handleComentar} noValidate className="flex gap-2 items-start">
           <div className="grow">
-            <textarea
-              className={`textarea w-full${errorContenido ? " textarea-error" : ""}`}
-              placeholder="Escribir un comentario…"
-              rows={2}
-              maxLength={CONTENIDO_MAX}
-              value={contenido}
-              onChange={(e) => {
-                setContenido(e.target.value);
-                if (errorContenido) setErrorContenido("");
-              }}
-              disabled={enviando}
-              aria-invalid={errorContenido ? true : undefined}
-              aria-describedby={errorContenido ? idErrorContenido : undefined}
-            />
+            <label className="floating-label">
+              <textarea
+                className={`textarea w-full${errorContenido ? " textarea-error" : ""}`}
+                placeholder="Escribir un comentario"
+                rows={2}
+                maxLength={CONTENIDO_MAX}
+                value={contenido}
+                onChange={(e) => {
+                  setContenido(e.target.value);
+                  if (errorContenido) setErrorContenido("");
+                }}
+                disabled={enviando}
+                aria-invalid={errorContenido ? true : undefined}
+                aria-describedby={errorContenido ? idErrorContenido : undefined}
+              />
+              <span>Escribir un comentario</span>
+            </label>
             {errorContenido ? (
               <p id={idErrorContenido} className="mt-1 text-xs text-error">
                 {errorContenido}

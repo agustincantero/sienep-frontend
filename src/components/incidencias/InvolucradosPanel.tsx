@@ -117,18 +117,21 @@ export function InvolucradosPanel({ codInstancia }: { codInstancia: number }) {
       )}
 
       {puedeAgregar ? (
-        <form onSubmit={handleAgregar} noValidate className="join max-w-[360px]">
-          <input
-            className="input input-sm join-item w-full"
-            placeholder="Nombre del involucrado"
-            value={nombre}
-            maxLength={NOMBRE_MAX}
-            onChange={(e) => setNombre(e.target.value)}
-            disabled={enviando}
-          />
+        <form onSubmit={handleAgregar} noValidate className="flex items-start gap-2 max-w-[360px]">
+          <label className="floating-label grow">
+            <input
+              className="input input-sm w-full"
+              placeholder="Nombre del involucrado"
+              value={nombre}
+              maxLength={NOMBRE_MAX}
+              onChange={(e) => setNombre(e.target.value)}
+              disabled={enviando}
+            />
+            <span>Nombre del involucrado</span>
+          </label>
           <button
             type="submit"
-            className="btn btn-outline btn-sm join-item gap-1"
+            className="btn btn-outline btn-sm gap-1"
             disabled={enviando || !nombre.trim()}
           >
             <UserPlus size={13} aria-hidden />

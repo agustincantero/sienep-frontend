@@ -259,6 +259,7 @@ export function MedicalReportsPanel({
             <input
               type="file"
               accept={EXTENSIONES_PERMITIDAS.join(",")}
+              aria-label="Archivo del informe médico"
               className={`file-input file-input-sm max-w-xs${errorArchivo ? " file-input-error" : ""}`}
               onChange={(e) => handleArchivoChange(e.target.files?.[0] ?? null)}
               disabled={subiendo}

@@ -31,7 +31,7 @@ export default async function NuevaInstanciaPage({
       // Un id inválido (400) o inexistente/inactiva (404) se muestra acá, dentro del layout, en vez de romper con un 500.
       return (
         <div className="grow overflow-auto">
-          <div className="max-w-[600px] mx-auto w-full px-4 py-5">
+          <div className="max-w-[720px] mx-auto w-full px-4 py-5">
             <BackButton href="/instancias" label="Volver a instancias" />
             <div role="alert" className="alert alert-error alert-soft text-sm">
               <span>{err instanceof BackendError ? err.message : "No se pudo cargar la instancia a clonar."}</span>

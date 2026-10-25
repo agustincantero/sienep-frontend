@@ -160,19 +160,22 @@ export function ContactoCard({
             return (
               <div key={idx}>
                 <div className="flex gap-2">
-                  <input
-                    id={`contacto-${key}`}
-                    className={`input w-full max-w-xs${errorTel ? " input-error" : ""}`}
-                    placeholder="099123456"
-                    aria-label={`Teléfono ${idx + 1}`}
-                    inputMode="numeric"
-                    value={tel}
-                    maxLength={12}
-                    onChange={(e) => cambiarTelefono(idx, e.target.value)}
-                    disabled={guardando}
-                    aria-invalid={errorTel ? true : undefined}
-                    aria-describedby={errorTel ? `contacto-${key}-error` : undefined}
-                  />
+                  <label className="floating-label w-full max-w-xs">
+                    <input
+                      id={`contacto-${key}`}
+                      className={`input w-full${errorTel ? " input-error" : ""}`}
+                      placeholder="Teléfono"
+                      aria-label={`Teléfono ${idx + 1}`}
+                      inputMode="numeric"
+                      value={tel}
+                      maxLength={12}
+                      onChange={(e) => cambiarTelefono(idx, e.target.value)}
+                      disabled={guardando}
+                      aria-invalid={errorTel ? true : undefined}
+                      aria-describedby={errorTel ? `contacto-${key}-error` : undefined}
+                    />
+                    <span>Teléfono</span>
+                  </label>
                   {form.telefonos.length > 1 ? (
                     <button
                       type="button"

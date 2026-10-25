@@ -92,7 +92,7 @@ export function IncidenciaDetalle({
   if (errorCarga || !incidencia) {
     return (
       <div className="grow overflow-auto">
-        <div className="max-w-[700px] mx-auto w-full px-4 py-5">
+        <div className="max-w-[980px] mx-auto w-full px-4 py-5">
           <BackButton href="/incidencias" label="Volver a incidencias" />
           <div role="alert" className="alert alert-error alert-soft text-sm">
             <span>{errorCarga || "Incidencia no encontrada."}</span>
@@ -104,7 +104,7 @@ export function IncidenciaDetalle({
 
   return (
     <div className="grow overflow-auto">
-      <div className="max-w-[700px] mx-auto w-full px-4 py-5">
+      <div className="max-w-[980px] mx-auto w-full px-4 py-5">
         <BackButton href={volverAEstudiante ? `/estudiantes/${incidencia.idEstudiante}?tab=incidencias` : "/incidencias"} label={volverAEstudiante ? "Volver al estudiante" : "Volver a incidencias"} />
 
         {error ? (

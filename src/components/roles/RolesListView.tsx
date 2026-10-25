@@ -124,7 +124,7 @@ export function RolesListView() {
 
   return (
     <div className="grow overflow-auto">
-      <div className="max-w-[900px] mx-auto w-full px-4 py-5">
+      <div className="max-w-[1200px] mx-auto w-full px-4 py-5">
         <SectionHeader
           title="Roles"
           action={puedeCrear ? "+ Nuevo rol" : undefined}
