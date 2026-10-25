@@ -18,6 +18,12 @@ export function listMedicalReports(idEstudiante: number, page = 0): Promise<Page
   return apiGet<Page<MedicalReport>>("/informes-adjuntos", { idUsuario: idEstudiante, page });
 }
 
+// GET /informes-adjuntos/mios — solo el estudiante autenticado (no tiene VER_INFORME): sus informes ACTIVOS, con
+// urlDescarga apuntando a /informes-adjuntos/mios/{id}/descargar, que responde 404 si el informe es de otro estudiante.
+export function listMisInformes(page = 0): Promise<Page<MedicalReport>> {
+  return apiGet<Page<MedicalReport>>("/informes-adjuntos/mios", { page, sort: "createdAt,desc" });
+}
+
 // multipart/form-data: idUsuario, nombre, archivo (PDF/JPG/JPEG/PNG, máx. 5MB).
 export function attachMedicalReport(idEstudiante: number, nombre: string, archivo: File): Promise<MedicalReport> {
   const formData = new FormData();
