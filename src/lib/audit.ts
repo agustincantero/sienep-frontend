@@ -49,7 +49,7 @@ export const AUDIT_ENTITIES = [
   "INST_COM_CONFIDENCIALES",
 ];
 
-// Forma de GET /auditorias y GET /auditorias/{id} (AuditoriaResponseDTO). valorAnterior/valorNuevo llegan ya como objeto (el backend anota esos campos con @JsonRawValue: son jsonb crudo de to_jsonb(OLD)/to_jsonb(NEW), no un string que haya que volver a parsear). idAutor/nombreAutor/ip vienen null cuando el cambio lo hizo un DBA directo en BD (sin pasar por la app, así que no hay variable de sesión `sienep.usuario_actual` que el trigger pueda leer); usuarioBd viene null en los eventos manuales de LOGIN/LOGOUT porque registrarEventoManual no lo completa.
+// Forma de GET /auditorias (AuditoriaResponseDTO). valorAnterior/valorNuevo llegan ya como objeto (el backend anota esos campos con @JsonRawValue: son jsonb crudo de to_jsonb(OLD)/to_jsonb(NEW), no un string que haya que volver a parsear). idAutor/nombreAutor/ip vienen null cuando el cambio lo hizo un DBA directo en BD (sin pasar por la app, así que no hay variable de sesión `sienep.usuario_actual` que el trigger pueda leer); usuarioBd viene null en los eventos manuales de LOGIN/LOGOUT porque registrarEventoManual no lo completa.
 export type AuditEvent = {
   idAuditoria: number;
   entidad: string;
