@@ -17,6 +17,13 @@ export function MisInformes() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
 
+  // Cambiar de página vuelve a pedir la lista: el spinner se prende acá y no en el efecto, para no mostrar mientras tanto
+  // las filas de la página anterior con el pie de la nueva.
+  function cambiarPagina(nueva: number) {
+    setCargando(true);
+    setPage(nueva);
+  }
+
   // cancelado: si se cambia de página mientras un pedido sigue en vuelo, la respuesta vieja no pisa la nueva.
   useEffect(() => {
     let cancelado = false;
@@ -102,8 +109,8 @@ export function MisInformes() {
                   pageSize={resultado.size}
                   hasPrevious={page > 0}
                   hasNext={!resultado.last}
-                  onPrevious={() => setPage((p) => Math.max(0, p - 1))}
-                  onNext={() => setPage((p) => p + 1)}
+                  onPrevious={() => cambiarPagina(Math.max(0, page - 1))}
+                  onNext={() => cambiarPagina(page + 1)}
                 />
               ) : null}
             </>
