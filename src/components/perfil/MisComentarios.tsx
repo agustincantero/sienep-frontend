@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MessageSquare } from "lucide-react";
-import { apiErrorMessage } from "@/lib/api";
-import { listMisComentarios, type StudentComment } from "@/lib/comments";
+import { useApi } from "@/hooks/useApi";
+import { listMisComentarios } from "@/lib/comments";
 import { formatFechaHora } from "@/lib/format";
-import type { Page } from "@/lib/students";
 import { PaginationFooter } from "@/components/ui/PaginationFooter";
 
 // Mismo prefijo de cita que arma StudentCommentsPanel al citar otro comentario: acá solo se quita para mostrar el
@@ -17,30 +16,10 @@ const CITA_REGEX = /^\[\[cita:(normal|confidencial):(\d+)\]\]\n/;
 // se muestran: el rol ESTUDIANTE no tiene permiso para verlos.
 export function MisComentarios() {
   const [page, setPage] = useState(0);
-  const [resultado, setResultado] = useState<Page<StudentComment> | null>(null);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
+  const { data: resultado, cargando, errorCarga: error } = useApi(() => listMisComentarios(page), [page], {
+    mensajeError: "No se pudieron cargar tus comentarios.",
+  });
 
-  // cancelado: si se cambia de página mientras un pedido sigue en vuelo, la respuesta vieja no pisa la nueva.
-  useEffect(() => {
-    let cancelado = false;
-    listMisComentarios(page)
-      .then((res) => {
-        if (cancelado) return;
-        setResultado(res);
-        setError("");
-      })
-      .catch((err) => {
-        if (cancelado) return;
-        setError(apiErrorMessage(err, "No se pudieron cargar tus comentarios."));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [page]);
 
   const comentarios = resultado?.content ?? [];
 

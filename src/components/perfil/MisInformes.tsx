@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Download, Paperclip } from "lucide-react";
-import { apiErrorMessage } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { formatFechaHora } from "@/lib/format";
-import { listMisInformes, type MedicalReport } from "@/lib/medical-reports";
-import type { Page } from "@/lib/students";
+import { listMisInformes } from "@/lib/medical-reports";
 import { PaginationFooter } from "@/components/ui/PaginationFooter";
 
 // "Mis informes" del estudiante, contra GET /informes-adjuntos/mios: el backend toma el id del token y devuelve solo
@@ -13,37 +12,12 @@ import { PaginationFooter } from "@/components/ui/PaginationFooter";
 // personal desde la ficha (MedicalReportsPanel). Más recientes primero.
 export function MisInformes() {
   const [page, setPage] = useState(0);
-  const [resultado, setResultado] = useState<Page<MedicalReport> | null>(null);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
+  // Cambiar de página vuelve a mostrar el spinner, para no mostrar mientras tanto las filas de la página anterior con el pie de la nueva.
+  const { data: resultado, cargando, errorCarga: error } = useApi(() => listMisInformes(page), [page], {
+    mensajeError: "No se pudieron cargar tus informes.",
+    spinnerAlCambiar: true,
+  });
 
-  // Cambiar de página vuelve a pedir la lista: el spinner se prende acá y no en el efecto, para no mostrar mientras tanto
-  // las filas de la página anterior con el pie de la nueva.
-  function cambiarPagina(nueva: number) {
-    setCargando(true);
-    setPage(nueva);
-  }
-
-  // cancelado: si se cambia de página mientras un pedido sigue en vuelo, la respuesta vieja no pisa la nueva.
-  useEffect(() => {
-    let cancelado = false;
-    listMisInformes(page)
-      .then((res) => {
-        if (cancelado) return;
-        setResultado(res);
-        setError("");
-      })
-      .catch((err) => {
-        if (cancelado) return;
-        setError(apiErrorMessage(err, "No se pudieron cargar tus informes."));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [page]);
 
   const informes = resultado?.content ?? [];
 
@@ -109,8 +83,8 @@ export function MisInformes() {
                   pageSize={resultado.size}
                   hasPrevious={page > 0}
                   hasNext={!resultado.last}
-                  onPrevious={() => cambiarPagina(Math.max(0, page - 1))}
-                  onNext={() => cambiarPagina(page + 1)}
+                  onPrevious={() => setPage(Math.max(0, page - 1))}
+                  onNext={() => setPage(page + 1)}
                 />
               ) : null}
             </>

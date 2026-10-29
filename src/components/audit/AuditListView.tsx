@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { apiErrorMessage } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import {
   AUDIT_ACTIONS,
   AUDIT_ENTITIES,
@@ -27,6 +27,9 @@ import { PaginationFooter } from "@/components/ui/PaginationFooter";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Toolbar, type ToolbarFilter } from "@/components/ui/Toolbar";
 
+type Resultado = { content: AuditEvent[]; total: number; last: boolean; demasiados?: boolean };
+const SIN_RESULTADOS: Resultado = { content: [], total: 0, last: true };
+
 // Espera a que el usuario termine de tipear antes de pegarle a la API (evita un request por tecla en el buscador).
 function useDebounced<T>(valor: T, ms: number): T {
   const [debounced, setDebounced] = useState(valor);
@@ -44,13 +47,6 @@ export function AuditListView() {
   const [page, setPage] = useState(0);
   const textoDebounced = useDebounced(texto, 300);
 
-  const [eventos, setEventos] = useState<AuditEvent[]>([]);
-  const [totalElements, setTotalElements] = useState(0);
-  // Más autores coinciden con el texto que los que se consultan a la vez: no se muestra nada hasta que se acote la búsqueda.
-  const [demasiadosAutores, setDemasiadosAutores] = useState(false);
-  const [hasNext, setHasNext] = useState(false);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
   const [expandidoId, setExpandidoId] = useState<number | null>(null);
 
   // Cualquier cambio de filtro vuelve a la primera página.
@@ -64,56 +60,46 @@ export function AuditListView() {
   const handleEntidadChange = conResetDePagina(setEntidad);
   const handleAccionChange = conResetDePagina(setAccion);
 
-  useEffect(() => {
-    let cancelado = false;
+  const {
+    data: resultado,
+    cargando,
+    errorCarga: error,
+  } = useApi(
+    () => {
+      const filtros = { entidad: entidad || undefined, accion: (accion || undefined) as AuditAction | undefined };
+      const buscado = textoDebounced.trim();
 
-    const filtros = { entidad: entidad || undefined, accion: (accion || undefined) as AuditAction | undefined };
-    const buscado = textoDebounced.trim();
-
-    // El `texto` del backend no ignora tildes ni acepta "Nombre Apellido": se resuelve el autor acá (estudiantes y funcionarios) y se filtra por idAutor.
-    const pedido: Promise<{ content: AuditEvent[]; total: number; last: boolean; demasiados?: boolean }> = buscado
-      ? Promise.allSettled([todosLosEstudiantesConInactivos(), todosLosFuncionarios()]).then(async (listas) => {
-          // Con una sola lista caída (ej. 403 por permisos) la búsqueda local perdería autores sin avisar: se deja el filtro original del backend.
-          if (listas.some((l) => l.status === "rejected")) {
-            const res = await listAuditEvents({ ...filtros, texto: buscado, page });
-            return { content: res.content, total: res.totalElements, last: res.last };
-          }
-          const personas = listas.flatMap((l) => (l.status === "fulfilled" ? l.value : []));
-          const autores = coincidenciasPersona(personas, buscado);
-          if (autores.length === 0 || autores.length > MAX_COINCIDENCIAS) {
-            return { content: [], total: 0, last: true, demasiados: autores.length > MAX_COINCIDENCIAS };
-          }
-          const r = await paginarMezclado(
-            autores.map((a) => a.idUsuario),
-            (idAutor, size) => listAuditEvents({ ...filtros, idAutor, size }),
-            page,
-            (e) => e.idAuditoria,
-          );
-          return { content: r.content, total: r.total, last: (page + 1) * TAMANIO_PAGINA >= r.total };
-        })
-      : listAuditEvents({ ...filtros, page }).then((res) => ({ content: res.content, total: res.totalElements, last: res.last }));
-
-    pedido
-      .then((res) => {
-        if (cancelado) return;
-        setEventos(res.content);
-        setTotalElements(res.total);
-        setDemasiadosAutores(res.demasiados === true);
-        setHasNext(!res.last);
-        setError("");
-      })
-      .catch((err) => {
-        if (cancelado) return;
-        setError(apiErrorMessage(err, "No se pudieron cargar los eventos de auditoría."));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-
-    return () => {
-      cancelado = true;
-    };
-  }, [textoDebounced, entidad, accion, page]);
+      // El `texto` del backend no ignora tildes ni acepta "Nombre Apellido": se resuelve el autor acá (estudiantes y funcionarios) y se filtra por idAutor.
+      const pedido: Promise<Resultado> = buscado
+        ? Promise.allSettled([todosLosEstudiantesConInactivos(), todosLosFuncionarios()]).then(async (listas) => {
+            // Con una sola lista caída (ej. 403 por permisos) la búsqueda local perdería autores sin avisar: se deja el filtro original del backend.
+            if (listas.some((l) => l.status === "rejected")) {
+              const res = await listAuditEvents({ ...filtros, texto: buscado, page });
+              return { content: res.content, total: res.totalElements, last: res.last };
+            }
+            const personas = listas.flatMap((l) => (l.status === "fulfilled" ? l.value : []));
+            const autores = coincidenciasPersona(personas, buscado);
+            if (autores.length === 0 || autores.length > MAX_COINCIDENCIAS) {
+              return { content: [], total: 0, last: true, demasiados: autores.length > MAX_COINCIDENCIAS };
+            }
+            const r = await paginarMezclado(
+              autores.map((a) => a.idUsuario),
+              (idAutor, size) => listAuditEvents({ ...filtros, idAutor, size }),
+              page,
+              (e) => e.idAuditoria,
+            );
+            return { content: r.content, total: r.total, last: (page + 1) * TAMANIO_PAGINA >= r.total };
+          })
+        : listAuditEvents({ ...filtros, page }).then((res) => ({ content: res.content, total: res.totalElements, last: res.last }));
+      return pedido;
+    },
+    [textoDebounced, entidad, accion, page],
+    { inicial: SIN_RESULTADOS, mensajeError: "No se pudieron cargar los eventos de auditoría." },
+  );
+  const { content: eventos, total: totalElements } = resultado;
+  const hasNext = !resultado.last;
+  // Más autores coinciden con el texto que los que se consultan a la vez: no se muestra nada hasta que se acote la búsqueda.
+  const demasiadosAutores = resultado.demasiados === true;
 
   const filters: ToolbarFilter[] = [
     { label: "Entidad", emptyLabel: "Todas", options: AUDIT_ENTITIES, value: entidad, onChange: handleEntidadChange },

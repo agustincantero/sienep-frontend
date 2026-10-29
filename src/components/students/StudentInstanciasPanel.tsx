@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { deactivateIncidencia, listIncidencias, reactivateIncidencia } from "@/lib/incidencias";
 import { deactivateInstancia, listInstancias, reactivateInstancia } from "@/lib/instancias";
 import { useSession } from "@/lib/session-context";
@@ -79,47 +80,41 @@ export function StudentInstanciasPanel({
   const puedeVer = permisos.includes(config.permisoVer);
 
   const [page, setPage] = useState(0);
-  // Historial completo (activas + inactivas), ya ordenado; null mientras carga la primera vez.
-  const [todas, setTodas] = useState<Fila[] | null>(null);
-  // true si el estudiante tiene más de MAX_POR_ESTADO en algún estado y no se trajeron todas.
-  const [truncado, setTruncado] = useState(false);
-  const [cargando, setCargando] = useState(puedeVer);
+  // Al cambiar de estudiante (o de pestaña) se vuelve a la primera página.
+  const [paginaDe, setPaginaDe] = useState(`${tipo}-${idEstudiante}`);
+  if (paginaDe !== `${tipo}-${idEstudiante}`) {
+    setPaginaDe(`${tipo}-${idEstudiante}`);
+    setPage(0);
+  }
+  // todas: historial completo (activas + inactivas), ya ordenado; null mientras carga la primera vez. truncado: el estudiante tiene más de MAX_POR_ESTADO en algún estado y no se trajeron todas.
+  const {
+    data: historial,
+    setData: setHistorial,
+    cargando,
+    errorCarga,
+  } = useApi(
+    () => {
+      if (!puedeVer) return Promise.resolve(null);
+      const pedir = (estado: string): Promise<Page<Fila>> =>
+        config.listar({ idEstudiante, estado, size: MAX_POR_ESTADO, sort: ORDEN });
+      return Promise.all([pedir("ACTIVO"), pedir("INACTIVO")]).then(([activas, inactivas]) => ({
+        todas: [...activas.content, ...inactivas.content].sort((a, b) => b.fechaHora.localeCompare(a.fechaHora)),
+        truncado: !activas.last || !inactivas.last,
+      }));
+    },
+    [config, idEstudiante, puedeVer],
+    { mensajeError: `No se pudieron cargar las ${tipo} del estudiante.` },
+  );
+  const todas = historial?.todas ?? null;
+  const truncado = historial?.truncado ?? false;
+  // Error de una baja o reactivación; el de carga es errorCarga.
   const [error, setError] = useState("");
   const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
   const [idADesactivar, setIdADesactivar] = useState<number | null>(null);
 
-  // cancelado: si cambia el estudiante mientras un pedido sigue en vuelo, la respuesta vieja no pisa la nueva (mismo criterio que StudentProfile).
-  useEffect(() => {
-    if (!puedeVer) return;
-    let cancelado = false;
-    const pedir = (estado: string): Promise<Page<Fila>> =>
-      config.listar({ idEstudiante, estado, size: MAX_POR_ESTADO, sort: ORDEN });
-    Promise.all([pedir("ACTIVO"), pedir("INACTIVO")])
-      .then(([activas, inactivas]) => {
-        if (cancelado) return;
-        const juntas = [...activas.content, ...inactivas.content].sort((a, b) =>
-          b.fechaHora.localeCompare(a.fechaHora),
-        );
-        setTodas(juntas);
-        setTruncado(!activas.last || !inactivas.last);
-        setPage(0);
-        setError("");
-      })
-      .catch((err: unknown) => {
-        if (cancelado) return;
-        setError(apiErrorMessage(err, `No se pudieron cargar las ${tipo} del estudiante.`));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [config, tipo, idEstudiante, puedeVer]);
-
   // Baja/alta lógica igual que en los listados generales: se actualiza el estado de la fila en el lugar.
   function cambiarEstado(id: number, estado: string) {
-    setTodas((prev) => (prev ? prev.map((f) => (f.codInstancia === id ? { ...f, estado } : f)) : prev));
+    setHistorial((prev) => (prev ? { ...prev, todas: prev.todas.map((f) => (f.codInstancia === id ? { ...f, estado } : f)) } : prev));
   }
 
   async function confirmarDesactivar() {
@@ -175,16 +170,16 @@ export function StudentInstanciasPanel({
               </Link>
             ) : null}
           </div>
-          {error ? (
+          {errorCarga || error ? (
             <div role="alert" className="alert alert-error alert-soft text-sm">
-              <span>{error}</span>
+              <span>{errorCarga || error}</span>
             </div>
           ) : null}
           {cargando ? (
             <div className="flex justify-center py-6">
               <span className="loading loading-spinner loading-md" role="status" aria-label="Cargando" />
             </div>
-          ) : filas.length === 0 && !error ? (
+          ) : filas.length === 0 && !errorCarga && !error ? (
             <p className="text-base-content/70 text-sm py-2">Este estudiante no tiene {tipo} registradas.</p>
           ) : null}
           {truncado ? (

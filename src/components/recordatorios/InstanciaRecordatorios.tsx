@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { apiErrorMessage } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { TOPE_LISTADO } from "@/lib/buscar-estudiante";
 import { listRecordatoriosDeInstancia, type Recordatorio } from "@/lib/recordatorios";
 import { useSession } from "@/lib/session-context";
@@ -16,26 +15,15 @@ export function InstanciaRecordatorios({ codInstancia, instanciaActiva }: { codI
   const puedeCrear = permisos.includes("CREAR_RECORDATORIO") && instanciaActiva;
   const puedeEditar = permisos.includes("EDITAR_RECORDATORIO");
 
-  const [recordatorios, setRecordatorios] = useState<Recordatorio[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
+  const {
+    data: recordatorios,
+    cargando,
+    errorCarga: error,
+  } = useApi(() => listRecordatoriosDeInstancia(codInstancia, { size: TOPE_LISTADO, sort: "fechaHora,asc" }).then((p) => p.content), [codInstancia], {
+    inicial: [] as Recordatorio[],
+    mensajeError: "No se pudieron cargar los recordatorios.",
+  });
 
-  useEffect(() => {
-    let cancelado = false;
-    listRecordatoriosDeInstancia(codInstancia, { size: TOPE_LISTADO, sort: "fechaHora,asc" })
-      .then((p) => {
-        if (!cancelado) setRecordatorios(p.content);
-      })
-      .catch((err) => {
-        if (!cancelado) setError(apiErrorMessage(err, "No se pudieron cargar los recordatorios."));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [codInstancia]);
 
   return (
     <div className="mt-6">
