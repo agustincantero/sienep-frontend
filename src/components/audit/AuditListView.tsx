@@ -7,6 +7,7 @@ import {
   AUDIT_ACTIONS,
   AUDIT_ENTITIES,
   describeAccion,
+  detalleNotificacion,
   listAuditEvents,
   type AuditAction,
   type AuditEvent,
@@ -154,6 +155,7 @@ export function AuditListView() {
                 const expandido = expandidoId === evento.idAuditoria;
                 const detalleId = `detalle-auditoria-${evento.idAuditoria}`;
                 const tieneDetalle = Boolean(evento.valorAnterior || evento.valorNuevo);
+                const notificacion = detalleNotificacion(evento);
                 return (
                   <Fragment key={evento.idAuditoria}>
                     <tr>
@@ -166,14 +168,23 @@ export function AuditListView() {
                               <span className="text-xs text-base-content/70">{evento.documentoAutor}</span>
                             ) : null}
                           </div>
+                        ) : notificacion ? (
+                          // Los avisos del scheduler de recordatorios (RF23) no tienen autor: los dispara el sistema, no un cambio directo en BD.
+                          <span className="text-base-content/70 italic">Sistema (envío automático)</span>
                         ) : (
                           <span className="text-base-content/70 italic">Acción directa en BD</span>
                         )}
                       </td>
                       <td>
-                        <span className={`badge badge-sm ${describeAccion(evento.accion).badgeClass}`}>
-                          {evento.accion}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-1">
+                          <span className={`badge badge-sm ${describeAccion(evento.accion).badgeClass}`}>
+                            {evento.accion}
+                          </span>
+                          {/* Un envío fallido se marca ya en la lista, sin tener que abrir el detalle (RNF12). */}
+                          {notificacion && !notificacion.enviada ? (
+                            <span className="badge badge-sm badge-error badge-outline">Falló</span>
+                          ) : null}
+                        </div>
                       </td>
                       <td>{evento.entidad}</td>
                       <td className="text-base-content/70">{evento.usuarioBd ?? "—"}</td>
