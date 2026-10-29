@@ -21,7 +21,7 @@ type ToolbarProps = {
   trailing?: React.ReactNode;
 };
 
-// Buscador y filtros con floating-label de daisyUI 5 (mismo patrón que Field en StudentForm y los
+// Buscador y filtros con floating-label de daisyUI 5 (mismo patrón que Field de components/ui y los
 // formularios de auth): el control va PRIMERO y el <span> con la etiqueta después, ambos hijos
 // directos del <label>. Así cada campo tiene nombre accesible propio y no depende del placeholder.
 // En un <select> la etiqueta queda siempre flotando (no hay placeholder-shown que la anime).

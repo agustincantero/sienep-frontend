@@ -1,21 +1,10 @@
 "use client";
 
-import { cloneElement, isValidElement, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, HeartPulse, Info, MapPin, Phone, Plus, User, Users, X } from "lucide-react";
 import { apiErrorMessage, ApiError } from "@/lib/api";
-import { isValidUruguayanCi } from "@/lib/document-validation";
-import { PAISES, PAISES_FRECUENTES } from "@/lib/paises";
-import { listGroups, type Group } from "@/lib/groups";
-import { listItrs, type Itr } from "@/lib/itrs";
 import { BackButton } from "@/components/layout/BackButton";
-import {
-  NRO_PUERTA_INVALIDO_MSG,
-  TELEFONO_INVALIDO_MSG,
-  TELEFONO_REGEX,
-  TEXTO_INVALIDO_MSG,
-  TEXTO_REGEX,
-} from "@/lib/validaciones-estudiante";
+import { validarEstudiante, type EstudianteFormState } from "@/lib/validaciones-estudiante";
 import {
   createStudent,
   updateStudent,
@@ -23,28 +12,13 @@ import {
   type StudentCreateInput,
   type StudentUpdateInput,
 } from "@/lib/students";
+import { DatosPersonalesSeccion } from "./formulario/DatosPersonalesSeccion";
+import { DireccionSeccion } from "./formulario/DireccionSeccion";
+import { TelefonosSeccion } from "./formulario/TelefonosSeccion";
+import { SelectorGrupos } from "./formulario/SelectorGrupos";
+import { SaludSeccion } from "./formulario/SaludSeccion";
 
-const DOCUMENTO_REGEX = /^[A-Za-z0-9]+$/;
-
-type FormState = {
-  nombre: string;
-  apellido: string;
-  documento: string;
-  paisDocumento: string;
-  email: string;
-  fechaNacimiento: string;
-  ciudad: string;
-  departamento: string;
-  calle: string;
-  nroPuerta: string;
-  telefonos: string[];
-  idGrupos: number[];
-  informacionSalud: string;
-  sistemaSalud: string;
-  motivoDerivacion: string;
-};
-
-function estadoInicial(estudiante?: Student): FormState {
+function estadoInicial(estudiante?: Student): EstudianteFormState {
   return {
     nombre: estudiante?.nombre ?? "",
     apellido: estudiante?.apellido ?? "",
@@ -64,131 +38,22 @@ function estadoInicial(estudiante?: Student): FormState {
   };
 }
 
-// Rango de fecha de nacimiento aceptado (18 a 100 años), para el date picker.
-const HOY = new Date();
-const FECHA_MAX = new Date(HOY.getFullYear() - 18, HOY.getMonth(), HOY.getDate()).toISOString().slice(0, 10);
-const FECHA_MIN = new Date(HOY.getFullYear() - 100, HOY.getMonth(), HOY.getDate()).toISOString().slice(0, 10);
-
-// Encabezado de sección del form: sentence case con peso real — el estilo
-// tracked-out en mayúscula queda reservado para rótulos secundarios como el
-// del Sidebar, no para cinco títulos apilados en la misma pantalla. El ícono
-// es el mismo lenguaje que las tabs de la ficha (StudentProfile).
-function SeccionLegend({ icon: Icon, children }: { icon: typeof User; children: React.ReactNode }) {
-  return (
-    <legend className="fieldset-legend text-sm font-semibold text-base-content mb-1 gap-1.5">
-      <Icon size={15} aria-hidden className="text-primary" />
-      {children}
-    </legend>
-  );
-}
-
-// Cada sección del form es su propia card — con cinco fieldsets apilados sin
-// separación visual, la pantalla se sentía como un solo bloque de texto
-// interminable. El radius acá es --radius-box (redondeado), igual que el
-// resto de las cards de la app; los controles adentro siguen con
-// --radius-field (casi recto).
-function SeccionCard({ children }: { children: React.ReactNode }) {
-  return (
-    <fieldset className="fieldset space-y-3 p-4 rounded-box border border-base-300">{children}</fieldset>
-  );
-}
-
 type StudentFormProps =
   | { mode: "crear" }
   | { mode: "editar"; estudianteId: number; estudiante: Student };
 
+// Alta y edición de estudiante. El estado del formulario vive acá; cada sección (carpeta formulario/) solo lo pinta.
 export function StudentForm(props: StudentFormProps) {
   const router = useRouter();
   const esEdicion = props.mode === "editar";
 
-  const [form, setForm] = useState<FormState>(() =>
+  const [form, setForm] = useState<EstudianteFormState>(() =>
     estadoInicial(esEdicion ? props.estudiante : undefined),
   );
-  const [grupos, setGrupos] = useState<Group[]>([]);
-  const [itrs, setItrs] = useState<Itr[]>([]);
-  // Distingue "todavía no llegó /itrs" de "llegó vacío o falló": sin esto, la sección
-  // de grupos mostraría un instante la lista plana de respaldo antes de pasar al selector.
-  const [itrsListos, setItrsListos] = useState(false);
-  const [filtroItr, setFiltroItr] = useState<number | "">("");
-  const [filtroCarrera, setFiltroCarrera] = useState<number | "">("");
-  const autoseleccionoFiltro = useRef(false);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState("");
   const [guardando, setGuardando] = useState(false);
   const errorGeneralRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    listGroups()
-      .then(setGrupos)
-      .catch(() => setGrupos([]));
-    // Si /itrs falla, la sección de grupos cae a la lista plana (ver más abajo) en vez de
-    // quedar sin forma de asignar: asignar un grupo solo debe depender de que /grupos responda.
-    listItrs()
-      .then(setItrs)
-      .catch(() => setItrs([]))
-      .finally(() => setItrsListos(true));
-  }, []);
-
-  // Las carreras no tienen catálogo propio acá: se derivan de los grupos ya
-  // cargados (mismo criterio que StudentsListView — cada Grupo trae
-  // idCarrera/nomCarrera, y toda carrera relevante tiene al menos un grupo).
-  const carreras = useMemo(() => {
-    const vistas = new Map<string, number>();
-    for (const g of grupos) vistas.set(g.nomCarrera, g.idCarrera);
-    return [...vistas.entries()].map(([nomCarrera, idCarrera]) => ({ nomCarrera, idCarrera }));
-  }, [grupos]);
-
-  // No todos los ITR tienen todas las carreras — ItrResponseDTO.carreras solo
-  // trae nombres (no ids), así que se cruza por nombre contra `carreras`. El cruce
-  // es seguro: proyecto.carreras.nom_carrera es UNIQUE y tanto /itrs (ItrMapper) como
-  // /grupos (GrupoMapper) devuelven esa misma columna, así que para una misma carrera
-  // el string es idéntico en ambos y no hay dos carreras con el mismo nombre.
-  const carrerasDelItr = useMemo(() => {
-    if (filtroItr === "") return [];
-    const itr = itrs.find((i) => i.idItr === filtroItr);
-    if (!itr) return [];
-    const nombres = new Set(itr.carreras);
-    return carreras.filter((c) => nombres.has(c.nomCarrera));
-  }, [filtroItr, itrs, carreras]);
-
-  const gruposDeLaCarrera = useMemo(() => {
-    if (filtroCarrera === "") return [];
-    return grupos.filter((g) => g.idCarrera === filtroCarrera);
-  }, [filtroCarrera, grupos]);
-
-  const gruposSeleccionados = useMemo(
-    () => grupos.filter((g) => form.idGrupos.includes(g.idGrupo)),
-    [grupos, form.idGrupos],
-  );
-
-  // Los grupos actuales del estudiante llegan como nombres (EstudianteResponseDTO.grupos),
-  // hay que resolverlos a id una vez que el catálogo de grupos está cargado.
-  useEffect(() => {
-    if (!esEdicion || grupos.length === 0) return;
-    const nombresActuales = new Set(props.estudiante.grupos);
-    const ids = grupos.filter((g) => nombresActuales.has(g.nomGrupo)).map((g) => g.idGrupo);
-    setForm((f) => ({ ...f, idGrupos: ids }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo debe correr cuando el catálogo de grupos llega
-  }, [grupos]);
-
-  // Al editar, arranca el selector de ITR/carrera ya posicionado en el grupo
-  // vigente del estudiante, en vez de forzarlo a rearmar el camino ITR →
-  // carrera desde cero para ver algo que ya está seleccionado. Solo una vez
-  // (autoseleccionoFiltro) para no pisar una navegación manual posterior.
-  useEffect(() => {
-    if (autoseleccionoFiltro.current) return;
-    if (gruposSeleccionados.length === 0 || itrs.length === 0) return;
-    const primerGrupo = gruposSeleccionados[0];
-    const itrDeLaCarrera = itrs.find((i) => i.carreras.includes(primerGrupo.nomCarrera));
-    autoseleccionoFiltro.current = true;
-    setFiltroCarrera(primerGrupo.idCarrera);
-    if (itrDeLaCarrera) setFiltroItr(itrDeLaCarrera.idItr);
-  }, [gruposSeleccionados, itrs]);
-
-  function alternarFiltroItr(value: string) {
-    setFiltroItr(value ? Number(value) : "");
-    setFiltroCarrera("");
-  }
 
   // El banner de error general puede quedar fuera de la vista si el usuario
   // ya scrolleó hacia una sección más abajo del form (5 fieldsets).
@@ -196,7 +61,7 @@ export function StudentForm(props: StudentFormProps) {
     if (errorGeneral) errorGeneralRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [errorGeneral]);
 
-  function campo<K extends keyof FormState>(key: K, value: FormState[K]) {
+  function campo<K extends keyof EstudianteFormState>(key: K, value: EstudianteFormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
     if (errores[key]) setErrores((e) => ({ ...e, [key]: "" }));
   }
@@ -215,83 +80,15 @@ export function StudentForm(props: StudentFormProps) {
     if (errores[key]) setErrores((e) => ({ ...e, [key]: "" }));
   }
 
-  function alternarGrupo(idGrupo: number) {
-    setForm((f) => ({
-      ...f,
-      idGrupos: f.idGrupos.includes(idGrupo)
-        ? f.idGrupos.filter((id) => id !== idGrupo)
-        : [...f.idGrupos, idGrupo],
-    }));
-  }
-
-  // El orden de los checks importa: define qué campo se enfoca cuando falla
-  // la validación (el primero insertado acá), así que sigue el mismo orden
-  // en que los campos aparecen en la pantalla.
-  function validar(): Record<string, string> {
-    const e: Record<string, string> = {};
-    // Vacío y formato inválido van por separado: con un solo if, un campo obligatorio vacío mostraba el mensaje de formato ("debe ser alfanumérico...") en vez de avisar que falta completarlo.
-    if (!form.nombre.trim()) {
-      e.nombre = "El nombre es obligatorio.";
-    } else if (!TEXTO_REGEX.test(form.nombre)) {
-      e.nombre = "Ingresá un nombre válido (solo letras, números y espacios).";
-    }
-    if (!form.apellido.trim()) {
-      e.apellido = "El apellido es obligatorio.";
-    } else if (!TEXTO_REGEX.test(form.apellido)) {
-      e.apellido = "Ingresá un apellido válido (solo letras, números y espacios).";
-    }
-    if (!esEdicion) {
-      if (!form.documento.trim()) {
-        e.documento = "El documento es obligatorio.";
-      } else if (!DOCUMENTO_REGEX.test(form.documento)) {
-        e.documento = "El documento debe ser alfanumérico, sin espacios.";
-      } else if (form.paisDocumento === "URY" && !isValidUruguayanCi(form.documento)) {
-        e.documento = "La cédula uruguaya ingresada no es válida (dígito verificador incorrecto).";
-      }
-    }
-    if (!form.email.trim()) {
-      e.email = "El email es obligatorio.";
-    } else if (!/^\S+@\S+\.\S+$/.test(form.email)) {
-      e.email = "Ingresá un email válido.";
-    }
-    if (!form.fechaNacimiento) {
-      e.fechaNacimiento = "La fecha de nacimiento es obligatoria.";
-    } else if (form.fechaNacimiento > FECHA_MAX) {
-      e.fechaNacimiento = "El estudiante debe ser mayor de edad (mínimo 18 años).";
-    } else if (form.fechaNacimiento < FECHA_MIN) {
-      e.fechaNacimiento = "La fecha de nacimiento no puede ser mayor a 100 años.";
-    }
-    if (form.calle.trim() && !TEXTO_REGEX.test(form.calle)) {
-      e.calle = TEXTO_INVALIDO_MSG;
-    }
-    if (form.nroPuerta) {
-      const n = Number(form.nroPuerta);
-      if (!Number.isInteger(n) || n < 1 || n > 9999) {
-        e.nroPuerta = NRO_PUERTA_INVALIDO_MSG;
-      }
-    }
-    if (form.ciudad.trim() && !TEXTO_REGEX.test(form.ciudad)) {
-      e.ciudad = TEXTO_INVALIDO_MSG;
-    }
-    if (form.departamento.trim() && !TEXTO_REGEX.test(form.departamento)) {
-      e.departamento = TEXTO_INVALIDO_MSG;
-    }
-    form.telefonos.forEach((tel, idx) => {
-      if (tel.trim() && !TELEFONO_REGEX.test(tel.trim())) {
-        e[`telefono-${idx}`] = TELEFONO_INVALIDO_MSG;
-      }
-    });
-    if (form.sistemaSalud.trim() && !TEXTO_REGEX.test(form.sistemaSalud)) {
-      e.sistemaSalud = TEXTO_INVALIDO_MSG;
-    }
-    return e;
+  function cambiarGrupos(valor: React.SetStateAction<number[]>) {
+    setForm((f) => ({ ...f, idGrupos: typeof valor === "function" ? valor(f.idGrupos) : valor }));
   }
 
   async function handleSubmit(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
     setErrorGeneral("");
 
-    const erroresValidacion = validar();
+    const erroresValidacion = validarEstudiante(form, esEdicion);
     setErrores(erroresValidacion);
     const primerCampoError = Object.keys(erroresValidacion).find((k) => erroresValidacion[k]);
     if (primerCampoError) {
@@ -353,6 +150,8 @@ export function StudentForm(props: StudentFormProps) {
     }
   }
 
+  const seccion = { form, errores, guardando, onCampo: campo };
+
   return (
     <div className="grow overflow-auto">
       <div className="max-w-[720px] mx-auto w-full px-4 py-5">
@@ -372,358 +171,27 @@ export function StudentForm(props: StudentFormProps) {
         ) : null}
 
         {/* noValidate: sin esto, la validación nativa del navegador (required,
-            min/max) intercepta el submit ANTES de que corra validar() — el
+            min/max) intercepta el submit ANTES de que corra validarEstudiante() — el
             foco salta al campo inválido pero nunca se ve el mensaje propio
-            ni queda enganchado a aria-describedby. Todo pasa por validar(). */}
+            ni queda enganchado a aria-describedby. Todo pasa por validarEstudiante(). */}
         <form onSubmit={handleSubmit} noValidate className="space-y-6">
-          <SeccionCard>
-            <SeccionLegend icon={User}>Datos personales</SeccionLegend>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Nombre" fieldKey="nombre" error={errores.nombre} required>
-                <input
-                  className={`input w-full${errores.nombre ? " input-error" : ""}`}
-                  placeholder="Nombre"
-                  value={form.nombre}
-                  maxLength={30}
-                  onChange={(e) => campo("nombre", e.target.value)}
-                  disabled={guardando}
-                  required
-                />
-              </Field>
-              <Field label="Apellido" fieldKey="apellido" error={errores.apellido} required>
-                <input
-                  className={`input w-full${errores.apellido ? " input-error" : ""}`}
-                  placeholder="Apellido"
-                  value={form.apellido}
-                  maxLength={30}
-                  onChange={(e) => campo("apellido", e.target.value)}
-                  disabled={guardando}
-                  required
-                />
-              </Field>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* En edición el documento no se puede cambiar (va deshabilitado), así que no se marca. */}
-              <Field label="Documento" fieldKey="documento" error={errores.documento} required={!esEdicion}>
-                <input
-                  className={`input w-full${errores.documento ? " input-error" : ""}`}
-                  placeholder="Documento"
-                  value={form.documento}
-                  maxLength={12}
-                  onChange={(e) => campo("documento", e.target.value)}
-                  disabled={guardando || esEdicion}
-                  required
-                />
-              </Field>
-              <Field label="País del documento" fieldKey="paisDocumento">
-                <select
-                  className="select w-full"
-                  value={form.paisDocumento}
-                  onChange={(e) => campo("paisDocumento", e.target.value)}
-                  disabled={guardando || esEdicion}
-                >
-                  <optgroup label="Frecuentes">
-                    {PAISES_FRECUENTES.map((p) => (
-                      <option key={p.codigo} value={p.codigo}>
-                        {p.nombre}
-                      </option>
-                    ))}
-                  </optgroup>
-                  {/* Los frecuentes se repiten acá a propósito, para que cada país también esté en su lugar alfabético. */}
-                  <optgroup label="Todos los países">
-                    {PAISES.map((p) => (
-                      <option key={p.codigo} value={p.codigo}>
-                        {p.nombre}
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
-              </Field>
-              <Field
-                label="Fecha de nacimiento"
-                fieldKey="fechaNacimiento"
-                error={errores.fechaNacimiento}
-                required
-              >
-                <input
-                  type="date"
-                  className={`input w-full${errores.fechaNacimiento ? " input-error" : ""}`}
-                  value={form.fechaNacimiento}
-                  min={FECHA_MIN}
-                  max={FECHA_MAX}
-                  onChange={(e) => campo("fechaNacimiento", e.target.value)}
-                  disabled={guardando}
-                  required
-                />
-              </Field>
-            </div>
-
-            <Field label="Email" fieldKey="email" error={errores.email} required>
-              <input
-                type="email"
-                className={`input w-full${errores.email ? " input-error" : ""}`}
-                placeholder="Email"
-                value={form.email}
-                onChange={(e) => campo("email", e.target.value)}
-                disabled={guardando}
-                required
-              />
-            </Field>
-          </SeccionCard>
-
-          <SeccionCard>
-            <SeccionLegend icon={MapPin}>Dirección</SeccionLegend>
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-              <div className="sm:col-span-2">
-                <Field label="Calle" fieldKey="calle" error={errores.calle}>
-                  <input
-                    className={`input w-full${errores.calle ? " input-error" : ""}`}
-                    placeholder="Calle"
-                    value={form.calle}
-                    maxLength={160}
-                    onChange={(e) => campo("calle", e.target.value)}
-                    disabled={guardando}
-                  />
-                </Field>
-              </div>
-              <Field label="Número" fieldKey="nroPuerta" error={errores.nroPuerta}>
-                {/* type="text" + inputMode="numeric" y no type="number": el navegador ignora maxLength en los number, así que dejaba escribir más de 4 dígitos y recién avisaba al validar. Así el tope se aplica mientras se escribe y se descarta todo lo que no sea dígito (también "e", "-", "." que un number acepta). */}
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  className={`input w-full${errores.nroPuerta ? " input-error" : ""}`}
-                  placeholder="Número"
-                  value={form.nroPuerta}
-                  maxLength={4}
-                  onChange={(e) => campo("nroPuerta", e.target.value.replace(/\D/g, ""))}
-                  disabled={guardando}
-                />
-              </Field>
-              <Field label="Ciudad" fieldKey="ciudad" error={errores.ciudad}>
-                <input
-                  className={`input w-full${errores.ciudad ? " input-error" : ""}`}
-                  placeholder="Ciudad"
-                  value={form.ciudad}
-                  maxLength={50}
-                  onChange={(e) => campo("ciudad", e.target.value)}
-                  disabled={guardando}
-                />
-              </Field>
-            </div>
-            <Field label="Departamento" fieldKey="departamento" error={errores.departamento}>
-              <input
-                className={`input w-full sm:w-1/2${errores.departamento ? " input-error" : ""}`}
-                placeholder="Departamento"
-                value={form.departamento}
-                maxLength={20}
-                onChange={(e) => campo("departamento", e.target.value)}
-                disabled={guardando}
-              />
-            </Field>
-          </SeccionCard>
-
-          <SeccionCard>
-            <SeccionLegend icon={Phone}>Teléfonos</SeccionLegend>
-            {form.telefonos.map((tel, idx) => {
-              const key = `telefono-${idx}`;
-              const errorId = `${key}-error`;
-              const errorTel = errores[key];
-              return (
-                <div key={idx}>
-                  <div className="flex gap-2">
-                    <label className="floating-label w-full max-w-xs">
-                      <input
-                        id={key}
-                        className={`input w-full${errorTel ? " input-error" : ""}`}
-                        placeholder="Teléfono"
-                        aria-label={`Teléfono ${idx + 1}`}
-                        value={tel}
-                        maxLength={12}
-                        onChange={(e) => cambiarTelefono(idx, e.target.value)}
-                        disabled={guardando}
-                        aria-invalid={errorTel ? true : undefined}
-                        aria-describedby={errorTel ? errorId : undefined}
-                      />
-                      <span>Teléfono</span>
-                    </label>
-                    {form.telefonos.length > 1 ? (
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => quitarTelefono(idx)}
-                        disabled={guardando}
-                        aria-label="Quitar teléfono"
-                      >
-                        <X size={14} aria-hidden />
-                      </button>
-                    ) : null}
-                  </div>
-                  {errorTel ? (
-                    <p id={errorId} className="mt-1 text-xs text-error">
-                      {errorTel}
-                    </p>
-                  ) : null}
-                </div>
-              );
-            })}
-            <button
-              type="button"
-              className="btn btn-link btn-sm pl-0 gap-1 text-sky-700"
-              onClick={agregarTelefono}
-              disabled={guardando}
-            >
-              <Plus size={14} aria-hidden />
-              Agregar teléfono
-            </button>
-          </SeccionCard>
-
-          {/* La sección depende solo de /grupos, como antes del selector por ITR: sin grupos no hay
-              nada que asignar. /itrs solo decide CÓMO se elige (ver más abajo). */}
-          {grupos.length > 0 ? (
-            <SeccionCard>
-              <SeccionLegend icon={Users}>Grupos</SeccionLegend>
-
-              {!itrsListos ? (
-                <span className="loading loading-spinner loading-sm" role="status" aria-label="Cargando grupos" />
-              ) : itrs.length === 0 ? (
-                /* Respaldo: /itrs falló o no devolvió ningún ITR activo. Sin ITR no hay cascada
-                   posible, así que se ofrece la lista plana de todos los grupos, igual que antes
-                   del selector por ITR/carrera. */
-                <div className="flex flex-wrap gap-2">
-                  {grupos.map((g) => (
-                    <GrupoChip
-                      key={g.idGrupo}
-                      seleccionado={form.idGrupos.includes(g.idGrupo)}
-                      disabled={guardando}
-                      onToggle={() => alternarGrupo(g.idGrupo)}
-                    >
-                      {g.nomGrupo} — {g.nomCarrera}
-                    </GrupoChip>
-                  ))}
-                </div>
-              ) : (
-                <>
-                  {gruposSeleccionados.length > 0 ? (
-                    <div>
-                      <p className="text-xs font-medium text-base-content/70 mb-1">Asignados</p>
-                      {/* Se muestran siempre, sin importar el filtro ITR/carrera vigente —
-                          si no, cambiar el filtro para agregar otro grupo hace "desaparecer"
-                          de la vista uno ya elegido, aunque siga asignado. */}
-                      <div className="flex flex-wrap gap-2">
-                        {gruposSeleccionados.map((g) => (
-                          <span key={g.idGrupo} className="badge badge-primary gap-1.5 h-auto min-h-6 py-1 max-w-full text-left wrap-anywhere">
-                            {g.nomGrupo} · {g.generacion} — {g.nomCarrera}
-                            <button
-                              type="button"
-                              className="hover:opacity-70"
-                              onClick={() => alternarGrupo(g.idGrupo)}
-                              disabled={guardando}
-                              aria-label={`Quitar ${g.nomGrupo}`}
-                            >
-                              <X size={12} aria-hidden />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Field label="ITR" fieldKey="itr">
-                      <select
-                        className="select w-full"
-                        value={filtroItr}
-                        onChange={(e) => alternarFiltroItr(e.target.value)}
-                        disabled={guardando}
-                      >
-                        <option value="">Seleccioná un ITR</option>
-                        {itrs.map((i) => (
-                          <option key={i.idItr} value={i.idItr}>
-                            {i.nomItr}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-                    <Field label="Carrera" fieldKey="carrera">
-                      <select
-                        className="select w-full"
-                        value={filtroCarrera}
-                        onChange={(e) => setFiltroCarrera(e.target.value ? Number(e.target.value) : "")}
-                        disabled={guardando || filtroItr === ""}
-                      >
-                        <option value="">
-                          {filtroItr === "" ? "Elegí un ITR primero" : "Seleccioná una carrera"}
-                        </option>
-                        {carrerasDelItr.map((c) => (
-                          <option key={c.idCarrera} value={c.idCarrera}>
-                            {c.nomCarrera}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-                  </div>
-
-                  {filtroCarrera !== "" ? (
-                    gruposDeLaCarrera.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {gruposDeLaCarrera.map((g) => (
-                          <GrupoChip
-                            key={g.idGrupo}
-                            seleccionado={form.idGrupos.includes(g.idGrupo)}
-                            disabled={guardando}
-                            onToggle={() => alternarGrupo(g.idGrupo)}
-                          >
-                            {g.nomGrupo} · {g.generacion}
-                          </GrupoChip>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-base-content/70">No hay grupos activos para esta carrera.</p>
-                    )
-                  ) : null}
-                </>
-              )}
-            </SeccionCard>
-          ) : null}
-
-          <SeccionCard>
-            <SeccionLegend icon={HeartPulse}>Información de salud</SeccionLegend>
-            <div role="note" className="alert alert-info alert-soft text-sm">
-              <Info size={16} aria-hidden />
-              <span>Esta información solo la ven funcionarios con permiso para ver datos de salud.</span>
-            </div>
-            <Field label="Información de salud" fieldKey="informacionSalud">
-              <textarea
-                className="textarea w-full"
-                placeholder="Información de salud"
-                rows={2}
-                value={form.informacionSalud}
-                onChange={(e) => campo("informacionSalud", e.target.value)}
-                disabled={guardando}
-              />
-            </Field>
-            <Field label="Motivo de derivación" fieldKey="motivoDerivacion">
-              <textarea
-                className="textarea w-full"
-                placeholder="Motivo de derivación"
-                rows={2}
-                value={form.motivoDerivacion}
-                onChange={(e) => campo("motivoDerivacion", e.target.value)}
-                disabled={guardando}
-              />
-            </Field>
-            <Field label="Sistema de salud" fieldKey="sistemaSalud" error={errores.sistemaSalud}>
-              <input
-                className={`input w-full${errores.sistemaSalud ? " input-error" : ""}`}
-                placeholder="Sistema de salud"
-                value={form.sistemaSalud}
-                maxLength={80}
-                onChange={(e) => campo("sistemaSalud", e.target.value)}
-                disabled={guardando}
-              />
-            </Field>
-          </SeccionCard>
+          <DatosPersonalesSeccion {...seccion} esEdicion={esEdicion} />
+          <DireccionSeccion {...seccion} />
+          <TelefonosSeccion
+            telefonos={form.telefonos}
+            errores={errores}
+            guardando={guardando}
+            onAgregar={agregarTelefono}
+            onQuitar={quitarTelefono}
+            onCambiar={cambiarTelefono}
+          />
+          <SelectorGrupos
+            idGrupos={form.idGrupos}
+            onChange={cambiarGrupos}
+            gruposActuales={esEdicion ? props.estudiante.grupos : undefined}
+            guardando={guardando}
+          />
+          <SaludSeccion {...seccion} />
 
           <div className="flex justify-end gap-2">
             <button
@@ -742,86 +210,5 @@ export function StudentForm(props: StudentFormProps) {
         </form>
       </div>
     </div>
-  );
-}
-
-// floating-label de daisyUI 5: el input va PRIMERO (con placeholder propio),
-// el <span> con la etiqueta después. `fieldKey` se usa como id del control
-// (así handleSubmit puede enfocar el primer campo inválido con
-// document.getElementById) y arma el id del <p> de error para
-// aria-describedby — un lector de pantalla que tabula a un campo inválido
-// necesita esa asociación, no alcanza con el color rojo.
-// `required` agrega el asterisco a la etiqueta, igual que en los formularios de roles y catálogos.
-function Field({
-  label,
-  error,
-  fieldKey,
-  required,
-  children,
-}: {
-  label: string;
-  error?: string;
-  fieldKey: string;
-  required?: boolean;
-  children: React.ReactElement;
-}) {
-  const errorId = `${fieldKey}-error`;
-  // Con el campo vacío y sin foco, floating-label oculta el <span> y lo que se ve es el placeholder: el
-  // asterisco tiene que ir también ahí, o el obligatorio recién se nota al enfocar o escribir.
-  const placeholder = isValidElement(children)
-    ? (children.props as Record<string, unknown>).placeholder
-    : undefined;
-  const control = isValidElement(children)
-    ? cloneElement(children as React.ReactElement<Record<string, unknown>>, {
-        id: fieldKey,
-        "aria-invalid": error ? true : undefined,
-        "aria-describedby": error ? errorId : undefined,
-        ...(required && typeof placeholder === "string" ? { placeholder: `${placeholder} *` } : {}),
-      })
-    : children;
-
-  return (
-    <div>
-      <label className="floating-label">
-        {control}
-        <span>
-          {label}
-          {required ? " *" : ""}
-        </span>
-      </label>
-      {error ? (
-        <p id={errorId} className="mt-1 text-xs text-error">
-          {error}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-// Chip seleccionable de un grupo. Es el mismo botón-checkbox que usaban la cascada ITR → carrera y
-// el respaldo de lista plana, extraído para no duplicarlo. Chips en vez de checkboxes con texto: el
-// estado seleccionado/no seleccionado se ve de un vistazo, mismo lenguaje que los badges de estado
-// del estudiante. El <input> real queda oculto pero maneja el estado accesible.
-function GrupoChip({
-  seleccionado,
-  disabled,
-  onToggle,
-  children,
-}: {
-  seleccionado: boolean;
-  disabled: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <label
-      className={`btn btn-sm rounded-full normal-case font-normal h-auto min-h-8 py-1 max-w-full wrap-anywhere has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary ${
-        seleccionado ? "btn-primary" : "btn-outline"
-      }${disabled ? " btn-disabled" : ""}`}
-    >
-      <input type="checkbox" className="sr-only" checked={seleccionado} onChange={onToggle} disabled={disabled} />
-      {seleccionado ? <Check size={14} aria-hidden /> : null}
-      {children}
-    </label>
   );
 }
