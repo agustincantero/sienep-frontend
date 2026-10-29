@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil, ShieldCheck, ShieldX } from "lucide-react";
+import { useAvisoVisible } from "@/lib/use-aviso-visible";
 import { apiErrorMessage } from "@/lib/api";
 import {
   deactivateRole,
@@ -43,6 +44,8 @@ export function RolesListView() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
+  const avisoExitoRef = useAvisoVisible<HTMLDivElement>(exito);
+  const avisoErrorRef = useAvisoVisible<HTMLDivElement>(error);
   const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
   const [idADesactivar, setIdADesactivar] = useState<number | null>(null);
 
@@ -139,13 +142,13 @@ export function RolesListView() {
         />
 
         {exito ? (
-          <div role="status" className="alert alert-success alert-soft text-sm mb-3">
+          <div ref={avisoExitoRef} role="status" className="alert alert-success alert-soft text-sm mb-3">
             <span>{exito}</span>
           </div>
         ) : null}
 
         {error ? (
-          <div role="alert" className="alert alert-error alert-soft text-sm mb-3">
+          <div ref={avisoErrorRef} role="alert" className="alert alert-error alert-soft text-sm mb-3">
             <span>{error}</span>
           </div>
         ) : null}
