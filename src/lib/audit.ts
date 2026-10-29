@@ -87,8 +87,8 @@ export type DetalleNotificacion = {
 
 // Texto de cada tipo de notificación que audita el backend.
 const TIPO_NOTIFICACION: Record<string, string> = {
-  INSTANCIA_CREADA: "Aviso de instancia registrada (RF15)",
-  RECORDATORIO_PROXIMO: "Aviso de recordatorio próximo a vencer (RF23)",
+  INSTANCIA_CREADA: "Aviso de instancia registrada",
+  RECORDATORIO_PROXIMO: "Aviso de recordatorio próximo a vencer",
 };
 
 export function detalleNotificacion(evento: AuditEvent): DetalleNotificacion | null {
