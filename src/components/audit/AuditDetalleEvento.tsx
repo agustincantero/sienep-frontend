@@ -1,5 +1,5 @@
-import { ArrowRight } from "lucide-react";
-import { type AuditAction, type AuditEvent } from "@/lib/audit";
+import { ArrowRight, CircleAlert, CircleCheck } from "lucide-react";
+import { detalleNotificacion, type AuditAction, type AuditEvent, type DetalleNotificacion } from "@/lib/audit";
 import { formatFechaHora } from "@/lib/format";
 
 // Clases completas a mano: un template literal armado en runtime no lo detecta el escaneo estático de Tailwind.
@@ -9,6 +9,7 @@ const BORDE_ACCION: Record<AuditAction, string> = {
   DELETE: "border-l-error",
   LOGIN: "border-l-neutral",
   LOGOUT: "border-l-base-300",
+  NOTIFICACION: "border-l-info",
 };
 
 // created_at / updated_at (o createdAt / updatedAt) cambian en casi todo UPDATE y tapan lo que realmente se editó.
@@ -73,6 +74,44 @@ function FilaDeCambio({ campo, anterior, nuevo }: { campo: string; anterior: Val
   );
 }
 
+// Una NOTIFICACION no es una fila de una tabla sino el resultado de un envío: se muestra si salió o falló y a quién, en vez de la lista de campos crudos.
+function DetalleDeNotificacion({ detalle }: { detalle: DetalleNotificacion }) {
+  const datos: [string, string | null][] = [
+    ["Tipo", detalle.tipo],
+    ["Registro", detalle.idNegocio],
+    ["Destinatario", detalle.destinatario],
+    ["Canal", detalle.canal],
+  ];
+  return (
+    <>
+      {detalle.enviada ? (
+        <div role="status" className="alert alert-success alert-soft text-sm mb-4">
+          <CircleCheck size={16} aria-hidden />
+          <span>La notificación se envió correctamente.</span>
+        </div>
+      ) : (
+        <div role="status" className="alert alert-error alert-soft text-sm mb-4">
+          <CircleAlert size={16} aria-hidden />
+          <span>
+            La notificación no se pudo enviar.
+            {detalle.motivo ? <> Motivo: <span className="font-medium wrap-anywhere">{detalle.motivo}</span></> : null}
+          </span>
+        </div>
+      )}
+      <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+        {datos.map(([etiqueta, valor]) => (
+          <div key={etiqueta} className="flex flex-col min-w-0">
+            <dt className="text-xs text-base-content/70">{etiqueta}</dt>
+            <dd className="text-sm">
+              <ValorTexto valor={valor ? { texto: valor, vacio: false } : { texto: "Sin valor", vacio: true }} />
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </>
+  );
+}
+
 // valorAnterior/valorNuevo son la FILA ENTERA (to_jsonb(OLD)/to_jsonb(NEW) del trigger), no solo el campo que cambió: en una edición se muestra primero lo que difiere y el resto queda plegado.
 export function AuditDetalleEvento({ evento }: { evento: AuditEvent }) {
   const { valorAnterior, valorNuevo, accion } = evento;
@@ -80,8 +119,11 @@ export function AuditDetalleEvento({ evento }: { evento: AuditEvent }) {
   if (!valorAnterior && !valorNuevo) return null;
 
   let cuerpo: React.ReactNode;
+  const notificacion = detalleNotificacion(evento);
 
-  if (!valorAnterior || !valorNuevo) {
+  if (notificacion) {
+    cuerpo = <DetalleDeNotificacion detalle={notificacion} />;
+  } else if (!valorAnterior || !valorNuevo) {
     // Alta o baja: solo existe un lado, no hay nada que comparar.
     const fila = (valorNuevo ?? valorAnterior) as Record<string, unknown>;
     cuerpo = (
