@@ -7,6 +7,16 @@ import { ChevronsLeft, Hand } from "lucide-react";
 const CLAVE_PISTA = "pista-desplazamiento-tabla";
 // Milisegundos que el ícono de deslizar queda visible si nadie toca ni desplaza la tabla antes.
 const DURACION_PISTA = 4500;
+// Guarda qué instancia de la tabla está mostrando el ícono ahora mismo, para que dos tablas en la misma pantalla no lo muestren juntas antes de que una lo descarte en sessionStorage.
+let pistaEnPantalla: object | null = null;
+
+function pistaYaVista(): boolean {
+  try {
+    return sessionStorage.getItem(CLAVE_PISTA) !== null;
+  } catch {
+    return false;
+  }
+}
 
 // Un header puede ser un string (alineado a la izquierda) o un objeto con `align` para columnas como "Identificador" que leen mejor centradas.
 export type DataTableHeader = string | { label: string; align?: "center" | "right" };
@@ -19,6 +29,8 @@ type DataTableProps = {
 // Tabla compartida por los listados. En pantallas angostas se desplaza en horizontal y lo avisa con sombras en los bordes (siempre que haya más columnas de ese lado) y con un ícono de deslizar que aparece una vez por sesión.
 export function DataTable({ headers, children }: DataTableProps) {
   const contenedorRef = useRef<HTMLDivElement>(null);
+  // Sigue el estado de la pista en esta tabla ("inactiva" en escritorio o tras descartarla) para no escribir en sessionStorage en cada scroll y para no mostrarla a los 700 ms si ya hubo un toque.
+  const estadoPistaRef = useRef<"inactiva" | "pendiente" | "visible">("inactiva");
   // Si queda contenido fuera de la vista a la izquierda y a la derecha, para mostrar la sombra de cada borde.
   const [bordes, setBordes] = useState({ izquierda: false, derecha: false });
   // Si el ícono de deslizar se está mostrando.
@@ -26,7 +38,12 @@ export function DataTable({ headers, children }: DataTableProps) {
 
   // La pista se da por vista al ocultarse y no al aparecer, así que si la tabla se desmonta enseguida (el listado de estudiantes se vuelve a montar al restaurar sus filtros) la próxima todavía la muestra.
   const descartarPista = useCallback(() => {
-    setPista(false);
+    if (estadoPistaRef.current === "inactiva") return;
+    if (estadoPistaRef.current === "visible") {
+      pistaEnPantalla = null;
+      setPista(false);
+    }
+    estadoPistaRef.current = "inactiva";
     try {
       sessionStorage.setItem(CLAVE_PISTA, "1");
     } catch {}
@@ -57,19 +74,27 @@ export function DataTable({ headers, children }: DataTableProps) {
     const el = contenedorRef.current;
     if (!el) return;
     if (!window.matchMedia("(max-width: 767px)").matches) return;
-    try {
-      if (sessionStorage.getItem(CLAVE_PISTA)) return;
-    } catch {}
+    if (pistaEnPantalla || pistaYaVista()) return;
 
+    const instancia = {};
+    estadoPistaRef.current = "pendiente";
     let ocultar: ReturnType<typeof setTimeout> | undefined;
-    // La pausa de 700 ms deja que la tabla termine de montarse y medirse, y evita mostrar el ícono si la persona ya la desplazó.
+    // La pausa de 700 ms deja que la tabla termine de montarse y medirse, y evita mostrar el ícono si la persona ya la tocó o desplazó.
     const mostrar = setTimeout(() => {
-      if (el.scrollWidth <= el.clientWidth || el.scrollLeft > 0) return;
+      if (estadoPistaRef.current !== "pendiente") return;
+      if (pistaEnPantalla || pistaYaVista() || el.scrollWidth <= el.clientWidth || el.scrollLeft > 0) {
+        estadoPistaRef.current = "inactiva";
+        return;
+      }
+      estadoPistaRef.current = "visible";
+      pistaEnPantalla = instancia;
       setPista(true);
       ocultar = setTimeout(descartarPista, DURACION_PISTA);
     }, 700);
 
     return () => {
+      if (pistaEnPantalla === instancia) pistaEnPantalla = null;
+      estadoPistaRef.current = "inactiva";
       clearTimeout(mostrar);
       clearTimeout(ocultar);
     };
