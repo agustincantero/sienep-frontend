@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Calendar, FileText, HeartPulse, Info, MessageSquare, TriangleAlert, User } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { formatFecha } from "@/lib/format";
 import { nombrePais } from "@/lib/paises";
 import { getStudent, resendStudentPassword, uploadStudentPhoto, type Student } from "@/lib/students";
@@ -56,12 +57,15 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
   const puedeVerSalud = permisos.includes("VER_BLOQUE_CONFIDENCIAL");
   const puedeEditar = permisos.includes("EDITAR_ESTUDIANTE");
 
-  const [estudiante, setEstudiante] = useState<Student | null>(null);
-  const [cargando, setCargando] = useState(true);
   // errorCarga: falló el GET inicial, no hay estudiante que mostrar (bloquea
   // la página). error: falló una ACCIÓN posterior (foto, reenviar
   // contraseña) — se muestra junto a los datos ya cargados, no los tapa.
-  const [errorCarga, setErrorCarga] = useState("");
+  const {
+    data: estudiante,
+    setData: setEstudiante,
+    cargando,
+    errorCarga,
+  } = useApi(() => getStudent(idEstudiante), [idEstudiante], { mensajeError: "No se pudo cargar el estudiante." });
   const [error, setError] = useState("");
   const [tab, setTab] = useState<Tab>(esTab(tabInicial) ? tabInicial : "datos");
   const [subiendoFoto, setSubiendoFoto] = useState(false);
@@ -86,29 +90,6 @@ export function StudentProfile({ idEstudiante, tabInicial }: { idEstudiante: num
       window.history.replaceState(null, "", window.location.pathname);
     }
   }, []);
-
-  // cancelado: si idEstudiante cambia mientras un GET anterior todavía está
-  // en vuelo (navegación rápida entre dos fichas), esa respuesta vieja no
-  // debe pisar los datos del estudiante nuevo que ya está cargando.
-  useEffect(() => {
-    let cancelado = false;
-    getStudent(idEstudiante)
-      .then((s) => {
-        if (cancelado) return;
-        setEstudiante(s);
-        setErrorCarga("");
-      })
-      .catch((err) => {
-        if (cancelado) return;
-        setErrorCarga(apiErrorMessage(err, "No se pudo cargar el estudiante."));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [idEstudiante]);
 
   async function handleFoto(ev: React.ChangeEvent<HTMLInputElement>) {
     const foto = ev.target.files?.[0];

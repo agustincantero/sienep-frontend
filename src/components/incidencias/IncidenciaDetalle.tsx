@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { apiErrorMessage } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { formatFechaHora } from "@/lib/format";
 import { nombreConDocumento } from "@/lib/identificacion";
-import { deactivateIncidencia, getIncidencia, reactivateIncidencia, type Incidencia } from "@/lib/incidencias";
+import { deactivateIncidencia, getIncidencia, reactivateIncidencia } from "@/lib/incidencias";
 import { useSession } from "@/lib/session-context";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EstadoBadge } from "@/components/instancias/EstadoBadge";
@@ -27,32 +28,15 @@ export function IncidenciaDetalle({
   const puedeDesactivar = permisos.includes("DESACTIVAR_INCIDENCIA");
   const puedeReactivar = permisos.includes("REACTIVAR_INCIDENCIA");
 
-  const [incidencia, setIncidencia] = useState<Incidencia | null>(null);
-  const [cargando, setCargando] = useState(true);
-  const [errorCarga, setErrorCarga] = useState("");
+  const {
+    data: incidencia,
+    setData: setIncidencia,
+    cargando,
+    errorCarga,
+  } = useApi(() => getIncidencia(codInstancia), [codInstancia], { mensajeError: "No se pudo cargar la incidencia." });
   const [error, setError] = useState("");
   const [confirmandoBaja, setConfirmandoBaja] = useState(false);
   const [procesando, setProcesando] = useState(false);
-
-  useEffect(() => {
-    let cancelado = false;
-    getIncidencia(codInstancia)
-      .then((i) => {
-        if (cancelado) return;
-        setIncidencia(i);
-        setErrorCarga("");
-      })
-      .catch((err) => {
-        if (cancelado) return;
-        setErrorCarga(apiErrorMessage(err, "No se pudo cargar la incidencia."));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [codInstancia]);
 
   async function confirmarDesactivar() {
     setConfirmandoBaja(false);

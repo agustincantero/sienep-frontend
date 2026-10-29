@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { User } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { useFotoPerfil } from "@/lib/foto-perfil-context";
 import { iniciales } from "@/lib/format";
 import { useSession } from "@/lib/session-context";
-import { getMiPerfil, uploadStudentPhoto, type MiPerfilEstudiante } from "@/lib/students";
+import { getMiPerfil, uploadStudentPhoto } from "@/lib/students";
 import { EstadoBadge } from "@/components/students/EstadoBadge";
 import { StudentAvatar } from "@/components/students/StudentAvatar";
 import { CambiarContraseniaForm } from "./CambiarContraseniaForm";
@@ -55,35 +56,18 @@ function PerfilFuncionario() {
 
 function PerfilEstudiante() {
   const { urlFoto, actualizarFoto } = useFotoPerfil();
-  const [perfil, setPerfil] = useState<MiPerfilEstudiante | null>(null);
-  const [cargando, setCargando] = useState(true);
-  const [errorCarga, setErrorCarga] = useState("");
+  const {
+    data: perfil,
+    setData: setPerfil,
+    cargando,
+    errorCarga,
+  } = useApi(() => getMiPerfil(), [], { mensajeError: "No se pudo cargar tu perfil." });
   const [errorFoto, setErrorFoto] = useState("");
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   // Foto elegida pero todavía no guardada: se muestra como vista previa hasta que se confirme o se cancele. El backend nunca borra la foto anterior del disco, así que conviene no subir una equivocada.
   const [fotoPendiente, setFotoPendiente] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const inputFotoRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    let cancelado = false;
-    getMiPerfil()
-      .then((p) => {
-        if (cancelado) return;
-        setPerfil(p);
-        setErrorCarga("");
-      })
-      .catch((err) => {
-        if (cancelado) return;
-        setErrorCarga(apiErrorMessage(err, "No se pudo cargar tu perfil."));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, []);
 
   // La object URL de la vista previa ocupa memoria hasta que se libera: se revoca al cambiar de archivo o al desmontar.
   useEffect(() => {

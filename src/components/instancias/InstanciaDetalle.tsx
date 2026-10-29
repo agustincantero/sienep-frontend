@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { apiErrorMessage } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { formatFechaHora } from "@/lib/format";
 import { nombreConDocumento } from "@/lib/identificacion";
-import { deactivateInstancia, getInstancia, reactivateInstancia, type InstanciaComun } from "@/lib/instancias";
+import { deactivateInstancia, getInstancia, reactivateInstancia } from "@/lib/instancias";
 import { useSession } from "@/lib/session-context";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EstadoBadge } from "./EstadoBadge";
@@ -28,32 +29,15 @@ export function InstanciaDetalle({
   const puedeReactivar = permisos.includes("REACTIVAR_INSTANCIA");
   const puedeVerRecordatorios = permisos.includes("VER_RECORDATORIOS");
 
-  const [instancia, setInstancia] = useState<InstanciaComun | null>(null);
-  const [cargando, setCargando] = useState(true);
-  const [errorCarga, setErrorCarga] = useState("");
+  const {
+    data: instancia,
+    setData: setInstancia,
+    cargando,
+    errorCarga,
+  } = useApi(() => getInstancia(codInstancia), [codInstancia], { mensajeError: "No se pudo cargar la instancia." });
   const [error, setError] = useState("");
   const [confirmandoBaja, setConfirmandoBaja] = useState(false);
   const [procesando, setProcesando] = useState(false);
-
-  useEffect(() => {
-    let cancelado = false;
-    getInstancia(codInstancia)
-      .then((i) => {
-        if (cancelado) return;
-        setInstancia(i);
-        setErrorCarga("");
-      })
-      .catch((err) => {
-        if (cancelado) return;
-        setErrorCarga(apiErrorMessage(err, "No se pudo cargar la instancia."));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [codInstancia]);
 
   async function confirmarDesactivar() {
     setConfirmandoBaja(false);
