@@ -169,6 +169,17 @@ input:-webkit-autofill:focus {
   box-shadow: 0 2px 8px -2px rgb(0 0 0 / 0.15);
 }
 
+/* Mano del ícono de deslizar de DataTable. Va y viene hacia la izquierda, que es el sentido en que se desliza para ver más columnas. */
+@keyframes deslizar-mano {
+  0%,
+  100% {
+    transform: translateX(8px);
+  }
+  50% {
+    transform: translateX(-8px);
+  }
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
