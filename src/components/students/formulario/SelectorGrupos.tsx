@@ -8,18 +8,18 @@ import { Field } from "@/components/ui/Field";
 import { SeccionCard, SeccionLegend } from "@/components/ui/SeccionFormulario";
 
 // Sección "Grupos" de StudentForm: carga /grupos y /itrs y deja elegir los grupos con la cascada ITR → carrera.
-// `gruposActuales` son los nombres de los grupos vigentes del estudiante (solo en edición).
+// `idGrupos` llega con los grupos vigentes del estudiante en la edición y vacío en el alta.
 export function SelectorGrupos({
   idGrupos,
   onChange,
-  gruposActuales,
   guardando,
 }: {
   idGrupos: number[];
   onChange: React.Dispatch<React.SetStateAction<number[]>>;
-  gruposActuales?: string[];
   guardando: boolean;
 }) {
+  // Grupos con los que se abrió el formulario: el selector ITR/carrera se posiciona en ellos (ver más abajo).
+  const [idGruposIniciales] = useState(idGrupos);
   const [grupos, setGrupos] = useState<Group[]>([]);
   const [itrs, setItrs] = useState<Itr[]>([]);
   // Distingue "todavía no llegó /itrs" de "llegó vacío o falló": sin esto, la sección
@@ -73,12 +73,13 @@ export function SelectorGrupos({
     [grupos, idGrupos],
   );
 
-  // Los grupos actuales del estudiante llegan como nombres (EstudianteResponseDTO.grupos),
-  // hay que resolverlos a id una vez que el catálogo de grupos está cargado.
+  // El catálogo trae solo los grupos ACTIVOS. Si el estudiante sigue en un grupo dado de baja, se saca de la
+  // selección al llegar el catálogo: el backend rechaza con 422 cualquier grupo inactivo y no dejaría guardar
+  // ningún otro cambio. Es lo mismo que pasaba cuando los grupos se resolvían por nombre contra este catálogo.
   useEffect(() => {
-    if (!gruposActuales || grupos.length === 0) return;
-    const nombresActuales = new Set(gruposActuales);
-    onChange(grupos.filter((g) => nombresActuales.has(g.nomGrupo)).map((g) => g.idGrupo));
+    if (grupos.length === 0) return;
+    const activos = new Set(grupos.map((g) => g.idGrupo));
+    onChange((ids) => ids.filter((id) => activos.has(id)));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo debe correr cuando el catálogo de grupos llega
   }, [grupos]);
 
@@ -86,13 +87,17 @@ export function SelectorGrupos({
   // vigente del estudiante, en vez de forzarlo a rearmar el camino ITR →
   // carrera desde cero para ver algo que ya está seleccionado. Solo una vez
   // (autoseleccionoFiltro) para no pisar una navegación manual posterior.
+  // Mira los grupos con los que se abrió el formulario y no la selección actual: si no, en el alta el
+  // filtro saltaba solo al primer ITR de la carrera apenas se elegía el primer grupo.
   // Se ajusta durante el render y no en un efecto, como recomienda React para estado derivado de props.
-  if (!autoseleccionoFiltro && gruposSeleccionados.length > 0 && itrs.length > 0) {
-    const primerGrupo = gruposSeleccionados[0];
-    const itrDeLaCarrera = itrs.find((i) => i.carreras.includes(primerGrupo.nomCarrera));
-    setAutoseleccionoFiltro(true);
-    setFiltroCarrera(primerGrupo.idCarrera);
-    if (itrDeLaCarrera) setFiltroItr(itrDeLaCarrera.idItr);
+  if (!autoseleccionoFiltro && itrs.length > 0) {
+    const primerGrupo = grupos.find((g) => idGruposIniciales.includes(g.idGrupo));
+    if (primerGrupo) {
+      const itrDeLaCarrera = itrs.find((i) => i.carreras.includes(primerGrupo.nomCarrera));
+      setAutoseleccionoFiltro(true);
+      setFiltroCarrera(primerGrupo.idCarrera);
+      if (itrDeLaCarrera) setFiltroItr(itrDeLaCarrera.idItr);
+    }
   }
 
   function alternarFiltroItr(value: string) {
