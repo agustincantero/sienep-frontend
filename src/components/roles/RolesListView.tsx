@@ -82,6 +82,7 @@ export function RolesListView() {
     setIdADesactivar(null);
     setAccionEnCursoId(id);
     setExito("");
+    setError("");
     try {
       await deactivateRole(id);
       setRoles((prev) =>
@@ -100,6 +101,7 @@ export function RolesListView() {
     const rol = roles.find((r) => r.idRol === id);
     setAccionEnCursoId(id);
     setExito("");
+    setError("");
     try {
       await reactivateRole(id);
       setRoles((prev) =>

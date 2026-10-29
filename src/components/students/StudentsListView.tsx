@@ -251,6 +251,7 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
     setIdADesactivar(null);
     setAccionEnCursoId(id);
     setExito("");
+    setError("");
     try {
       // confirmar=true solo si se le mostraron los procesos abiertos: si aparecieron otros entre la consulta y
       // la confirmación, el backend responde 409 y su mensaje se muestra como error.
@@ -267,6 +268,7 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
     const estudiante = estudiantes.find((e) => e.idUsuario === id);
     setAccionEnCursoId(id);
     setExito("");
+    setError("");
     try {
       await reactivateStudent(id);
       setEstudiantes((prev) => prev.map((e) => (e.idUsuario === id ? { ...e, estado: "ACTIVO" } : e)));
