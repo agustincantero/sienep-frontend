@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { Ban, Pencil, Send, ShieldAlert, Trash2 } from "lucide-react";
+import { Ban, Info, Pencil, Send, ShieldAlert, Trash2 } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFechaHora } from "@/lib/format";
 import type { ComentarioInstancia } from "@/lib/instancia-comentarios";
@@ -211,7 +211,8 @@ function ComentarioBox<T extends ComentarioInstancia>({
     <div>
       <h6 className="text-sm font-semibold mb-2">{titulo}</h6>
       {confidencial ? (
-        <div role="note" className="alert alert-soft text-sm mb-3">
+        <div role="note" className="alert alert-info alert-soft text-sm mb-3">
+          <Info size={16} aria-hidden />
           <span>Estos comentarios solo los ven funcionarios con permiso para verlos.</span>
         </div>
       ) : null}

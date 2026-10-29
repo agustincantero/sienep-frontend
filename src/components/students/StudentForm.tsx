@@ -2,7 +2,7 @@
 
 import { cloneElement, isValidElement, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, HeartPulse, MapPin, Phone, Plus, User, Users, X } from "lucide-react";
+import { Check, HeartPulse, Info, MapPin, Phone, Plus, User, Users, X } from "lucide-react";
 import { apiErrorMessage, ApiError } from "@/lib/api";
 import { isValidUruguayanCi } from "@/lib/document-validation";
 import { PAISES, PAISES_FRECUENTES } from "@/lib/paises";
@@ -689,7 +689,8 @@ export function StudentForm(props: StudentFormProps) {
 
           <SeccionCard>
             <SeccionLegend icon={HeartPulse}>Información de salud</SeccionLegend>
-            <div role="note" className="alert alert-soft text-sm">
+            <div role="note" className="alert alert-info alert-soft text-sm">
+              <Info size={16} aria-hidden />
               <span>Esta información solo la ven funcionarios con permiso para ver datos de salud.</span>
             </div>
             <Field label="Información de salud" fieldKey="informacionSalud">
