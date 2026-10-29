@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, FilterX, Pencil, Plus, UserCheck, UserX } from "lucide-react";
+import { useAvisoVisible } from "@/lib/use-aviso-visible";
 import { apiErrorMessage } from "@/lib/api";
 import {
   ESTADOS,
@@ -153,6 +154,8 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
+  const avisoExitoRef = useAvisoVisible<HTMLDivElement>(exito);
+  const avisoErrorRef = useAvisoVisible<HTMLDivElement>(error);
   const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
   const [idADesactivar, setIdADesactivar] = useState<number | null>(null);
   // RF06 — procesos abiertos del estudiante a desactivar ("2 instancias agendadas y ..."), o null si no tiene.
@@ -248,6 +251,7 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
     setIdADesactivar(null);
     setAccionEnCursoId(id);
     setExito("");
+    setError("");
     try {
       // confirmar=true solo si se le mostraron los procesos abiertos: si aparecieron otros entre la consulta y
       // la confirmación, el backend responde 409 y su mensaje se muestra como error.
@@ -264,6 +268,7 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
     const estudiante = estudiantes.find((e) => e.idUsuario === id);
     setAccionEnCursoId(id);
     setExito("");
+    setError("");
     try {
       await reactivateStudent(id);
       setEstudiantes((prev) => prev.map((e) => (e.idUsuario === id ? { ...e, estado: "ACTIVO" } : e)));
@@ -361,13 +366,13 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
         ) : null}
 
         {exito ? (
-          <div role="status" className="alert alert-success alert-soft text-sm mb-3">
+          <div ref={avisoExitoRef} role="status" className="alert alert-success alert-soft text-sm mb-3">
             <span>{exito}</span>
           </div>
         ) : null}
 
         {error ? (
-          <div role="alert" className="alert alert-error alert-soft text-sm mb-3">
+          <div ref={avisoErrorRef} role="alert" className="alert alert-error alert-soft text-sm mb-3">
             <span>{error}</span>
           </div>
         ) : null}

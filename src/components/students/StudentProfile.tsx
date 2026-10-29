@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Calendar, FileText, HeartPulse, MessageSquare, TriangleAlert, User } from "lucide-react";
+import { Calendar, FileText, HeartPulse, Info, MessageSquare, TriangleAlert, User } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFecha } from "@/lib/format";
 import { nombrePais } from "@/lib/paises";
@@ -345,7 +345,8 @@ function DatosGenerales({ estudiante }: { estudiante: Student }) {
 function SaludConfidencial({ estudiante }: { estudiante: Student }) {
   return (
     <div>
-      <div role="alert" className="alert alert-soft text-sm mb-3">
+      <div role="note" className="alert alert-info alert-soft text-sm mb-3">
+        <Info size={16} aria-hidden />
         <span>Esta información solo la ven funcionarios con permiso para ver datos de salud.</span>
       </div>
       <Dato label="Información de salud" value={estudiante.informacionSalud} />

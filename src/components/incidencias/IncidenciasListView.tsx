@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
+import { useAvisoVisible } from "@/lib/use-aviso-visible";
 import { apiErrorMessage } from "@/lib/api";
 import {
   deactivateIncidencia,
@@ -64,6 +65,8 @@ export function IncidenciasListView() {
   // Más estudiantes coinciden con el texto que los que se consultan a la vez: no se muestra nada hasta que se acote la búsqueda.
   const [demasiadasCoincidencias, setDemasiadasCoincidencias] = useState(false);
   const [exito, setExito] = useState("");
+  const avisoExitoRef = useAvisoVisible<HTMLDivElement>(exito);
+  const avisoErrorRef = useAvisoVisible<HTMLDivElement>(error);
   // Se incrementa para volver a pedir la página actual después de desactivar o reactivar.
   const [recarga, setRecarga] = useState(0);
   const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
@@ -237,13 +240,13 @@ export function IncidenciasListView() {
         />
 
         {exito ? (
-          <div role="status" className="alert alert-success alert-soft text-sm mb-3">
+          <div ref={avisoExitoRef} role="status" className="alert alert-success alert-soft text-sm mb-3">
             <span>{exito}</span>
           </div>
         ) : null}
 
         {error ? (
-          <div role="alert" className="alert alert-error alert-soft text-sm mb-3">
+          <div ref={avisoErrorRef} role="alert" className="alert alert-error alert-soft text-sm mb-3">
             <span>{error}</span>
           </div>
         ) : null}
