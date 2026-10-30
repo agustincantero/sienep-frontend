@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CalendarPlus } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { formatFecha, formatFechaHora } from "@/lib/format";
 import {
   deactivateRecordatorio,
@@ -12,7 +13,6 @@ import {
   getRecordatorio,
   reactivateRecordatorio,
   TIPOS_RECORDATORIO,
-  type Recordatorio,
 } from "@/lib/recordatorios";
 import { getInstancia } from "@/lib/instancias";
 import { useSession } from "@/lib/session-context";
@@ -39,40 +39,24 @@ export function RecordatorioDetalle({
   // POST /recordatorios/{id}/instancias pide CREAR_INSTANCIA (crea una instancia, no toca el recordatorio más que para marcarlo cumplido).
   const puedeCrearSeguimiento = permisos.includes("CREAR_INSTANCIA");
 
-  const [recordatorio, setRecordatorio] = useState<Recordatorio | null>(null);
-  const [cargando, setCargando] = useState(true);
-  const [errorCarga, setErrorCarga] = useState("");
+  const {
+    data: recordatorio,
+    setData: setRecordatorio,
+    cargando,
+    errorCarga,
+  } = useApi(() => getRecordatorio(codRecordatorio), [codRecordatorio], { mensajeError: "No se pudo cargar el recordatorio." });
   const [error, setError] = useState("");
   const [confirmandoBaja, setConfirmandoBaja] = useState(false);
   const [creandoSeguimiento, setCreandoSeguimiento] = useState(false);
   const [procesando, setProcesando] = useState(false);
   // Identificador de negocio de la instancia (RecordatorioResponseDTO no lo trae). Si no se puede leer, queda solo el título.
-  const [idNegInstancia, setIdNegInstancia] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelado = false;
-    getRecordatorio(codRecordatorio)
-      .then((r) => {
-        if (cancelado) return;
-        setRecordatorio(r);
-        setErrorCarga("");
-        getInstancia(r.codInstancia)
-          .then((i) => {
-            if (!cancelado) setIdNegInstancia(i.idNegInstancia);
-          })
-          .catch(() => {});
-      })
-      .catch((err) => {
-        if (cancelado) return;
-        setErrorCarga(apiErrorMessage(err, "No se pudo cargar el recordatorio."));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [codRecordatorio]);
+  // Se pide aparte para no demorar el detalle; su errorCarga se ignora.
+  const codInstancia = recordatorio?.codInstancia;
+  const { data: idNegInstancia } = useApi(
+    () => (codInstancia == null ? Promise.resolve(null) : getInstancia(codInstancia).then((i) => i.idNegInstancia)),
+    [codInstancia],
+    { mensajeError: "" },
+  );
 
   async function confirmarDesactivar() {
     setConfirmandoBaja(false);

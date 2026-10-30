@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil, ShieldCheck, ShieldX } from "lucide-react";
 import { useAvisoVisible } from "@/lib/use-aviso-visible";
 import { apiErrorMessage } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import {
   deactivateRole,
   esRolProtegido,
@@ -40,34 +41,20 @@ export function RolesListView() {
 
   const [texto, setTexto] = useState("");
   const [estadoLabel, setEstadoLabel] = useState("Todos");
-  const [roles, setRoles] = useState<Rol[]>([]);
-  const [cargando, setCargando] = useState(true);
+  const {
+    data: roles,
+    setData: setRoles,
+    cargando,
+    errorCarga,
+  } = useApi(() => cargarRoles(estadoLabel), [estadoLabel], { inicial: [] as Rol[], mensajeError: "No se pudieron cargar los roles." });
+  // Error de una baja o reactivación; el de carga es errorCarga.
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
   const avisoExitoRef = useAvisoVisible<HTMLDivElement>(exito);
-  const avisoErrorRef = useAvisoVisible<HTMLDivElement>(error);
+  const avisoErrorRef = useAvisoVisible<HTMLDivElement>(errorCarga || error);
   const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
   const [idADesactivar, setIdADesactivar] = useState<number | null>(null);
 
-  useEffect(() => {
-    let cancelado = false;
-    cargarRoles(estadoLabel)
-      .then((res) => {
-        if (cancelado) return;
-        setRoles(res);
-        setError("");
-      })
-      .catch((err) => {
-        if (cancelado) return;
-        setError(apiErrorMessage(err, "No se pudieron cargar los roles."));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [estadoLabel]);
 
   const rolesFiltrados = useMemo(() => {
     if (!texto.trim()) return roles;
@@ -149,9 +136,9 @@ export function RolesListView() {
           </div>
         ) : null}
 
-        {error ? (
+        {errorCarga || error ? (
           <div ref={avisoErrorRef} role="alert" className="alert alert-error alert-soft text-sm mb-3">
-            <span>{error}</span>
+            <span>{errorCarga || error}</span>
           </div>
         ) : null}
 

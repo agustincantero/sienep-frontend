@@ -1,8 +1,9 @@
 "use client";
 
-import { cloneElement, isValidElement, useEffect, useState } from "react";
+import { cloneElement, isValidElement, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarClock, User } from "lucide-react";
+import { useApi } from "@/hooks/useApi";
 import { apiErrorMessage } from "@/lib/api";
 import { listCategoriasInstancia, type CategoriaInstancia } from "@/lib/categorias-instancia";
 import {
@@ -13,8 +14,7 @@ import {
   type InstanciaComunUpdateInput,
 } from "@/lib/instancias";
 import { ahoraParaInputLocal } from "@/lib/format";
-import { getStudent } from "@/lib/students";
-import { EstudianteSelector, type EstudianteElegido } from "./EstudianteSelector";
+import { EstudianteSelector, useEstudianteFijo, type EstudianteElegido } from "./EstudianteSelector";
 import { BackButton } from "@/components/layout/BackButton";
 
 const TITULO_MAX = 150;
@@ -66,39 +66,20 @@ export function InstanciaForm(props: InstanciaFormProps) {
     estadoInicial(esEdicion ? props.instancia : undefined, idEstudianteFijo, clonDe),
   );
   // Estudiante elegido en el selector (solo en el alta; en la edición es inmutable). Al clonar arranca con el de la instancia origen.
-  const [estudiante, setEstudiante] = useState<EstudianteElegido | null>(
+  const [estudianteElegido, setEstudiante] = useState<EstudianteElegido | null>(
     clonDe ? { id: clonDe.idEstudiante, nombre: clonDe.nombreEstudiante } : null,
   );
-  const [categorias, setCategorias] = useState<CategoriaInstancia[]>([]);
+  // Con estudiante fijo (alta desde la ficha) el selector está bloqueado: se muestra ese.
+  const estudianteFijo = useEstudianteFijo(idEstudianteFijo);
+  const estudiante = idEstudianteFijo === undefined ? estudianteElegido : estudianteFijo;
+  // La categoría requiere VER_CATEGORIAS_INSTANCIA — si el rol no lo tiene, el combo queda vacío y el usuario no puede guardar hasta que se corrija del lado del backend. No se rompe la pantalla por eso.
+  const { data: categorias } = useApi(listCategoriasInstancia, [], { inicial: [] as CategoriaInstancia[], mensajeError: "" });
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState("");
   const [guardando, setGuardando] = useState(false);
   const ahora = ahoraParaInputLocal();
   // Una instancia no puede quedar en el pasado; al editar una ya vencida no se pone mínimo para no marcar su fecha guardada como inválida.
   const fechaMin = esEdicion && props.instancia.fechaHora.slice(0, 16) < ahora ? undefined : ahora;
-
-  // Con estudiante fijo (alta desde la ficha) hay que resolver su nombre para mostrarlo; si el rol no puede leer la ficha, queda el número.
-  useEffect(() => {
-    if (idEstudianteFijo === undefined) return;
-    let cancelado = false;
-    getStudent(idEstudianteFijo)
-      .then((s) => {
-        if (!cancelado) setEstudiante({ id: s.idUsuario, nombre: `${s.nombre} ${s.apellido}`, documento: s.documento });
-      })
-      .catch(() => {
-        if (!cancelado) setEstudiante({ id: idEstudianteFijo, nombre: `Estudiante #${idEstudianteFijo}` });
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [idEstudianteFijo]);
-
-  useEffect(() => {
-    // La categoría requiere VER_CATEGORIAS_INSTANCIA — si el rol no lo tiene, el combo queda vacío y el usuario no puede guardar hasta que se corrija del lado del backend. No se rompe la pantalla por eso.
-    listCategoriasInstancia()
-      .then(setCategorias)
-      .catch(() => setCategorias([]));
-  }, []);
 
   function campo<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));

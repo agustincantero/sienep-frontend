@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Ban, Download, Paperclip, Trash2, Upload } from "lucide-react";
+import { useApi } from "@/hooks/useApi";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFechaHora } from "@/lib/format";
 import {
@@ -34,8 +35,16 @@ export function MedicalReportsPanel({
   const puedeAdjuntar = permisos.includes("ADJUNTAR_INFORME");
   const puedeEliminar = permisos.includes("ELIMINAR_INFORME");
 
-  const [informes, setInformes] = useState<MedicalReport[]>([]);
-  const [cargando, setCargando] = useState(true);
+  const {
+    data: informes,
+    cargando,
+    errorCarga,
+    recargar,
+  } = useApi(() => listMedicalReports(idEstudiante).then((res) => res.content), [idEstudiante], {
+    inicial: [] as MedicalReport[],
+    mensajeError: "No se pudieron cargar los informes.",
+  });
+  // Error de adjuntar o eliminar; el de carga es errorCarga.
   const [error, setError] = useState("");
   const [nombre, setNombre] = useState("");
   const [archivo, setArchivo] = useState<File | null>(null);
@@ -44,34 +53,6 @@ export function MedicalReportsPanel({
   const [subiendo, setSubiendo] = useState(false);
   const [eliminandoId, setEliminandoId] = useState<number | null>(null);
   const [informeAEliminar, setInformeAEliminar] = useState<MedicalReport | null>(null);
-
-  // idEstudianteRef: cargar() se llama tanto desde el efecto (al cambiar de
-  // estudiante) como a mano después de adjuntar un informe. Si el usuario
-  // navega a otra ficha mientras el primer pedido sigue en vuelo, esta
-  // referencia evita que la respuesta vieja pise el estado del nuevo.
-  const idEstudianteRef = useRef(idEstudiante);
-  useEffect(() => {
-    idEstudianteRef.current = idEstudiante;
-  }, [idEstudiante]);
-
-  function cargar() {
-    const idAlPedir = idEstudiante;
-    listMedicalReports(idAlPedir)
-      .then((res) => {
-        if (idEstudianteRef.current !== idAlPedir) return;
-        setInformes(res.content);
-        setError("");
-      })
-      .catch((err) => {
-        if (idEstudianteRef.current !== idAlPedir) return;
-        setError(apiErrorMessage(err, "No se pudieron cargar los informes."));
-      })
-      .finally(() => {
-        if (idEstudianteRef.current === idAlPedir) setCargando(false);
-      });
-  }
-
-  useEffect(cargar, [idEstudiante]);
 
   function handleArchivoChange(nuevo: File | null) {
     setArchivo(nuevo);
@@ -110,7 +91,7 @@ export function MedicalReportsPanel({
       setNombre("");
       setArchivo(null);
       form.reset();
-      cargar();
+      recargar();
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo adjuntar el informe."));
     } finally {
@@ -126,7 +107,7 @@ export function MedicalReportsPanel({
     try {
       await deleteMedicalReport(id);
       // Recarga en vez de sacarlo de la lista: el informe eliminado vuelve como marca.
-      cargar();
+      recargar();
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo eliminar el informe."));
     } finally {
@@ -136,9 +117,9 @@ export function MedicalReportsPanel({
 
   return (
     <div className="space-y-4">
-      {error ? (
+      {errorCarga || error ? (
         <div role="alert" className="alert alert-error alert-soft text-sm">
-          <span>{error}</span>
+          <span>{errorCarga || error}</span>
         </div>
       ) : null}
 

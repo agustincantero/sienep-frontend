@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Eye, FilterX, Pencil, Plus, UserCheck, UserX } from "lucide-react";
 import { useAvisoVisible } from "@/lib/use-aviso-visible";
 import { apiErrorMessage } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import {
   ESTADOS,
   FILTROS_POR_DEFECTO,
@@ -25,6 +26,7 @@ import {
   getProcesosAbiertos,
   listStudents,
   reactivateStudent,
+  type Page,
   type StudentSummary,
 } from "@/lib/students";
 import { DataTable } from "@/components/ui/DataTable";
@@ -33,6 +35,9 @@ import { Toolbar, type ToolbarFilter } from "@/components/ui/Toolbar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EstadoBadge } from "./EstadoBadge";
 import { StudentAvatar } from "./StudentAvatar";
+
+type Resultado = Pick<Page<StudentSummary>, "content" | "totalElements" | "last">;
+const SIN_RESULTADOS: Resultado = { content: [], totalElements: 0, last: true };
 
 // Últimos filtros usados en la sesión: al volver a /estudiantes sin filtros en la URL (desde la ficha o el
 // menú) se restauran. sessionStorage y no localStorage: no tienen por qué sobrevivir a cerrar el navegador.
@@ -144,29 +149,18 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
     guardarFiltros(queryActual);
   }, [listo, queryActual]);
 
-  const [grupos, setGrupos] = useState<Group[]>([]);
+  const { data: grupos, cargando: cargandoGrupos } = useApi(listGroups, [], { inicial: [] as Group[], mensajeError: "" });
   // false hasta que termina la carga de grupos (con o sin error): los filtros de grupo y carrera viajan por id,
   // y el id recién se puede resolver con el catálogo cargado.
-  const [gruposCargados, setGruposCargados] = useState(false);
-  const [estudiantes, setEstudiantes] = useState<StudentSummary[]>([]);
-  const [totalElements, setTotalElements] = useState(0);
-  const [hasNext, setHasNext] = useState(false);
-  const [cargando, setCargando] = useState(true);
+  const gruposCargados = !cargandoGrupos;
+  // Error de una baja o reactivación; el de carga es errorCarga.
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
   const avisoExitoRef = useAvisoVisible<HTMLDivElement>(exito);
-  const avisoErrorRef = useAvisoVisible<HTMLDivElement>(error);
   const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
   const [idADesactivar, setIdADesactivar] = useState<number | null>(null);
   // RF06 — procesos abiertos del estudiante a desactivar ("2 instancias agendadas y ..."), o null si no tiene.
   const [procesosABaja, setProcesosABaja] = useState<string | null>(null);
-
-  useEffect(() => {
-    listGroups()
-      .then(setGrupos)
-      .catch(() => setGrupos([]))
-      .finally(() => setGruposCargados(true));
-  }, []);
 
   // Las carreras no tienen catálogo propio en esta pantalla: se derivan de
   // los grupos ya cargados (cada Grupo trae idCarrera/nomCarrera).
@@ -182,50 +176,47 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
   // espera: si saliera ahora iría sin el id y listaría estudiantes de otros grupos/carreras.
   const esperandoGrupos = puedeBuscar && !gruposCargados && (nomGrupo !== "" || nomCarrera !== "");
 
-  useEffect(() => {
-    if (!listo || esperandoGrupos) return;
-    let cancelado = false;
+  const {
+    data: resultado,
+    setData: setResultado,
+    cargando,
+    errorCarga,
+  } = useApi(
+    () => {
+      // El backend no ignora tildes ni acepta "Nombre Apellido": con texto se piden todos los que cumplen los demás filtros y se busca y pagina acá.
+      const buscado = puedeBuscar ? textoDebounced.trim() : "";
+      const filtros = {
+        grupo: puedeBuscar ? idGrupo : undefined,
+        carrera: puedeBuscar ? idCarrera : undefined,
+        estado: estadoLabel ? ESTADOS[estadoLabel] : undefined,
+        sort: ORDENES[orden].sort,
+      };
+      return buscado
+        ? listStudents({ ...filtros, size: TOPE_LISTADO }).then((res) => {
+            const coinciden = res.content.filter((e) => coincideTexto(buscado, e.nombre, e.apellido, e.documento));
+            const desde = page * TAMANIO_PAGINA;
+            return {
+              content: coinciden.slice(desde, desde + TAMANIO_PAGINA),
+              totalElements: coinciden.length,
+              last: desde + TAMANIO_PAGINA >= coinciden.length,
+            };
+          })
+        : listStudents({ ...filtros, page });
+    },
+    [textoDebounced, idGrupo, idCarrera, estadoLabel, orden, page, puedeBuscar],
+    {
+      inicial: SIN_RESULTADOS,
+      mensajeError: "No se pudieron cargar los estudiantes.",
+      esperar: !listo || esperandoGrupos,
+    },
+  );
+  const { content: estudiantes, totalElements } = resultado;
+  const hasNext = !resultado.last;
+  const avisoErrorRef = useAvisoVisible<HTMLDivElement>(errorCarga || error);
 
-    // El backend no ignora tildes ni acepta "Nombre Apellido": con texto se piden todos los que cumplen los demás filtros y se busca y pagina acá.
-    const buscado = puedeBuscar ? textoDebounced.trim() : "";
-    const filtros = {
-      grupo: puedeBuscar ? idGrupo : undefined,
-      carrera: puedeBuscar ? idCarrera : undefined,
-      estado: estadoLabel ? ESTADOS[estadoLabel] : undefined,
-      sort: ORDENES[orden].sort,
-    };
-
-    (buscado
-      ? listStudents({ ...filtros, size: TOPE_LISTADO }).then((res) => {
-          const coinciden = res.content.filter((e) => coincideTexto(buscado, e.nombre, e.apellido, e.documento));
-          const desde = page * TAMANIO_PAGINA;
-          return {
-            content: coinciden.slice(desde, desde + TAMANIO_PAGINA),
-            totalElements: coinciden.length,
-            last: desde + TAMANIO_PAGINA >= coinciden.length,
-          };
-        })
-      : listStudents({ ...filtros, page })
-    )
-      .then((res) => {
-        if (cancelado) return;
-        setEstudiantes(res.content);
-        setTotalElements(res.totalElements);
-        setHasNext(!res.last);
-        setError("");
-      })
-      .catch((err) => {
-        if (cancelado) return;
-        setError(apiErrorMessage(err, "No se pudieron cargar los estudiantes."));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-
-    return () => {
-      cancelado = true;
-    };
-  }, [listo, esperandoGrupos, textoDebounced, idGrupo, idCarrera, estadoLabel, orden, page, puedeBuscar]);
+  function cambiarEstado(id: number, estado: string) {
+    setResultado((prev) => ({ ...prev, content: prev.content.map((e) => (e.idUsuario === id ? { ...e, estado } : e)) }));
+  }
 
   const estudianteADesactivar = estudiantes.find((e) => e.idUsuario === idADesactivar);
 
@@ -256,7 +247,7 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
       // confirmar=true solo si se le mostraron los procesos abiertos: si aparecieron otros entre la consulta y
       // la confirmación, el backend responde 409 y su mensaje se muestra como error.
       await deactivateStudent(id, confirmar);
-      setEstudiantes((prev) => prev.map((e) => (e.idUsuario === id ? { ...e, estado: "INACTIVO" } : e)));
+      cambiarEstado(id, "INACTIVO");
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo desactivar el estudiante."));
     } finally {
@@ -271,7 +262,7 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
     setError("");
     try {
       await reactivateStudent(id);
-      setEstudiantes((prev) => prev.map((e) => (e.idUsuario === id ? { ...e, estado: "ACTIVO" } : e)));
+      cambiarEstado(id, "ACTIVO");
       setExito(
         estudiante
           ? `Estudiante activado: ${estudiante.nombre} ${estudiante.apellido}.`
@@ -371,9 +362,9 @@ export function StudentsListView({ filtrosIniciales }: { filtrosIniciales: Filtr
           </div>
         ) : null}
 
-        {error ? (
+        {errorCarga || error ? (
           <div ref={avisoErrorRef} role="alert" className="alert alert-error alert-soft text-sm mb-3">
-            <span>{error}</span>
+            <span>{errorCarga || error}</span>
           </div>
         ) : null}
 

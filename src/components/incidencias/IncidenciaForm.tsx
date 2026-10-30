@@ -1,13 +1,12 @@
 "use client";
 
-import { cloneElement, isValidElement, useEffect, useState } from "react";
+import { cloneElement, isValidElement, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TriangleAlert, User } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
 import { createIncidencia, updateIncidencia, type Incidencia, type IncidenciaInput } from "@/lib/incidencias";
 import { ahoraParaInputLocal } from "@/lib/format";
-import { getStudent } from "@/lib/students";
-import { EstudianteSelector, type EstudianteElegido } from "@/components/instancias/EstudianteSelector";
+import { EstudianteSelector, useEstudianteFijo, type EstudianteElegido } from "@/components/instancias/EstudianteSelector";
 import { BackButton } from "@/components/layout/BackButton";
 
 const TITULO_MAX = 150;
@@ -56,30 +55,17 @@ export function IncidenciaForm(props: IncidenciaFormProps) {
     estadoInicial(esEdicion ? props.incidencia : undefined, idEstudianteFijo),
   );
   // Estudiante elegido en el selector. En la edición arranca con el de la incidencia (y se puede cambiar).
-  const [estudiante, setEstudiante] = useState<EstudianteElegido | null>(
+  const [estudianteElegido, setEstudiante] = useState<EstudianteElegido | null>(
     props.mode === "editar" ? { id: props.incidencia.idEstudiante, nombre: props.incidencia.nombreEstudiante } : null,
   );
+  // Con estudiante fijo (alta desde la ficha) el selector está bloqueado: se muestra ese.
+  const estudianteFijo = useEstudianteFijo(idEstudianteFijo);
+  const estudiante = idEstudianteFijo === undefined ? estudianteElegido : estudianteFijo;
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState("");
   const [guardando, setGuardando] = useState(false);
   // Una incidencia registra algo que ya ocurrió: no puede quedar en el futuro.
   const ahora = ahoraParaInputLocal();
-
-  // Con estudiante fijo (alta desde la ficha) hay que resolver su nombre para mostrarlo; si el rol no puede leer la ficha, queda el número.
-  useEffect(() => {
-    if (idEstudianteFijo === undefined) return;
-    let cancelado = false;
-    getStudent(idEstudianteFijo)
-      .then((s) => {
-        if (!cancelado) setEstudiante({ id: s.idUsuario, nombre: `${s.nombre} ${s.apellido}`, documento: s.documento });
-      })
-      .catch(() => {
-        if (!cancelado) setEstudiante({ id: idEstudianteFijo, nombre: `Estudiante #${idEstudianteFijo}` });
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [idEstudianteFijo]);
 
   function campo<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));

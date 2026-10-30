@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Calendar, TriangleAlert, type LucideIcon } from "lucide-react";
-import { apiErrorMessage } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { formatFechaHora } from "@/lib/format";
 import { listMisIncidencias } from "@/lib/incidencias";
 import { listMisInstancias } from "@/lib/instancias";
@@ -98,31 +98,11 @@ function Listado({
   cargar: (page: number) => Promise<Page<Fila>>;
 }) {
   const [page, setPage] = useState(0);
-  const [resultado, setResultado] = useState<Page<Fila> | null>(null);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
+  // cargar y noun son fijos por listado: solo la página vuelve a disparar el pedido.
+  const { data: resultado, cargando, errorCarga: error } = useApi(() => cargar(page), [page], {
+    mensajeError: `No se pudieron cargar tus ${noun}.`,
+  });
 
-  // cancelado: si se cambia de página mientras un pedido sigue en vuelo, la respuesta vieja no pisa la nueva.
-  useEffect(() => {
-    let cancelado = false;
-    cargar(page)
-      .then((res) => {
-        if (cancelado) return;
-        setResultado(res);
-        setError("");
-      })
-      .catch((err) => {
-        if (cancelado) return;
-        setError(apiErrorMessage(err, `No se pudieron cargar tus ${noun}.`));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- cargar/noun son fijos por listado; solo la página debe re-disparar el fetch
-  }, [page]);
 
   const filas = resultado?.content ?? [];
 

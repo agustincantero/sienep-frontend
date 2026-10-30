@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { UserPlus } from "lucide-react";
+import { useApi } from "@/hooks/useApi";
 import { apiErrorMessage } from "@/lib/api";
 import { addInvolucrado, listInvolucrados, removeInvolucrado, type Involucrado } from "@/lib/incidencias";
 import { useSession } from "@/lib/session-context";
@@ -14,36 +15,23 @@ export function InvolucradosPanel({ codInstancia }: { codInstancia: number }) {
   const puedeAgregar = permisos.includes("EDITAR_INCIDENCIA");
   const puedeQuitar = permisos.includes("DESACTIVAR_INCIDENCIA");
 
-  const [involucrados, setInvolucrados] = useState<Involucrado[]>([]);
-  const [cargando, setCargando] = useState(true);
+  const {
+    data: involucrados,
+    setData: setInvolucrados,
+    cargando,
+    errorCarga,
+    recargar,
+  } = useApi(
+    // El backend no filtra por estado en el GET: se listan solo los ACTIVOS acá, los INACTIVOS (ya quitados) no tienen que reaparecer.
+    () => listInvolucrados(codInstancia).then((res) => res.filter((inv) => inv.estado === "ACTIVO")),
+    [codInstancia],
+    { inicial: [] as Involucrado[], mensajeError: "No se pudieron cargar los involucrados." },
+  );
+  // Error de agregar o quitar; el de carga es errorCarga.
   const [error, setError] = useState("");
   const [nombre, setNombre] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [quitandoNombre, setQuitandoNombre] = useState<string | null>(null);
-  const codInstanciaRef = useRef(codInstancia);
-  useEffect(() => {
-    codInstanciaRef.current = codInstancia;
-  }, [codInstancia]);
-
-  function cargar() {
-    const idAlPedir = codInstancia;
-    listInvolucrados(idAlPedir)
-      .then((res) => {
-        if (codInstanciaRef.current !== idAlPedir) return;
-        // El backend no filtra por estado en el GET: se listan solo los ACTIVOS acá, los INACTIVOS (ya quitados) no tienen que reaparecer.
-        setInvolucrados(res.filter((inv) => inv.estado === "ACTIVO"));
-        setError("");
-      })
-      .catch((err) => {
-        if (codInstanciaRef.current !== idAlPedir) return;
-        setError(apiErrorMessage(err, "No se pudieron cargar los involucrados."));
-      })
-      .finally(() => {
-        if (codInstanciaRef.current === idAlPedir) setCargando(false);
-      });
-  }
-
-  useEffect(cargar, [codInstancia]);
 
   async function handleAgregar(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
@@ -59,7 +47,7 @@ export function InvolucradosPanel({ codInstancia }: { codInstancia: number }) {
     try {
       await addInvolucrado(codInstancia, nombreTrim);
       setNombre("");
-      cargar();
+      recargar();
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo agregar el involucrado."));
     } finally {
@@ -84,9 +72,9 @@ export function InvolucradosPanel({ codInstancia }: { codInstancia: number }) {
     <div className="mt-4">
       <h6 className="text-sm font-semibold mb-2">Involucrados</h6>
 
-      {error ? (
+      {errorCarga || error ? (
         <div role="alert" className="alert alert-error alert-soft text-sm mb-3">
-          <span>{error}</span>
+          <span>{errorCarga || error}</span>
         </div>
       ) : null}
 

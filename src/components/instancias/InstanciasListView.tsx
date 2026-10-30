@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { useAvisoVisible } from "@/lib/use-aviso-visible";
 import { apiErrorMessage } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { listCategoriasInstancia, type CategoriaInstancia } from "@/lib/categorias-instancia";
 import {
   deactivateInstancia,
@@ -30,6 +31,9 @@ const ESTADO_A_VALOR: Record<string, string> = { Activo: "ACTIVO", Inactivo: "IN
 const ESTADOS_TODOS = "ACTIVO,INACTIVO";
 // Referencia estable para que el efecto de carga no se dispare cuando llegan los estudiantes y no hay nada tipeado en el buscador.
 const SIN_ESTUDIANTES: StudentSummary[] = [];
+
+type Resultado = { content: InstanciaComun[]; total: number; size: number; last: boolean; demasiadas: boolean };
+const SIN_RESULTADOS: Resultado = { content: [], total: 0, size: TAMANIO_PAGINA, last: true, demasiadas: false };
 
 export function InstanciasListView() {
   const router = useRouter();
@@ -58,33 +62,19 @@ export function InstanciasListView() {
   const handleEstadoChange = conResetDePagina(setEstadoLabel);
 
   // Tope alto en vez de paginar el propio combo: alcanza para poblar el filtro y el combo de "Nueva instancia" con todos los estudiantes activos de una.
-  const [estudiantes, setEstudiantes] = useState<StudentSummary[]>([]);
+  // Si falla, el buscador queda sin estudiantes que resolver: no se avisa.
+  const { data: estudiantes } = useApi(() => listStudents({ size: 1000 }).then((res) => res.content), [], {
+    inicial: [] as StudentSummary[],
+    mensajeError: "",
+  });
   // listCategoriasInstancia requiere VER_CATEGORIAS_INSTANCIA, que en el seed actual solo tiene ADMINISTRADOR: Psicopedagogo/Tutor van a ver este filtro vacío hasta que se corrija del lado del backend, acá solo hace falta no romper la pantalla si la llamada 403.
-  const [categorias, setCategorias] = useState<CategoriaInstancia[]>([]);
-  const [instancias, setInstancias] = useState<InstanciaComun[]>([]);
-  const [totalElements, setTotalElements] = useState(0);
-  const [pageSize, setPageSize] = useState(20);
-  const [hasNext, setHasNext] = useState(false);
-  const [cargando, setCargando] = useState(true);
+  const { data: categorias } = useApi(listCategoriasInstancia, [], { inicial: [] as CategoriaInstancia[], mensajeError: "" });
+  // Error de una baja o reactivación; el de carga es errorCarga.
   const [error, setError] = useState("");
-  // Más estudiantes coinciden con el texto que los que se consultan a la vez: no se muestra nada hasta que se acote la búsqueda.
-  const [demasiadasCoincidencias, setDemasiadasCoincidencias] = useState(false);
   const [exito, setExito] = useState("");
   const avisoExitoRef = useAvisoVisible<HTMLDivElement>(exito);
-  const avisoErrorRef = useAvisoVisible<HTMLDivElement>(error);
-  // Se incrementa para volver a pedir la página actual después de desactivar o reactivar.
-  const [recarga, setRecarga] = useState(0);
   const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
   const [idADesactivar, setIdADesactivar] = useState<number | null>(null);
-
-  useEffect(() => {
-    listStudents({ size: 1000 })
-      .then((res) => setEstudiantes(res.content))
-      .catch(() => setEstudiantes([]));
-    listCategoriasInstancia()
-      .then(setCategorias)
-      .catch(() => setCategorias([]));
-  }, []);
 
   useEffect(() => {
     const id = setTimeout(() => setTextoDebounced(nomEstudiante), 300);
@@ -94,68 +84,59 @@ export function InstanciasListView() {
   // Los estudiantes solo re-disparan la carga cuando hay texto en el buscador, que es cuando se usan para resolver ids.
   const estudiantesDeBusqueda = textoDebounced.trim() ? estudiantes : SIN_ESTUDIANTES;
 
-  useEffect(() => {
-    let cancelado = false;
+  const {
+    data: resultado,
+    setData: setResultado,
+    cargando,
+    errorCarga,
+    recargar,
+  } = useApi(
+    () => {
+      const texto = textoDebounced.trim();
+      const coincidencias = texto ? coincidenciasEstudiante(estudiantesDeBusqueda, texto) : null;
+      const idCategoria = categorias.find((c) => c.nomCategoria === nomCategoria)?.idCategoria;
+      const estadoParam = estadoLabel ? ESTADO_A_VALOR[estadoLabel] : undefined;
+      // Sin ?estado=, el backend devuelve solo las ACTIVAS; "Estado: Todos" pide los dos estados en una sola consulta, así la paginación (20 por página, total y rango del pie) la resuelve el backend igual que con un estado puntual.
+      const estado = estadoParam ?? ESTADOS_TODOS;
 
-    const texto = textoDebounced.trim();
-    const coincidencias = texto ? coincidenciasEstudiante(estudiantesDeBusqueda, texto) : null;
-    const idCategoria = categorias.find((c) => c.nomCategoria === nomCategoria)?.idCategoria;
-    const estadoParam = estadoLabel ? ESTADO_A_VALOR[estadoLabel] : undefined;
-    // Sin ?estado=, el backend devuelve solo las ACTIVAS; "Estado: Todos" pide los dos estados en una sola consulta, así la paginación (20 por página, total y rango del pie) la resuelve el backend igual que con un estado puntual.
-    const estado = estadoParam ?? ESTADOS_TODOS;
-
-    type Resultado = { content: InstanciaComun[]; total: number; size: number; last: boolean; demasiadas: boolean };
-    let pedido: Promise<Resultado>;
-    if (coincidencias === null || coincidencias.length === 1) {
-      const idEstudiante = coincidencias?.[0].idUsuario;
-      pedido = listInstancias({ idEstudiante, idCategoria, estado, page }).then((p) => ({
-        content: p.content,
-        total: p.totalElements,
-        size: p.size,
-        last: p.last,
-        demasiadas: false,
-      }));
-    } else if (coincidencias.length === 0 || coincidencias.length > MAX_COINCIDENCIAS) {
-      const demasiadas = coincidencias.length > MAX_COINCIDENCIAS;
-      pedido = Promise.resolve({ content: [], total: 0, size: TAMANIO_PAGINA, last: true, demasiadas });
-    } else {
-      // El backend filtra de a un idEstudiante: con varias coincidencias se piden por separado y se juntan acá.
-      pedido = paginarVariosEstudiantes(
-        coincidencias.map((c) => c.idUsuario),
-        (idEstudiante, size) => listInstancias({ idEstudiante, idCategoria, estado, size }),
-        page,
-      ).then((r) => ({
-        content: r.content,
-        total: r.total,
-        size: TAMANIO_PAGINA,
-        last: (page + 1) * TAMANIO_PAGINA >= r.total,
-        demasiadas: false,
-      }));
-    }
-
-    pedido
-      .then((r) => {
-        if (cancelado) return;
-        setInstancias(r.content);
-        setTotalElements(r.total);
-        setPageSize(r.size);
-        setHasNext(!r.last);
-        setDemasiadasCoincidencias(r.demasiadas);
-        setError("");
-      })
-      .catch((err) => {
-        if (cancelado) return;
-        setError(apiErrorMessage(err, "No se pudieron cargar las instancias."));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-
-    return () => {
-      cancelado = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- las categorías solo se usan para resolver el id, no deben re-disparar el fetch por sí solas
-  }, [textoDebounced, nomCategoria, estadoLabel, page, recarga, estudiantesDeBusqueda]);
+      let pedido: Promise<Resultado>;
+      if (coincidencias === null || coincidencias.length === 1) {
+        const idEstudiante = coincidencias?.[0].idUsuario;
+        pedido = listInstancias({ idEstudiante, idCategoria, estado, page }).then((p) => ({
+          content: p.content,
+          total: p.totalElements,
+          size: p.size,
+          last: p.last,
+          demasiadas: false,
+        }));
+      } else if (coincidencias.length === 0 || coincidencias.length > MAX_COINCIDENCIAS) {
+        const demasiadas = coincidencias.length > MAX_COINCIDENCIAS;
+        pedido = Promise.resolve({ content: [], total: 0, size: TAMANIO_PAGINA, last: true, demasiadas });
+      } else {
+        // El backend filtra de a un idEstudiante: con varias coincidencias se piden por separado y se juntan acá.
+        pedido = paginarVariosEstudiantes(
+          coincidencias.map((c) => c.idUsuario),
+          (idEstudiante, size) => listInstancias({ idEstudiante, idCategoria, estado, size }),
+          page,
+        ).then((r) => ({
+          content: r.content,
+          total: r.total,
+          size: TAMANIO_PAGINA,
+          last: (page + 1) * TAMANIO_PAGINA >= r.total,
+          demasiadas: false,
+        }));
+      }
+      return pedido;
+    },
+    // Las categorías solo se usan para resolver el id: no re-disparan el pedido por sí solas.
+    [textoDebounced, nomCategoria, estadoLabel, page, estudiantesDeBusqueda],
+    { inicial: SIN_RESULTADOS, mensajeError: "No se pudieron cargar las instancias." },
+  );
+  const { content: instancias, total: totalElements, size: pageSize } = resultado;
+  const hasNext = !resultado.last;
+  // Más estudiantes coinciden con el texto que los que se consultan a la vez: no se muestra nada hasta que se acote la búsqueda.
+  const demasiadasCoincidencias = resultado.demasiadas;
+  const avisoErrorRef = useAvisoVisible<HTMLDivElement>(errorCarga || error);
 
   const instanciaADesactivar = instancias.find((i) => i.codInstancia === idADesactivar);
 
@@ -164,11 +145,11 @@ export function InstanciasListView() {
   // fila sigue correspondiendo: se le actualiza el estado en el lugar, sin moverla.
   function reflejarCambioDeEstado(id: number, nuevoEstado: string) {
     if (!estadoLabel) {
-      setInstancias((prev) => prev.map((i) => (i.codInstancia === id ? { ...i, estado: nuevoEstado } : i)));
+      setResultado((prev) => ({ ...prev, content: prev.content.map((i) => (i.codInstancia === id ? { ...i, estado: nuevoEstado } : i)) }));
     } else if (instancias.length === 1 && page > 0) {
       setPage(page - 1);
     } else {
-      setRecarga((n) => n + 1);
+      recargar();
     }
   }
 
@@ -264,9 +245,9 @@ export function InstanciasListView() {
           </div>
         ) : null}
 
-        {error ? (
+        {errorCarga || error ? (
           <div ref={avisoErrorRef} role="alert" className="alert alert-error alert-soft text-sm mb-3">
-            <span>{error}</span>
+            <span>{errorCarga || error}</span>
           </div>
         ) : null}
 

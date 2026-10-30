@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Building2, TriangleAlert } from "lucide-react";
+import { useApi } from "@/hooks/useApi";
 import { apiErrorMessage } from "@/lib/api";
-import { listCarreras, type Carrera } from "@/lib/carreras";
+import { listCarreras } from "@/lib/carreras";
 import { compararTexto, esNombreRepetido } from "@/lib/catalogos";
 import { hrefListado } from "@/lib/catalogos-tabs";
 import { createItr, updateItr, type Itr } from "@/lib/itrs";
@@ -28,15 +29,11 @@ export function ItrForm({ itr }: { itr?: Itr }) {
   const [guardando, setGuardando] = useState(false);
 
   // Catálogo de carreras ACTIVAS para los checkboxes: ItrService rechaza asociar una inactiva (422). null = todavía no cargó o no se pudo cargar.
-  const [carreras, setCarreras] = useState<Carrera[] | null>(null);
-  const [errorCarreras, setErrorCarreras] = useState("");
-
-  useEffect(() => {
-    if (!puedeVerCarreras) return;
-    listCarreras("ACTIVO")
-      .then((res) => setCarreras([...res].sort((a, b) => compararTexto(a.nomCarrera, b.nomCarrera))))
-      .catch((err) => setErrorCarreras(apiErrorMessage(err, "No se pudo cargar el catálogo de carreras.")));
-  }, [puedeVerCarreras]);
+  const { data: carreras, errorCarga: errorCarreras } = useApi(
+    () => listCarreras("ACTIVO").then((res) => [...res].sort((a, b) => compararTexto(a.nomCarrera, b.nomCarrera))),
+    [puedeVerCarreras],
+    { mensajeError: "No se pudo cargar el catálogo de carreras.", esperar: !puedeVerCarreras },
+  );
 
   const avisoCarreras = puedeVerCarreras ? errorCarreras : "Para asociar carreras a un ITR necesitás el permiso de ver carreras.";
   const sinCatalogo = carreras == null;

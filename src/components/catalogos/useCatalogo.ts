@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useApi } from "@/hooks/useApi";
 import { apiErrorMessage } from "@/lib/api";
 import { listarPorEstado, type FiltroEstado } from "@/lib/catalogos";
 
@@ -42,39 +43,24 @@ type Opciones<T> = {
 // Estado y acciones comunes a las cinco pestañas: listado por estado, baja lógica con confirmación y reactivación. Después de cada cambio se vuelve a pedir el listado en vez de parchearlo a mano: ITR y Carrera traen datos derivados (carreras/ITRs asociados) que solo el backend sabe recalcular.
 export function useCatalogo<T>({ listar, idDe, nombreDe, desactivar, reactivar, sustantivo, exitoInicial }: Opciones<T>) {
   const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>("Todos");
-  const [items, setItems] = useState<T[]>([]);
-  const [cargando, setCargando] = useState(true);
-  // El error de carga NO se borra solo: sin él, la tabla vacía diría "No se encontraron" cuando en realidad falló el GET.
-  const [errorCarga, setErrorCarga] = useState("");
+  const {
+    data: items,
+    cargando,
+    errorCarga,
+    recargar,
+  } = useApi(
+    () => listarPorEstado(listar, filtroEstado),
+    // listar y sustantivo son estables por pestaña (vienen de constantes del módulo).
+    [filtroEstado],
+    {
+      inicial: [] as T[],
+      mensajeError: `No se pudieron cargar ${sustantivo.femenino ? "las" : "los"} ${sustantivo.plural}.`,
+    },
+  );
   const [exito, setExito] = useMensajeTemporal(exitoInicial);
   const [error, setError] = useMensajeTemporal();
-  const [version, setVersion] = useState(0);
   const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
   const [idADesactivar, setIdADesactivar] = useState<number | null>(null);
-
-  useEffect(() => {
-    let cancelado = false;
-    listarPorEstado(listar, filtroEstado)
-      .then((res) => {
-        if (cancelado) return;
-        setItems(res);
-        setErrorCarga("");
-      })
-      .catch((err) => {
-        if (cancelado) return;
-        setErrorCarga(apiErrorMessage(err, `No se pudieron cargar ${sustantivo.femenino ? "las" : "los"} ${sustantivo.plural}.`));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-    // listar y sustantivo son estables por pestaña (vienen de constantes del módulo).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtroEstado, version]);
-
-  const recargar = useCallback(() => setVersion((v) => v + 1), []);
 
   const itemADesactivar = items.find((i) => idDe(i) === idADesactivar);
 

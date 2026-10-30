@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { useAvisoVisible } from "@/lib/use-aviso-visible";
 import { apiErrorMessage } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { coincideTexto, TAMANIO_PAGINA, TOPE_LISTADO } from "@/lib/buscar-estudiante";
 import {
   deactivateRecordatorio,
@@ -60,44 +61,35 @@ export function RecordatoriosListView() {
   const handleTextoChange = conResetDePagina(setTexto);
   const handleCategoriaChange = conResetDePagina(setNomCategoria);
   const handleCuandoChange = conResetDePagina(setCuandoLabel);
-  // Cambiar de estado vuelve a pedir la lista: el spinner se prende acá y no en el efecto, para no mostrar mientras tanto filas del estado anterior.
-  const handleEstadoChange = conResetDePagina((valor: string) => {
-    setCargando(true);
-    setEstadoLabel(valor);
-  });
+  const handleEstadoChange = conResetDePagina(setEstadoLabel);
 
   // Todos los recordatorios del estado elegido (hasta TOPE_LISTADO por estado): el backend no filtra por texto, categoría ni "cuándo", así que se filtra y pagina acá.
-  const [recordatorios, setRecordatorios] = useState<Recordatorio[]>([]);
+  // Cambiar de estado vuelve a mostrar el spinner, para no mostrar mientras tanto filas del estado anterior.
+  const {
+    data: recordatorios,
+    setData: setRecordatorios,
+    cargando,
+    errorCarga,
+  } = useApi(
+    () => {
+      const estadoParam = ESTADO_A_VALOR[estadoLabel];
+      const estados = estadoParam ? [estadoParam] : ESTADOS_TODOS;
+      return Promise.all(estados.map((estado) => listRecordatorios({ estado, size: TOPE_LISTADO, sort: "fechaHora,asc" }))).then((paginas) =>
+        paginas.flatMap((p) => p.content).sort(porFecha),
+      );
+    },
+    [estadoLabel],
+    { inicial: [] as Recordatorio[], mensajeError: "No se pudieron cargar los recordatorios.", spinnerAlCambiar: true },
+  );
   const idNegInstancias = useIdNegInstancias();
-  const [cargando, setCargando] = useState(true);
+  // Error de una baja o reactivación; el de carga es errorCarga.
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
   const avisoExitoRef = useAvisoVisible<HTMLDivElement>(exito);
-  const avisoErrorRef = useAvisoVisible<HTMLDivElement>(error);
+  const avisoErrorRef = useAvisoVisible<HTMLDivElement>(errorCarga || error);
   const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
   const [idADesactivar, setIdADesactivar] = useState<number | null>(null);
 
-  useEffect(() => {
-    let cancelado = false;
-    const estadoParam = ESTADO_A_VALOR[estadoLabel];
-    const estados = estadoParam ? [estadoParam] : ESTADOS_TODOS;
-    Promise.all(estados.map((estado) => listRecordatorios({ estado, size: TOPE_LISTADO, sort: "fechaHora,asc" })))
-      .then((paginas) => {
-        if (cancelado) return;
-        setRecordatorios(paginas.flatMap((p) => p.content).sort(porFecha));
-        setError("");
-      })
-      .catch((err) => {
-        if (cancelado) return;
-        setError(apiErrorMessage(err, "No se pudieron cargar los recordatorios."));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [estadoLabel]);
 
   // Las categorías salen de los propios recordatorios: GET /categorias-recordatorios pide VER_CATEGORIAS_RECORDATORIO, que los roles de seguimiento no tienen.
   const categorias = useMemo(
@@ -230,9 +222,9 @@ export function RecordatoriosListView() {
           </div>
         ) : null}
 
-        {error ? (
+        {errorCarga || error ? (
           <div ref={avisoErrorRef} role="alert" className="alert alert-error alert-soft text-sm mb-3">
-            <span>{error}</span>
+            <span>{errorCarga || error}</span>
           </div>
         ) : null}
 
