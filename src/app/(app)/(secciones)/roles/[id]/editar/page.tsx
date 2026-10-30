@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ShieldAlert } from "lucide-react";
 import { BackendError, backendJson } from "@/lib/backend";
@@ -14,6 +15,8 @@ export const metadata: Metadata = {
 
 export default async function EditarRolPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  // Mismo criterio que ?estudiante= en instancias/nuevo: un id que no es un entero positivo no existe, así que va a la 404 en vez de llegar al backend.
+  if (!Number.isInteger(Number(id)) || Number(id) <= 0) notFound();
 
   if (!(await tienePermiso("EDITAR_ROL"))) {
     return <SinPermiso volverHref="/roles" volverLabel="Volver a roles" />;

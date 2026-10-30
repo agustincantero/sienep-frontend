@@ -12,7 +12,6 @@ import { createItr, updateItr, type Itr } from "@/lib/itrs";
 import { useSession } from "@/lib/session-context";
 import { CatalogoFormLayout } from "./CatalogoFormLayout";
 import { Campo } from "./Campo";
-import { useMensajeTemporal } from "./useCatalogo";
 
 const MAX_NOMBRE = 80;
 
@@ -25,7 +24,7 @@ export function ItrForm({ itr }: { itr?: Itr }) {
   // Por nombre y no por id: GET /itrs solo trae los NOMBRES de las carreras (ItrResponseDTO), y así la selección inicial vale aunque el catálogo de carreras todavía no haya llegado. Los ids se resuelven al guardar.
   const [seleccion, setSeleccion] = useState<string[]>(itr ? [...itr.carreras] : []);
   const [errorNombre, setErrorNombre] = useState("");
-  const [errorGeneral, setErrorGeneral] = useMensajeTemporal();
+  const [errorGeneral, setErrorGeneral] = useState("");
   const [guardando, setGuardando] = useState(false);
 
   // Catálogo de carreras ACTIVAS para los checkboxes: ItrService rechaza asociar una inactiva (422). null = todavía no cargó o no se pudo cargar.

@@ -11,7 +11,7 @@ type CatalogoFormLayoutProps = {
   seccion: { icon: LucideIcon; titulo: string };
   submitLabel: string;
   guardando: boolean;
-  // Error que no es de un campo puntual (403, 500, conexión): va arriba del formulario y se borra a los 3 s.
+  // Error que no es de un campo puntual (403, 500, conexión): va arriba del formulario y queda hasta el próximo intento, como en los demás formularios.
   errorGeneral: string;
   // Deshabilita el botón de guardar sin ocultarlo (ej. ITR sin catálogo de carreras cargado).
   bloquearGuardado?: boolean;

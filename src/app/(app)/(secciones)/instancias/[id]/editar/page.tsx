@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { BackendError, backendJson } from "@/lib/backend";
 import { InstanciaForm } from "@/components/instancias/InstanciaForm";
 import { SinPermiso } from "@/components/layout/SinPermiso";
@@ -19,6 +20,8 @@ export default async function EditarInstanciaPage({
   searchParams: Promise<{ desde?: string }>;
 }) {
   const { id } = await params;
+  // Mismo criterio que ?estudiante= en instancias/nuevo: un id que no es un entero positivo no existe, así que va a la 404 en vez de llegar al backend.
+  if (!Number.isInteger(Number(id)) || Number(id) <= 0) notFound();
   // ?desde=estudiante: viene del detalle abierto desde la ficha del estudiante; al guardar, el form vuelve a ese detalle conservando el parámetro (ver StudentInstanciasPanel).
   const { desde } = await searchParams;
 

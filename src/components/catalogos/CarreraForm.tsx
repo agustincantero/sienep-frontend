@@ -9,7 +9,6 @@ import { esNombreRepetido } from "@/lib/catalogos";
 import { hrefListado } from "@/lib/catalogos-tabs";
 import { CatalogoFormLayout } from "./CatalogoFormLayout";
 import { Campo } from "./Campo";
-import { useMensajeTemporal } from "./useCatalogo";
 
 const MAX_NOMBRE = 80;
 
@@ -17,7 +16,7 @@ export function CarreraForm({ carrera }: { carrera?: Carrera }) {
   const router = useRouter();
   const [nombre, setNombre] = useState(carrera?.nomCarrera ?? "");
   const [errorNombre, setErrorNombre] = useState("");
-  const [errorGeneral, setErrorGeneral] = useMensajeTemporal();
+  const [errorGeneral, setErrorGeneral] = useState("");
   const [guardando, setGuardando] = useState(false);
 
   async function guardar() {

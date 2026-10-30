@@ -18,6 +18,8 @@ export default async function EditarEstudiantePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  // Mismo criterio que ?estudiante= en instancias/nuevo: un id que no es un entero positivo no existe, así que va a la 404 en vez de llegar al backend.
+  if (!Number.isInteger(Number(id)) || Number(id) <= 0) notFound();
 
   if (!(await tienePermiso("EDITAR_ESTUDIANTE"))) {
     return <SinPermiso volverHref="/estudiantes" volverLabel="Volver a estudiantes" />;

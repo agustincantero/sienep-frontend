@@ -187,7 +187,11 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
     }
   }
 
-  // La frecuencia guardada puede haberse dado de baja: se muestra igual para no perderla al editar.
+  // La categoría y la frecuencia guardadas pueden haberse dado de baja: se muestran igual para no perderlas al editar.
+  const opcionesCategoria =
+    recordatorio && !categorias.some((c) => c.idCategoria === recordatorio.idCategoria)
+      ? [...categorias, { idCategoria: recordatorio.idCategoria, nomCategoria: recordatorio.nombreCategoria }]
+      : categorias;
   const activas = (frecuencias ?? []).map((f) => ({ id: f.idFrecuencia, label: f.descripcion }));
   const opcionesFrecuencia =
     recordatorio?.idFrecuencia != null && !activas.some((f) => f.id === recordatorio.idFrecuencia)
@@ -289,7 +293,7 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
                   required
                 >
                   <option value="">Seleccioná una categoría</option>
-                  {categorias.map((c) => (
+                  {opcionesCategoria.map((c) => (
                     <option key={c.idCategoria} value={c.idCategoria}>
                       {c.nomCategoria}
                     </option>
