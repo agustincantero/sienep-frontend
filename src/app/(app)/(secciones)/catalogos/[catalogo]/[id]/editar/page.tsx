@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { BackendError, backendJson } from "@/lib/backend";
 import { CatalogoForm } from "@/components/catalogos/CatalogoForm";
 import { BackButton } from "@/components/layout/BackButton";
@@ -35,6 +35,8 @@ export default async function EditarItemCatalogoPage({ params }: Params) {
   const definicion = buscarCatalogo(catalogo);
   // Mismo criterio que el listado ([catalogo]/page.tsx): catálogo inexistente redirige a /catalogos en vez de notFound().
   if (!definicion) redirect("/catalogos");
+  // Mismo criterio que ?estudiante= en instancias/nuevo: un id que no es un entero positivo no existe, así que va a la 404 en vez de llegar al backend.
+  if (!Number.isInteger(Number(id)) || Number(id) <= 0) notFound();
   const volverHref = hrefListado(definicion.id);
 
   if (!(await tienePermiso(definicion.permisos.editar))) {
