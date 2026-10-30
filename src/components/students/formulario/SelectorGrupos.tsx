@@ -21,6 +21,9 @@ export function SelectorGrupos({
   // Grupos con los que se abrió el formulario: el selector ITR/carrera se posiciona en ellos (ver más abajo).
   const [idGruposIniciales] = useState(idGrupos);
   const [grupos, setGrupos] = useState<Group[]>([]);
+  // true solo si /grupos respondió bien (aunque venga vacío): con el catálogo vacío igual hay que limpiar
+  // los grupos inactivos, pero si la llamada falló no se sabe cuáles siguen activos y no se toca la selección.
+  const [gruposCargados, setGruposCargados] = useState(false);
   const [itrs, setItrs] = useState<Itr[]>([]);
   // Distingue "todavía no llegó /itrs" de "llegó vacío o falló": sin esto, la sección
   // de grupos mostraría un instante la lista plana de respaldo antes de pasar al selector.
@@ -31,7 +34,10 @@ export function SelectorGrupos({
 
   useEffect(() => {
     listGroups()
-      .then(setGrupos)
+      .then((lista) => {
+        setGrupos(lista);
+        setGruposCargados(true);
+      })
       .catch(() => setGrupos([]));
     // Si /itrs falla, la sección cae a la lista plana (ver más abajo) en vez de
     // quedar sin forma de asignar: asignar un grupo solo debe depender de que /grupos responda.
@@ -76,12 +82,13 @@ export function SelectorGrupos({
   // El catálogo trae solo los grupos ACTIVOS. Si el estudiante sigue en un grupo dado de baja, se saca de la
   // selección al llegar el catálogo: el backend rechaza con 422 cualquier grupo inactivo y no dejaría guardar
   // ningún otro cambio. Es lo mismo que pasaba cuando los grupos se resolvían por nombre contra este catálogo.
+  // También corre con el catálogo vacío: ahí la sección no se muestra y sin limpiar quedaría un 422 imposible de corregir.
   useEffect(() => {
-    if (grupos.length === 0) return;
+    if (!gruposCargados) return;
     const activos = new Set(grupos.map((g) => g.idGrupo));
     onChange((ids) => ids.filter((id) => activos.has(id)));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo debe correr cuando el catálogo de grupos llega
-  }, [grupos]);
+  }, [grupos, gruposCargados]);
 
   // Al editar, arranca el selector de ITR/carrera ya posicionado en el grupo
   // vigente del estudiante, en vez de forzarlo a rearmar el camino ITR →
