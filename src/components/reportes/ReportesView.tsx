@@ -80,7 +80,8 @@ export function ReportesView({ filtrosIniciales, puedeExportar }: ReportesViewPr
       document.body.appendChild(enlace);
       enlace.click();
       enlace.remove();
-      URL.revokeObjectURL(url);
+      // Se libera con demora porque algunos navegadores cortan la descarga si la URL se revoca recién hecho el click.
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo exportar el reporte."));
     } finally {
@@ -104,7 +105,7 @@ export function ReportesView({ filtrosIniciales, puedeExportar }: ReportesViewPr
               {...{ autoComplete: "off" }}
               suppressHydrationWarning
               onClick={() => void exportarPdf()}
-              disabled={exportando || cargando || rangoInvalido || vacio}
+              disabled={exportando || cargando || rangoInvalido || !reporte || vacio}
             >
               {exportando ? <span className="loading loading-spinner loading-xs" aria-hidden /> : <Download size={16} aria-hidden />}
               Exportar PDF
@@ -128,7 +129,7 @@ export function ReportesView({ filtrosIniciales, puedeExportar }: ReportesViewPr
           ) : null}
         </div>
 
-        {reporte ? (
+        {reporte && !rangoInvalido ? (
           <p className="text-sm text-base-content/70 mb-4" aria-live="polite">
             {reporte.desde && reporte.hasta ? <>Período {etiquetaMes(reporte.desde)} a {etiquetaMes(reporte.hasta)}. </> : null}
             {reporte.datosAl ? <>Datos al {formatFechaHora(reporte.datosAl)}. </> : <>Todavía no hay cargas en el Data Warehouse. </>}

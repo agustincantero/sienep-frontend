@@ -118,8 +118,10 @@ export function etiquetaMes(fechaIso: string): string {
   return nombre ? `${nombre} ${anio}` : fechaIso;
 }
 
-// "2026-03-01" -> "mar" para el eje del gráfico.
-export function etiquetaMesCorta(fechaIso: string): string {
-  const nombre = MESES[Number(fechaIso.split("-")[1]) - 1];
-  return nombre ? nombre.slice(0, 3) : fechaIso;
+// "2026-03-01" -> "mar" para el eje del gráfico, o "mar 26" con conAnio (períodos de más de un año, donde el mes solo se repite).
+export function etiquetaMesCorta(fechaIso: string, conAnio = false): string {
+  const [anio, mes] = fechaIso.split("-");
+  const nombre = MESES[Number(mes) - 1];
+  if (!nombre) return fechaIso;
+  return conAnio ? `${nombre.slice(0, 3)} ${anio.slice(2)}` : nombre.slice(0, 3);
 }

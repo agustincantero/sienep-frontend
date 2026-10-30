@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
-
-const MES_VALIDO = /^\d{4}-(0[1-9]|1[0-2])$/;
+import { MES_VALIDO } from "@/lib/reportes-filtros";
 
 // Firefox y Safari de escritorio no soportan type="month" y lo degradan a un campo de texto vacío y sin pista.
 function soportaMes() {

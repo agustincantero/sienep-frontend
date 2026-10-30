@@ -10,12 +10,12 @@ export const FILTROS_REPORTES_POR_DEFECTO: FiltrosReportes = { desde: "", hasta:
 
 type Fuente = URLSearchParams | Record<string, string | string[] | undefined>;
 
-const MES = /^\d{4}-(0[1-9]|1[0-2])$/;
+export const MES_VALIDO = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 function mes(fuente: Fuente, clave: string): string {
   const v = fuente instanceof URLSearchParams ? fuente.get(clave) : fuente[clave];
   const texto = (Array.isArray(v) ? v[0] : v)?.trim() ?? "";
-  return MES.test(texto) ? texto : "";
+  return MES_VALIDO.test(texto) ? texto : "";
 }
 
 // Lo que viene en la URL lo escribe cualquiera: un mes inválido se ignora.
@@ -32,5 +32,5 @@ export function aQueryReportes(f: FiltrosReportes): string {
 
 // El backend espera fechas ISO; el primer día del mes alcanza porque él redondea a meses completos.
 export function mesAFecha(mesIso: string): string | undefined {
-  return MES.test(mesIso) ? `${mesIso}-01` : undefined;
+  return MES_VALIDO.test(mesIso) ? `${mesIso}-01` : undefined;
 }

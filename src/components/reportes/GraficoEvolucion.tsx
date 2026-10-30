@@ -51,6 +51,9 @@ export function GraficoEvolucion({ datos }: { datos: EvolucionMensual[] }) {
     datos.map((d, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(valor(d)).toFixed(1)}`).join(" ");
 
   const paso = datos.length > 1 ? anchoUtil / (datos.length - 1) : anchoUtil;
+  // Con más de 12 meses el nombre solo se repite, así que se suma el año; y si las etiquetas no entran, se muestra una de cada tantas.
+  const conAnio = datos.length > 12;
+  const cadaN = Math.max(1, Math.ceil((conAnio ? 52 : 32) / paso));
 
   return (
     <section className="card bg-base-100 border border-base-300">
@@ -88,11 +91,13 @@ export function GraficoEvolucion({ datos }: { datos: EvolucionMensual[] }) {
                   {m}
                 </text>
               ))}
-              {datos.map((d, i) => (
-                <text key={d.mes} x={x(i)} y={ALTO - 10} textAnchor="middle" fontSize={TAMANIO_TEXTO} fill="currentColor" fillOpacity={0.7}>
-                  {etiquetaMesCorta(d.mes)}
-                </text>
-              ))}
+              {datos.map((d, i) =>
+                i % cadaN === 0 ? (
+                  <text key={d.mes} x={x(i)} y={ALTO - 10} textAnchor="middle" fontSize={TAMANIO_TEXTO} fill="currentColor" fillOpacity={0.7}>
+                    {etiquetaMesCorta(d.mes, conAnio)}
+                  </text>
+                ) : null,
+              )}
               <path d={camino((d) => d.instanciasAgendadas, yInstancias)} fill="none" className="stroke-sky-600" strokeWidth={2.5} strokeLinejoin="round" />
               <path d={camino((d) => d.incidenciasOcurridas, yIncidencias)} fill="none" className="stroke-pink-600" strokeWidth={2.5} strokeLinejoin="round" />
               {activo !== null ? (

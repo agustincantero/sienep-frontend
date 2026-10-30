@@ -81,22 +81,15 @@ async function errorDeRespuesta(res: Response): Promise<ApiError> {
 async function request<T>(path: string, init: RequestInit): Promise<T> {
   const res = await fetchApi(path, init);
 
+  if (!res.ok) throw await errorDeRespuesta(res);
+
   const raw = await res.text();
-  let data: unknown = null;
-  if (raw) {
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      data = null;
-    }
+  if (!raw) return null as T;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null as T;
   }
-
-  if (!res.ok) {
-    const message = (data as { message?: string } | null)?.message;
-    throw new ApiError(res.status, message?.trim() ? message : mensajePorEstado(res.status));
-  }
-
-  return data as T;
 }
 
 function jsonInit(method: string, body: unknown): RequestInit {
