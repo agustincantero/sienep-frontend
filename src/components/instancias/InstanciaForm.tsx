@@ -41,7 +41,7 @@ function estadoInicial(instancia?: InstanciaComun, idEstudianteFijo?: number, cl
   };
 }
 
-// Mismo patrón que SeccionLegend/SeccionCard de StudentForm — un solo fieldset alcanza acá, el form es corto.
+// Mismo patrón que SeccionLegend/SeccionCard de components/ui/SeccionFormulario — un solo fieldset alcanza acá, el form es corto.
 function SeccionLegend({ icon: Icon, children }: { icon: typeof User; children: React.ReactNode }) {
   return (
     <legend className="fieldset-legend text-sm font-semibold text-base-content mb-1 gap-1.5">
@@ -105,7 +105,7 @@ export function InstanciaForm(props: InstanciaFormProps) {
     if (errores[key]) setErrores((e) => ({ ...e, [key]: "" }));
   }
 
-  // Mismo criterio de orden que StudentForm.validar(): define qué campo se enfoca si falla, sigue el orden en pantalla.
+  // Mismo criterio de orden que validarEstudiante(): define qué campo se enfoca si falla, sigue el orden en pantalla.
   function validar(): Record<string, string> {
     const e: Record<string, string> = {};
     if (!esEdicion && !form.idEstudiante) {
@@ -283,7 +283,7 @@ export function InstanciaForm(props: InstanciaFormProps) {
   );
 }
 
-// Idéntico al Field de StudentForm.tsx — se duplica acá porque StudentForm no lo exporta.
+// Variante del Field de components/ui con texto de `ayuda` debajo del control.
 function Field({
   label,
   error,

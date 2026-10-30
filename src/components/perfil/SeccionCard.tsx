@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-// Card de sección de "Mi perfil": mismas clases que SeccionCard + SeccionLegend de StudentForm, para que el perfil se vea como el resto de los formularios. Ojo: el `fieldset` de daisyUI baja todo su contenido a text-xs, así que el texto de adentro tiene que fijar su tamaño (text-sm) explícitamente.
+// Card de sección de "Mi perfil": mismas clases que SeccionCard + SeccionLegend de components/ui/SeccionFormulario, para que el perfil se vea como el resto de los formularios. Ojo: el `fieldset` de daisyUI baja todo su contenido a text-xs, así que el texto de adentro tiene que fijar su tamaño (text-sm) explícitamente.
 export function SeccionCard({
   icon: Icon,
   titulo,
