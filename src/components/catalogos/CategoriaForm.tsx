@@ -9,7 +9,6 @@ import { buscarCatalogo, hrefListado } from "@/lib/catalogos-tabs";
 import { CatalogoFormLayout } from "./CatalogoFormLayout";
 import { Campo } from "./Campo";
 import type { Categoria, ConfigCategoria } from "./categorias-config";
-import { useMensajeTemporal } from "./useCatalogo";
 
 const MAX_NOMBRE = 50;
 const MAX_DESCRIPCION = 100;
@@ -26,7 +25,7 @@ export function CategoriaForm({ config, categoria }: { config: ConfigCategoria; 
     descripcion: categoria?.descripcion ?? "",
   });
   const [errores, setErrores] = useState<Errores>({});
-  const [errorGeneral, setErrorGeneral] = useMensajeTemporal();
+  const [errorGeneral, setErrorGeneral] = useState("");
   const [guardando, setGuardando] = useState(false);
 
   const nombreNormalizado = normalizarNombreCategoria(form.nombre);

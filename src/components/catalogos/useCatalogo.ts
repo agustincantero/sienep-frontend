@@ -19,7 +19,7 @@ export function participio(s: Sustantivo, verbo: "creado" | "actualizado" | "des
 const DURACION_MENSAJE_MS = 3000;
 
 // Mensaje que se borra solo a los 3 s. Cada mensaje nuevo reinicia la cuenta.
-export function useMensajeTemporal(inicial = ""): [string, (m: string) => void] {
+function useMensajeTemporal(inicial = ""): [string, (m: string) => void] {
   const [mensaje, setMensaje] = useState(inicial);
   useEffect(() => {
     if (!mensaje) return;

@@ -18,7 +18,6 @@ import {
 } from "@/lib/frecuencias";
 import { CatalogoFormLayout } from "./CatalogoFormLayout";
 import { Campo } from "./Campo";
-import { useMensajeTemporal } from "./useCatalogo";
 
 const MAX_DESCRIPCION = 50;
 // FrecuenciaRequestDTO: intDias entre 1 y 31.
@@ -38,7 +37,7 @@ export function FrecuenciaForm({ frecuencia }: { frecuencia?: Frecuencia }) {
     intDias: frecuencia?.intDias != null ? String(frecuencia.intDias) : "",
   });
   const [errores, setErrores] = useState<Errores>({});
-  const [errorGeneral, setErrorGeneral] = useMensajeTemporal();
+  const [errorGeneral, setErrorGeneral] = useState("");
   const [guardando, setGuardando] = useState(false);
 
   function campo<K extends keyof FormState>(key: K, value: FormState[K]) {

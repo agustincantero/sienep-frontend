@@ -12,7 +12,6 @@ import { createGroup, updateGroup, type Group } from "@/lib/groups";
 import { useSession } from "@/lib/session-context";
 import { CatalogoFormLayout } from "./CatalogoFormLayout";
 import { Campo } from "./Campo";
-import { useMensajeTemporal } from "./useCatalogo";
 
 const MAX_NOMBRE = 60;
 // GrupoService.validarGeneracion: mayor a 1900 y no posterior al año en curso.
@@ -32,7 +31,7 @@ export function GrupoForm({ grupo }: { grupo?: Group }) {
     generacion: String(grupo?.generacion ?? anioActual),
   });
   const [errores, setErrores] = useState<Errores>({});
-  const [errorGeneral, setErrorGeneral] = useMensajeTemporal();
+  const [errorGeneral, setErrorGeneral] = useState("");
   const [guardando, setGuardando] = useState(false);
 
   // Solo hace falta en el alta (la carrera no se edita). Solo ACTIVAS: GrupoService.crear rechaza una inactiva.
