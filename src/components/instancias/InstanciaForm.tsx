@@ -149,6 +149,13 @@ export function InstanciaForm(props: InstanciaFormProps) {
     }
   }
 
+  // La categoría guardada puede haberse dado de baja: se muestra igual para no perderla al editar (mismo criterio que RecordatorioForm).
+  const instanciaEditada = esEdicion ? props.instancia : undefined;
+  const opcionesCategoria =
+    instanciaEditada && !categorias.some((c) => c.idCategoria === instanciaEditada.idCategoria)
+      ? [...categorias, { idCategoria: instanciaEditada.idCategoria, nomCategoria: instanciaEditada.nombreCategoria }]
+      : categorias;
+
   return (
     <div className="grow overflow-auto">
       <div className="max-w-[720px] mx-auto w-full px-4 py-5">
@@ -216,7 +223,7 @@ export function InstanciaForm(props: InstanciaFormProps) {
                   required
                 >
                   <option value="">Seleccioná una categoría</option>
-                  {categorias.map((c) => (
+                  {opcionesCategoria.map((c) => (
                     <option key={c.idCategoria} value={c.idCategoria}>
                       {c.nomCategoria}
                     </option>
