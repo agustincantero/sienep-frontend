@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import { Ban, Info, Pencil, Send, ShieldAlert, Trash2 } from "lucide-react";
+import { useApi } from "@/hooks/useApi";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFechaHora } from "@/lib/format";
 import type { ComentarioInstancia } from "@/lib/instancia-comentarios";
@@ -104,11 +105,18 @@ function ComentarioBox<T extends ComentarioInstancia>({
   };
   confidencial?: boolean;
 }) {
-  const [comentarios, setComentarios] = useState<T[]>([]);
-  const [cargando, setCargando] = useState(true);
+  // listar es estable (un import), por eso las deps son solo codInstancia.
+  const {
+    data: comentarios,
+    cargando,
+    errorCarga,
+    recargar,
+  } = useApi(() => listar(codInstancia).then((res) => res.content), [codInstancia], {
+    inicial: [] as T[],
+    mensajeError: "No se pudieron cargar los comentarios.",
+  });
+  // Error de comentar, editar o eliminar; el de carga es errorCarga.
   const [error, setError] = useState("");
-  // true si la última carga falló: no se sabe si hay comentarios, así que no se afirma que no los hay.
-  const [cargaFallida, setCargaFallida] = useState(false);
   const [contenido, setContenido] = useState("");
   const [enviando, setEnviando] = useState(false);
   // Mensajes de validación de cada textarea (alta y edición). Los botones no se deshabilitan por contenido
@@ -127,22 +135,6 @@ function ComentarioBox<T extends ComentarioInstancia>({
   const [idAEliminar, setIdAEliminar] = useState<number | null>(null);
   const [eliminando, setEliminando] = useState(false);
 
-  function cargar() {
-    listar(codInstancia)
-      .then((res) => {
-        setComentarios(res.content);
-        setCargaFallida(false);
-        setError("");
-      })
-      .catch((err) => {
-        setCargaFallida(true);
-        setError(apiErrorMessage(err, "No se pudieron cargar los comentarios."));
-      })
-      .finally(() => setCargando(false));
-  }
-
-  useEffect(cargar, [codInstancia]); // eslint-disable-line react-hooks/exhaustive-deps -- listar/crear son estables (imports)
-
   async function handleComentar(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
     const texto = contenido.trim();
@@ -155,7 +147,7 @@ function ComentarioBox<T extends ComentarioInstancia>({
     try {
       await crear(codInstancia, texto);
       setContenido("");
-      cargar();
+      recargar();
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo agregar el comentario."));
     } finally {
@@ -183,7 +175,7 @@ function ComentarioBox<T extends ComentarioInstancia>({
     try {
       await acciones.editar(codInstancia, idEnEdicion, texto);
       setIdEnEdicion(null);
-      cargar();
+      recargar();
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo editar el comentario."));
     } finally {
@@ -199,7 +191,7 @@ function ComentarioBox<T extends ComentarioInstancia>({
     setError("");
     try {
       await acciones.eliminar(codInstancia, id);
-      cargar();
+      recargar();
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo eliminar el comentario."));
     } finally {
@@ -217,9 +209,9 @@ function ComentarioBox<T extends ComentarioInstancia>({
         </div>
       ) : null}
 
-      {error ? (
+      {errorCarga || error ? (
         <div role="alert" className="alert alert-error alert-soft text-sm mb-3">
-          <span>{error}</span>
+          <span>{errorCarga || error}</span>
         </div>
       ) : null}
 
@@ -228,7 +220,8 @@ function ComentarioBox<T extends ComentarioInstancia>({
           <span className="loading loading-spinner loading-sm" role="status" aria-label="Cargando" />
         </div>
       ) : comentarios.length === 0 ? (
-        cargaFallida ? null : (
+        // Si la carga falló no se sabe si hay comentarios, así que no se afirma que no los hay.
+        errorCarga ? null : (
           <p className="text-base-content/70 text-sm mb-3">Todavía no hay comentarios.</p>
         )
       ) : (

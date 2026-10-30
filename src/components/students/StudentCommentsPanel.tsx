@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useState } from "react";
+import { useApi } from "@/hooks/useApi";
 import { apiErrorMessage } from "@/lib/api";
 import {
   createConfidentialComment,
@@ -62,10 +63,33 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
   const puedeCrear = puedeCrearNormal || puedeCrearConfidencial;
   const idNuevo = useId();
 
-  const [comentarios, setComentarios] = useState<ComentarioConTipo[]>([]);
-  const [cargando, setCargando] = useState(puedeVer);
-  // error: falla al cargar la lista O al publicar — se muestra junto al
-  // contenido ya cargado, mismo patrón que MedicalReportsPanel.
+  // Sin permiso para ver no se pide nada (esperar): el return de abajo muestra el aviso en lugar del panel.
+  const { data: comentarios, cargando, errorCarga, recargar } = useApi(
+    () => {
+      const pedidos: Promise<ComentarioConTipo[]>[] = [];
+      if (puedeVerNormal) {
+        pedidos.push(
+          listNormalComments(idEstudiante).then((res) => res.content.map((c) => ({ ...c, tipo: "normal" as const }))),
+        );
+      }
+      if (puedeVerConfidencial) {
+        pedidos.push(
+          listConfidentialComments(idEstudiante).then((res) =>
+            res.content.map((c) => ({ ...c, tipo: "confidencial" as const })),
+          ),
+        );
+      }
+      // Más viejo primero, más nuevo al final (como un hilo de conversación):
+      // el formulario de alta vive justo debajo de la lista, así que el
+      // último comentario queda pegado a donde se escribe el siguiente.
+      return Promise.all(pedidos).then((listas) =>
+        listas.flat().sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+      );
+    },
+    [idEstudiante],
+    { inicial: [] as ComentarioConTipo[], mensajeError: "No se pudieron cargar los comentarios.", esperar: !puedeVer },
+  );
+  // Error al publicar; el de carga es errorCarga. Se muestran junto al contenido ya cargado, mismo patrón que MedicalReportsPanel.
   const [error, setError] = useState("");
   const [contenidoNuevo, setContenidoNuevo] = useState("");
   const [esConfidencialNuevo, setEsConfidencialNuevo] = useState(false);
@@ -75,55 +99,6 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
   // Comentario al que se acaba de saltar desde una cita: se resalta un rato
   // para que quede claro cuál es, sin depender del hash de la URL.
   const [resaltado, setResaltado] = useState<string | null>(null);
-
-  // Mismo motivo que en MedicalReportsPanel: si el usuario navega a otra
-  // ficha mientras un pedido sigue en vuelo, la respuesta vieja no debe
-  // pisar el estado del estudiante nuevo.
-  const idEstudianteRef = useRef(idEstudiante);
-  useEffect(() => {
-    idEstudianteRef.current = idEstudiante;
-  }, [idEstudiante]);
-
-  // Nunca se llama si !puedeVer: el formulario de alta (único otro punto que
-  // la invoca) ni siquiera se renderiza en ese caso, ver el return de abajo.
-  function cargar() {
-    const idAlPedir = idEstudiante;
-    const pedidos: Promise<ComentarioConTipo[]>[] = [];
-    if (puedeVerNormal) {
-      pedidos.push(
-        listNormalComments(idAlPedir).then((res) => res.content.map((c) => ({ ...c, tipo: "normal" as const }))),
-      );
-    }
-    if (puedeVerConfidencial) {
-      pedidos.push(
-        listConfidentialComments(idAlPedir).then((res) =>
-          res.content.map((c) => ({ ...c, tipo: "confidencial" as const })),
-        ),
-      );
-    }
-    Promise.all(pedidos)
-      .then((listas) => {
-        if (idEstudianteRef.current !== idAlPedir) return;
-        // Más viejo primero, más nuevo al final (como un hilo de conversación):
-        // el formulario de alta vive justo debajo de la lista, así que el
-        // último comentario queda pegado a donde se escribe el siguiente.
-        const todos = listas.flat().sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-        setComentarios(todos);
-        setError("");
-      })
-      .catch((err) => {
-        if (idEstudianteRef.current !== idAlPedir) return;
-        setError(apiErrorMessage(err, "No se pudieron cargar los comentarios."));
-      })
-      .finally(() => {
-        if (idEstudianteRef.current === idAlPedir) setCargando(false);
-      });
-  }
-
-  useEffect(() => {
-    if (puedeVer) cargar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- puedeVer* no cambian durante la vida del componente, solo idEstudiante
-  }, [idEstudiante]);
 
   // Si el citado es confidencial, el default es marcar la respuesta también
   // como confidencial — citar su contenido (aunque sea parcialmente, en la
@@ -169,7 +144,7 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
       setContenidoNuevo("");
       setEsConfidencialNuevo(false);
       setCitando(null);
-      cargar();
+      recargar();
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo publicar el comentario."));
     } finally {
@@ -183,9 +158,9 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
 
   return (
     <div>
-      {error ? (
+      {errorCarga || error ? (
         <div role="alert" className="alert alert-error alert-soft text-sm mb-3">
-          <span>{error}</span>
+          <span>{errorCarga || error}</span>
         </div>
       ) : null}
 
