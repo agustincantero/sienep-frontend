@@ -43,7 +43,7 @@ function mensajePorEstado(status: number): string {
 
 // Núcleo compartido por todos los verbos: maneja la conexión caída, la sesión
 // vencida (401 fuera de las rutas públicas de auth) y el parseo de error.
-async function request<T>(path: string, init: RequestInit): Promise<T> {
+async function fetchApi(path: string, init: RequestInit): Promise<Response> {
   let res: Response;
   try {
     res = await fetch(`/api${path}`, { ...init, credentials: "same-origin" });
@@ -63,22 +63,33 @@ async function request<T>(path: string, init: RequestInit): Promise<T> {
     throw new ApiError(401, "Tu sesión expiró. Volvé a iniciar sesión.");
   }
 
+  return res;
+}
+
+// Lee el cuerpo de error como JSON (si lo es) y arma el ApiError con el mensaje del backend o el genérico por estado.
+async function errorDeRespuesta(res: Response): Promise<ApiError> {
   const raw = await res.text();
-  let data: unknown = null;
-  if (raw) {
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      data = null;
-    }
+  let message: string | undefined;
+  try {
+    message = (JSON.parse(raw) as { message?: string } | null)?.message;
+  } catch {
+    message = undefined;
   }
+  return new ApiError(res.status, message?.trim() ? message : mensajePorEstado(res.status));
+}
 
-  if (!res.ok) {
-    const message = (data as { message?: string } | null)?.message;
-    throw new ApiError(res.status, message?.trim() ? message : mensajePorEstado(res.status));
+async function request<T>(path: string, init: RequestInit): Promise<T> {
+  const res = await fetchApi(path, init);
+
+  if (!res.ok) throw await errorDeRespuesta(res);
+
+  const raw = await res.text();
+  if (!raw) return null as T;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null as T;
   }
-
-  return data as T;
 }
 
 function jsonInit(method: string, body: unknown): RequestInit {
@@ -99,6 +110,18 @@ function withQuery(path: string, params?: Record<string, string | number | undef
 
 export function apiGet<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {
   return request<T>(withQuery(path, params), { method: "GET" });
+}
+
+// Para respuestas binarias (PDF). Devuelve el blob y el nombre sugerido en Content-Disposition, si vino.
+export async function apiGetBlob(
+  path: string,
+  params?: Record<string, string | number | undefined>,
+): Promise<{ blob: Blob; nombreArchivo: string | null }> {
+  const res = await fetchApi(withQuery(path, params), { method: "GET" });
+  if (!res.ok) throw await errorDeRespuesta(res);
+  const disposicion = res.headers.get("content-disposition") ?? "";
+  const nombreArchivo = /filename="?([^";]+)"?/i.exec(disposicion)?.[1] ?? null;
+  return { blob: await res.blob(), nombreArchivo };
 }
 
 export function apiPost<T>(path: string, body: unknown): Promise<T> {
