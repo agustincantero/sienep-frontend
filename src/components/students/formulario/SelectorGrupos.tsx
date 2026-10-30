@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Check, Users, X } from "lucide-react";
+import { useApi } from "@/hooks/useApi";
 import { listGroups, type Group } from "@/lib/groups";
 import { listItrs, type Itr } from "@/lib/itrs";
 import { Field } from "@/components/ui/Field";
@@ -20,32 +21,23 @@ export function SelectorGrupos({
 }) {
   // Grupos con los que se abrió el formulario: el selector ITR/carrera se posiciona en ellos (ver más abajo).
   const [idGruposIniciales] = useState(idGrupos);
-  const [grupos, setGrupos] = useState<Group[]>([]);
+  // Los mensajes no se muestran, pero no pueden ser vacíos: errorCarga es lo que distingue "llegó vacío" de "falló".
+  const gruposApi = useApi(listGroups, [], { inicial: [] as Group[], mensajeError: "No se pudieron cargar los grupos." });
+  // Si /itrs falla, la sección cae a la lista plana (ver más abajo) en vez de
+  // quedar sin forma de asignar: asignar un grupo solo debe depender de que /grupos responda.
+  const itrsApi = useApi(listItrs, [], { inicial: [] as Itr[], mensajeError: "No se pudieron cargar los ITR." });
   // true solo si /grupos respondió bien (aunque venga vacío): con el catálogo vacío igual hay que limpiar
   // los grupos inactivos, pero si la llamada falló no se sabe cuáles siguen activos y no se toca la selección.
-  const [gruposCargados, setGruposCargados] = useState(false);
-  const [itrs, setItrs] = useState<Itr[]>([]);
+  const gruposCargados = !gruposApi.cargando && !gruposApi.errorCarga;
+  // Si falló, el hook conserva el valor inicial ([]): se usa igual que un catálogo vacío.
+  const grupos = gruposApi.data;
+  const itrs = itrsApi.data;
   // Distingue "todavía no llegó /itrs" de "llegó vacío o falló": sin esto, la sección
   // de grupos mostraría un instante la lista plana de respaldo antes de pasar al selector.
-  const [itrsListos, setItrsListos] = useState(false);
+  const itrsListos = !itrsApi.cargando;
   const [filtroItr, setFiltroItr] = useState<number | "">("");
   const [filtroCarrera, setFiltroCarrera] = useState<number | "">("");
   const [autoseleccionoFiltro, setAutoseleccionoFiltro] = useState(false);
-
-  useEffect(() => {
-    listGroups()
-      .then((lista) => {
-        setGrupos(lista);
-        setGruposCargados(true);
-      })
-      .catch(() => setGrupos([]));
-    // Si /itrs falla, la sección cae a la lista plana (ver más abajo) en vez de
-    // quedar sin forma de asignar: asignar un grupo solo debe depender de que /grupos responda.
-    listItrs()
-      .then(setItrs)
-      .catch(() => setItrs([]))
-      .finally(() => setItrsListos(true));
-  }, []);
 
   // Las carreras no tienen catálogo propio acá: se derivan de los grupos ya
   // cargados (mismo criterio que StudentsListView — cada Grupo trae

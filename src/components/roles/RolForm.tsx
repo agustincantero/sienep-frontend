@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Shield, ShieldAlert, Tag } from "lucide-react";
+import { useApi } from "@/hooks/useApi";
 import { ApiError, apiErrorMessage } from "@/lib/api";
 import { agruparPermisos, listPermisos, type Permiso } from "@/lib/permisos";
 import { createRole, normalizarNombreRol, updateRole, type Rol } from "@/lib/roles";
@@ -31,9 +32,11 @@ export function RolForm(props: RolFormProps) {
   const { permisos: misPermisos } = useSession();
 
   const [form, setForm] = useState<FormState>(() => estadoInicial(esEdicion ? props.rol : undefined));
-  const [catalogo, setCatalogo] = useState<Permiso[]>([]);
-  const [catalogoError, setCatalogoError] = useState("");
-  const [cargandoCatalogo, setCargandoCatalogo] = useState(true);
+  const {
+    data: catalogo,
+    cargando: cargandoCatalogo,
+    errorCarga: catalogoError,
+  } = useApi(listPermisos, [], { inicial: [] as Permiso[], mensajeError: "No se pudo cargar el catálogo de permisos." });
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -43,13 +46,6 @@ export function RolForm(props: RolFormProps) {
   useEffect(() => {
     if (errorGeneral) errorGeneralRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [errorGeneral]);
-
-  useEffect(() => {
-    listPermisos()
-      .then(setCatalogo)
-      .catch((err) => setCatalogoError(apiErrorMessage(err, "No se pudo cargar el catálogo de permisos.")))
-      .finally(() => setCargandoCatalogo(false));
-  }, []);
 
   const grupos = useMemo(() => agruparPermisos(catalogo), [catalogo]);
 

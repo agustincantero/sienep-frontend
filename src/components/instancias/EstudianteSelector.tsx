@@ -2,11 +2,26 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { X } from "lucide-react";
+import { useApi } from "@/hooks/useApi";
 import { apiErrorMessage } from "@/lib/api";
 import { coincideTexto, todosLosEstudiantes } from "@/lib/buscar-estudiante";
-import type { StudentSummary } from "@/lib/students";
+import { getStudent, type StudentSummary } from "@/lib/students";
 
 export type EstudianteElegido = { id: number; nombre: string; documento?: string };
+
+// Alta desde la ficha del estudiante: el selector queda bloqueado en ese estudiante y hay que resolver su nombre para mostrarlo. Si el rol no puede leer la ficha, queda el número. Sin id fijo no se pide nada y devuelve null.
+export function useEstudianteFijo(idEstudianteFijo: number | undefined): EstudianteElegido | null {
+  const { data } = useApi(
+    () =>
+      getStudent(idEstudianteFijo as number).then(
+        (s): EstudianteElegido => ({ id: s.idUsuario, nombre: `${s.nombre} ${s.apellido}`, documento: s.documento }),
+        (): EstudianteElegido => ({ id: idEstudianteFijo as number, nombre: `Estudiante #${idEstudianteFijo}` }),
+      ),
+    [idEstudianteFijo],
+    { inicial: null as EstudianteElegido | null, mensajeError: "", esperar: idEstudianteFijo === undefined },
+  );
+  return idEstudianteFijo === undefined ? null : data;
+}
 
 const MIN_CARACTERES = 2;
 const MAX_RESULTADOS = 8;

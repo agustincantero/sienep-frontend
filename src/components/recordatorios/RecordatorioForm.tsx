@@ -1,9 +1,10 @@
 "use client";
 
-import { cloneElement, isValidElement, useEffect, useState } from "react";
+import { cloneElement, isValidElement, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bell, Repeat, User } from "lucide-react";
+import { useApi } from "@/hooks/useApi";
 import { apiErrorMessage } from "@/lib/api";
 import { hrefListado } from "@/lib/catalogos-tabs";
 import { listCategoriasRecordatorio, type CategoriaRecordatorio } from "@/lib/categorias-recordatorio";
@@ -82,31 +83,22 @@ export function RecordatorioForm(props: RecordatorioFormProps) {
   // Instancia elegida en el buscador; fija si se llegó desde la instancia.
   const [instancia, setInstancia] = useState<InstanciaComun | null>(instanciaFija ?? null);
   // Al editar, la instancia no se puede cambiar: se lee solo para mostrar su identificador de negocio (RecordatorioResponseDTO no lo trae).
-  const [instanciaActual, setInstanciaActual] = useState<InstanciaComun | null>(null);
-  const [categorias, setCategorias] = useState<CategoriaRecordatorio[]>([]);
-  const [frecuencias, setFrecuencias] = useState<Frecuencia[] | null>(null);
+  const { data: instanciaActual } = useApi(() => getInstancia(recordatorio?.codInstancia as number), [recordatorio?.codInstancia], {
+    mensajeError: "",
+    esperar: !recordatorio,
+  });
+  // La categoría requiere VER_CATEGORIAS_RECORDATORIO — si el rol no lo tiene, el combo queda vacío (mismo caso que las categorías de instancia en InstanciaForm). No se rompe la pantalla por eso.
+  const { data: categorias } = useApi(listCategoriasRecordatorio, [], { inicial: [] as CategoriaRecordatorio[], mensajeError: "" });
+  // null mientras carga. Sin frecuencias activas (o si la llamada falla), la sección de repetición avisa que no hay y dónde se cargan.
+  // El mensaje no se muestra, pero no puede ser vacío: errorCarga es lo que distingue "falló" de "todavía no llegó".
+  const frecuenciasApi = useApi(listFrecuencias, [], { mensajeError: "No se pudieron cargar las frecuencias." });
+  const frecuencias: Frecuencia[] | null = frecuenciasApi.errorCarga ? [] : frecuenciasApi.data;
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState("");
   const [guardando, setGuardando] = useState(false);
   const ahora = ahoraParaInputLocal();
   // El backend exige fecha futura también al editar (aunque no cambie): un recordatorio vencido solo se guarda si se lo pasa a una fecha nueva.
   const vencido = recordatorio != null && recordatorio.fechaHora.slice(0, 16) <= ahora;
-
-  useEffect(() => {
-    if (recordatorio) {
-      getInstancia(recordatorio.codInstancia)
-        .then(setInstanciaActual)
-        .catch(() => {});
-    }
-    // La categoría requiere VER_CATEGORIAS_RECORDATORIO — si el rol no lo tiene, el combo queda vacío (mismo caso que las categorías de instancia en InstanciaForm). No se rompe la pantalla por eso.
-    listCategoriasRecordatorio()
-      .then(setCategorias)
-      .catch(() => setCategorias([]));
-    // Sin frecuencias activas (o si la llamada falla), la sección de repetición avisa que no hay y dónde se cargan.
-    listFrecuencias()
-      .then(setFrecuencias)
-      .catch(() => setFrecuencias([]));
-  }, [recordatorio]);
 
   function campo<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));

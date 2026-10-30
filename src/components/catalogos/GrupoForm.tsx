@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Users } from "lucide-react";
+import { useApi } from "@/hooks/useApi";
 import { apiErrorMessage } from "@/lib/api";
-import { listCarreras, type Carrera } from "@/lib/carreras";
+import { listCarreras } from "@/lib/carreras";
 import { compararTexto, esNombreRepetido } from "@/lib/catalogos";
 import { hrefListado } from "@/lib/catalogos-tabs";
 import { createGroup, updateGroup, type Group } from "@/lib/groups";
@@ -35,16 +36,13 @@ export function GrupoForm({ grupo }: { grupo?: Group }) {
   const [guardando, setGuardando] = useState(false);
 
   // Solo hace falta en el alta (la carrera no se edita). Solo ACTIVAS: GrupoService.crear rechaza una inactiva.
-  const [carreras, setCarreras] = useState<Carrera[] | null>(null);
-  const [errorCarreras, setErrorCarreras] = useState("");
   const puedeVerCarreras = permisos.includes("VER_CARRERAS");
-
-  useEffect(() => {
-    if (grupo || !puedeVerCarreras) return;
-    listCarreras("ACTIVO")
-      .then((res) => setCarreras([...res].sort((a, b) => compararTexto(a.nomCarrera, b.nomCarrera))))
-      .catch((err) => setErrorCarreras(apiErrorMessage(err, "No se pudo cargar el catálogo de carreras.")));
-  }, [grupo, puedeVerCarreras]);
+  // null mientras carga o si falló.
+  const { data: carreras, errorCarga: errorCarreras } = useApi(
+    () => listCarreras("ACTIVO").then((res) => [...res].sort((a, b) => compararTexto(a.nomCarrera, b.nomCarrera))),
+    [grupo, puedeVerCarreras],
+    { mensajeError: "No se pudo cargar el catálogo de carreras.", esperar: Boolean(grupo) || !puedeVerCarreras },
+  );
 
   const avisoCarreras = puedeVerCarreras ? errorCarreras : "Para elegir la carrera necesitás el permiso de ver carreras.";
 

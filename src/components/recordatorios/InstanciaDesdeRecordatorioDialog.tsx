@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { useApi } from "@/hooks/useApi";
 import { apiErrorMessage } from "@/lib/api";
 import { listCategoriasInstancia, type CategoriaInstancia } from "@/lib/categorias-instancia";
 import type { InstanciaComun } from "@/lib/instancias";
@@ -21,7 +22,12 @@ export function InstanciaDesdeRecordatorioDialog({ open, recordatorio, onCreada,
   const ref = useRef<HTMLDialogElement>(null);
   const tituloId = useId();
   const descripcionId = useId();
-  const [categorias, setCategorias] = useState<CategoriaInstancia[]>([]);
+  // Se pide cada vez que se abre. La categoría requiere VER_CATEGORIAS_INSTANCIA; si falta, el combo queda vacío (mismo caso que InstanciaForm).
+  const { data: categorias } = useApi(listCategoriasInstancia, [open], {
+    inicial: [] as CategoriaInstancia[],
+    mensajeError: "",
+    esperar: !open,
+  });
   const [idCategoria, setIdCategoria] = useState("");
   const [titulo, setTitulo] = useState("");
   const [canal, setCanal] = useState("");
@@ -35,14 +41,6 @@ export function InstanciaDesdeRecordatorioDialog({ open, recordatorio, onCreada,
     if (!dialog) return;
     if (open && !dialog.open) dialog.showModal();
     if (!open && dialog.open) dialog.close();
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    // La categoría requiere VER_CATEGORIAS_INSTANCIA; si falta, el combo queda vacío (mismo caso que InstanciaForm).
-    listCategoriasInstancia()
-      .then(setCategorias)
-      .catch(() => setCategorias([]));
   }, [open]);
 
   async function handleSubmit(ev: React.FormEvent<HTMLFormElement>) {
