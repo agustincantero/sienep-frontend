@@ -43,6 +43,16 @@ export function InstanciaDesdeRecordatorioDialog({ open, recordatorio, onCreada,
     if (!open && dialog.open) dialog.close();
   }, [open]);
 
+  // Al cerrarlo sin crear se descarta lo escrito y el error, así la próxima vez abre limpio (mismo criterio que ContactoCard.abrirEdicion).
+  function cerrar() {
+    setIdCategoria("");
+    setTitulo("");
+    setCanal("");
+    setErrorCategoria("");
+    setError("");
+    onCancel();
+  }
+
   async function handleSubmit(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
     setError("");
@@ -68,7 +78,7 @@ export function InstanciaDesdeRecordatorioDialog({ open, recordatorio, onCreada,
   }
 
   return (
-    <dialog ref={ref} className="modal" aria-labelledby={tituloId} aria-describedby={descripcionId} onClose={onCancel}>
+    <dialog ref={ref} className="modal" aria-labelledby={tituloId} aria-describedby={descripcionId} onClose={cerrar}>
       <div className="modal-box">
         <h3 id={tituloId} className="text-lg font-semibold">Registrar instancia de seguimiento</h3>
         <p id={descripcionId} className="py-3 text-sm text-base-content/70 wrap-anywhere">
@@ -149,7 +159,7 @@ export function InstanciaDesdeRecordatorioDialog({ open, recordatorio, onCreada,
         </form>
 
         <div className="modal-action">
-          <button type="button" className="btn" onClick={onCancel} disabled={guardando}>
+          <button type="button" className="btn" onClick={cerrar} disabled={guardando}>
             Cancelar
           </button>
           <button type="submit" form="form-seguimiento" className="btn btn-primary" disabled={guardando}>
