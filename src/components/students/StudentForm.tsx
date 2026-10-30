@@ -31,7 +31,7 @@ function estadoInicial(estudiante?: Student): EstudianteFormState {
     calle: estudiante?.calle ?? "",
     nroPuerta: estudiante?.nroPuerta != null ? String(estudiante.nroPuerta) : "",
     telefonos: estudiante?.telefonos && estudiante.telefonos.length > 0 ? estudiante.telefonos : [""],
-    idGrupos: [],
+    idGrupos: estudiante?.idGrupos ?? [],
     informacionSalud: estudiante?.informacionSalud ?? "",
     sistemaSalud: estudiante?.sistemaSalud ?? "",
     motivoDerivacion: estudiante?.motivoDerivacion ?? "",
@@ -188,7 +188,6 @@ export function StudentForm(props: StudentFormProps) {
           <SelectorGrupos
             idGrupos={form.idGrupos}
             onChange={cambiarGrupos}
-            gruposActuales={esEdicion ? props.estudiante.grupos : undefined}
             guardando={guardando}
           />
           <SaludSeccion {...seccion} />
