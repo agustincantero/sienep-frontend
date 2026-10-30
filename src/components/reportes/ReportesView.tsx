@@ -100,6 +100,9 @@ export function ReportesView({ filtrosIniciales, puedeExportar }: ReportesViewPr
             <button
               type="button"
               className="btn btn-primary btn-sm"
+              // Firefox restaura el estado disabled del botón al recargar y rompe la hidratación; autoComplete="off" lo evita (los tipos de React no lo declaran para button).
+              {...{ autoComplete: "off" }}
+              suppressHydrationWarning
               onClick={() => void exportarPdf()}
               disabled={exportando || cargando || rangoInvalido || vacio}
             >
