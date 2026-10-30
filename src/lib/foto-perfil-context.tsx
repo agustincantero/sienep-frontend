@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext } from "react";
+import { useApi } from "@/hooks/useApi";
 import { useSession } from "./session-context";
 import { getMiPerfil } from "./students";
 
@@ -15,26 +16,17 @@ const FotoPerfilContext = createContext<FotoPerfil | null>(null);
 
 export function FotoPerfilProvider({ children }: { children: React.ReactNode }) {
   const { tipo } = useSession();
-  const [urlFoto, setUrlFoto] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (tipo !== "ESTUDIANTE") return;
-    let cancelado = false;
-    getMiPerfil()
-      .then((perfil) => {
-        if (!cancelado) setUrlFoto(perfil.urlFoto);
-      })
-      // Sin foto en el TopBar no se rompe nada: quedan las iniciales.
-      .catch(() => {});
-    return () => {
-      cancelado = true;
-    };
-  }, [tipo]);
+  // Sin foto en el TopBar no se rompe nada: quedan las iniciales. Por eso el error de carga no se muestra (mensajeError vacío).
+  const { data: urlFoto, setData: setUrlFoto } = useApi(() => getMiPerfil().then((perfil) => perfil.urlFoto), [tipo], {
+    inicial: null as string | null,
+    mensajeError: "",
+    esperar: tipo !== "ESTUDIANTE",
+  });
 
   // La URL no cambia al reemplazar la foto (/estudiantes/{id}/foto): sin el ?v=, el navegador seguiría mostrando la vieja desde su caché.
   const actualizarFoto = useCallback((nueva: string | null) => {
     setUrlFoto(nueva ? `${nueva}?v=${Date.now()}` : null);
-  }, []);
+  }, [setUrlFoto]);
 
   return (
     <FotoPerfilContext.Provider value={{ urlFoto, actualizarFoto }}>{children}</FotoPerfilContext.Provider>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Download } from "lucide-react";
+import { useApi } from "@/hooks/useApi";
 import { apiErrorMessage } from "@/lib/api";
 import { formatFechaHora } from "@/lib/format";
 import {
@@ -30,43 +31,27 @@ type ReportesViewProps = {
 
 export function ReportesView({ filtrosIniciales, puedeExportar }: ReportesViewProps) {
   const [filtros, setFiltros] = useState(filtrosIniciales);
-  const [reporte, setReporte] = useState<Reporte | null>(null);
-  const [cargando, setCargando] = useState(true);
+  // Error de la exportación; el de carga es errorCarga.
   const [error, setError] = useState("");
   const [exportando, setExportando] = useState(false);
 
   // Con "desde" posterior a "hasta" el backend responde 400: se avisa acá y no se consulta.
   const rangoInvalido = Boolean(filtros.desde && filtros.hasta && filtros.desde > filtros.hasta);
 
+  // Cada cambio de filtros vuelve a mostrar el spinner, para no dejar a la vista el reporte de otro período mientras llega el nuevo.
+  const { data, cargando, errorCarga } = useApi(() => obtenerReporte(filtros), [filtros], {
+    mensajeError: "No se pudo cargar el reporte.",
+    spinnerAlCambiar: true,
+    esperar: rangoInvalido,
+  });
+  // Si la carga falla, el hook conserva el reporte anterior: se oculta para no mostrar datos de otro período bajo el aviso de error.
+  const reporte: Reporte | null = errorCarga ? null : data;
+
   function cambiarFiltros(nuevos: FiltrosReportes) {
     setFiltros(nuevos);
-    setCargando(true);
     const query = aQueryReportes(nuevos);
     window.history.replaceState(null, "", query ? `?${query}` : window.location.pathname);
   }
-
-  useEffect(() => {
-    if (rangoInvalido) return;
-    let cancelado = false;
-    obtenerReporte(filtros)
-      .then((res) => {
-        if (cancelado) return;
-        setReporte(res);
-        setError("");
-      })
-      .catch((err) => {
-        if (cancelado) return;
-        // Se descarta el reporte anterior para no mostrar datos de otro período bajo el aviso de error.
-        setReporte(null);
-        setError(apiErrorMessage(err, "No se pudo cargar el reporte."));
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [filtros, rangoInvalido]);
 
   async function exportarPdf() {
     setExportando(true);
@@ -143,9 +128,9 @@ export function ReportesView({ filtrosIniciales, puedeExportar }: ReportesViewPr
           </div>
         ) : null}
 
-        {error ? (
+        {errorCarga || error ? (
           <div role="alert" className="alert alert-error alert-soft text-sm mb-3">
-            <span>{error}</span>
+            <span>{errorCarga || error}</span>
           </div>
         ) : null}
 
