@@ -53,6 +53,9 @@ export type Student = {
   urlFoto: string | null;
   telefonos: string[];
   grupos: string[];
+  // Ids de los mismos grupos, en el mismo orden. El formulario de edición marca los asignados por id: por nombre se
+  // confundían los grupos que se llaman igual en distintas carreras.
+  idGrupos: number[];
   advertencia: string | null;
 };
 

@@ -280,7 +280,7 @@ export function ContactoCard({
   );
 }
 
-// Campo con floating-label, mismo patrón que Field en StudentForm: el id y los aria del control se arman acá.
+// Campo con floating-label, mismo patrón que Field de components/ui: el id y los aria del control se arman acá.
 function Campo({
   label,
   fieldKey,

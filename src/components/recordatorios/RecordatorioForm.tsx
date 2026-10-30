@@ -53,7 +53,7 @@ function estadoInicial(recordatorio?: Recordatorio): FormState {
   };
 }
 
-// Mismo patrón que SeccionLegend de InstanciaForm/StudentForm.
+// Mismo patrón que SeccionLegend de components/ui/SeccionFormulario.
 function SeccionLegend({ icon: Icon, children }: { icon: typeof User; children: React.ReactNode }) {
   return (
     <legend className="fieldset-legend text-sm font-semibold text-base-content mb-1 gap-1.5">
