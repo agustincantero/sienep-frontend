@@ -73,7 +73,22 @@ export function InstanciaForm(props: InstanciaFormProps) {
   const estudianteFijo = useEstudianteFijo(idEstudianteFijo);
   const estudiante = idEstudianteFijo === undefined ? estudianteElegido : estudianteFijo;
   // La categoría requiere VER_CATEGORIAS_INSTANCIA — si el rol no lo tiene, el combo queda vacío y el usuario no puede guardar hasta que se corrija del lado del backend. No se rompe la pantalla por eso.
-  const { data: categorias } = useApi(listCategoriasInstancia, [], { inicial: [] as CategoriaInstancia[], mensajeError: "" });
+  const {
+    data: categorias,
+    cargando: cargandoCategorias,
+    errorCarga: errorCategorias,
+  } = useApi(listCategoriasInstancia, [], { inicial: [] as CategoriaInstancia[], mensajeError: "No se pudieron cargar las categorías." });
+  // La categoría de la instancia que se edita o se clona puede haberse dado de baja. Solo se afirma con el catálogo ya cargado: mientras llega o si falló, que falte en la lista no dice nada.
+  const origen = esEdicion ? props.instancia : clonDe;
+  const faltaEnCatalogo = origen !== undefined && !categorias.some((c) => c.idCategoria === origen.idCategoria);
+  const categoriaDeBaja = faltaEnCatalogo && !cargandoCategorias && !errorCategorias;
+  // Al editar se muestra igual para no perderla (mismo criterio que RecordatorioForm); al clonar no se ofrece, así el combo se ve sin elegir.
+  const opcionesCategoria =
+    esEdicion && origen && faltaEnCatalogo
+      ? [...categorias, { idCategoria: origen.idCategoria, nomCategoria: `${origen.nombreCategoria}${categoriaDeBaja ? " (dada de baja)" : ""}` }]
+      : categorias;
+  // El backend rechaza guardar una categoría inactiva, así que se frena acá con un mensaje claro.
+  const eligioCategoriaDeBaja = categoriaDeBaja && form.idCategoria === String(origen?.idCategoria);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -99,6 +114,8 @@ export function InstanciaForm(props: InstanciaFormProps) {
     }
     if (!form.idCategoria) {
       e.idCategoria = "Elegí una categoría.";
+    } else if (eligioCategoriaDeBaja) {
+      e.idCategoria = "La categoría original está dada de baja. Elegí otra para poder guardar.";
     }
     if (!form.fechaHora) {
       e.fechaHora = "La fecha y hora son obligatorias.";
@@ -148,13 +165,6 @@ export function InstanciaForm(props: InstanciaFormProps) {
       setGuardando(false);
     }
   }
-
-  // La categoría guardada puede haberse dado de baja: se muestra igual para no perderla al editar (mismo criterio que RecordatorioForm).
-  const instanciaEditada = esEdicion ? props.instancia : undefined;
-  const opcionesCategoria =
-    instanciaEditada && !categorias.some((c) => c.idCategoria === instanciaEditada.idCategoria)
-      ? [...categorias, { idCategoria: instanciaEditada.idCategoria, nomCategoria: instanciaEditada.nombreCategoria }]
-      : categorias;
 
   return (
     <div className="grow overflow-auto">
