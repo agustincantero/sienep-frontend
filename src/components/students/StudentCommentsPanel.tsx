@@ -169,7 +169,8 @@ export function StudentCommentsPanel({ idEstudiante }: { idEstudiante: number })
           <span className="loading loading-spinner loading-md" role="status" aria-label="Cargando" />
         </div>
       ) : comentarios.length === 0 ? (
-        <p className="text-base-content/70 text-sm">Todavía no hay comentarios.</p>
+        // Si la carga falló no se sabe si hay comentarios, así que no se afirma que no los hay.
+        errorCarga ? null : <p className="text-base-content/70 text-sm">Todavía no hay comentarios.</p>
       ) : (
         <ul className="divide-y divide-base-300 mb-3">
           {comentarios.map((c) => {

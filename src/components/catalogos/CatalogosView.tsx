@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
 import { TABS_CATALOGO, hrefListado, type TabCatalogo } from "@/lib/catalogos-tabs";
 import { useSession } from "@/lib/session-context";
-import { SectionHeader } from "@/components/ui/SectionHeader";
 import { CarrerasPanel } from "./CarrerasPanel";
 import { CATEGORIAS_INSTANCIA, CATEGORIAS_RECORDATORIO } from "./categorias-config";
 import { CategoriasPanel } from "./CategoriasPanel";
@@ -51,11 +51,19 @@ export function CatalogosView({ catalogo, exitoInicial }: { catalogo: TabCatalog
   return (
     <div className="grow overflow-auto">
       <div className="max-w-[1200px] mx-auto w-full px-4 py-5">
-        <SectionHeader
-          title="Catálogos"
-          action={puedeCrear ? `+ ${actual.nuevoLabel}` : undefined}
-          onAction={puedeCrear ? () => router.push(`/catalogos/${catalogo}/nuevo`) : undefined}
-        />
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <h1 className="text-xl font-bold mb-0">Catálogos</h1>
+          {puedeCrear ? (
+            <button
+              type="button"
+              className="btn btn-primary btn-sm gap-1"
+              onClick={() => router.push(`/catalogos/${catalogo}/nuevo`)}
+            >
+              <Plus size={14} aria-hidden />
+              {actual.nuevoLabel}
+            </button>
+          ) : null}
+        </div>
 
         {/* Cada pestaña es un link a su propia ruta (/catalogos/[catalogo]): navegación normal, no un tablist ARIA. */}
         <nav aria-label="Catálogos" className="tabs tabs-border mb-4 flex-nowrap overflow-x-auto">
