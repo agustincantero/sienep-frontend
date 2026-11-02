@@ -22,6 +22,8 @@ import { BackButton } from "@/components/layout/BackButton";
 const MAX_NOMBRE = 50;
 const MAX_DOCUMENTO = 15;
 const DOCUMENTO_REGEX = /^[A-Za-z0-9]+$/;
+// isValidUruguayanCi descarta lo que no es dígito, así que "1234a567" pasaría como "1234567".
+const CI_URY_REGEX = /^[0-9]{6,8}$/;
 // EMAIL REGEX parecido al del backend.
 const EMAIL_REGEX =
     /^(?=.{1,50}$)[a-z0-9%+_-]+(?:\.[a-z0-9%+_-]+)*@[a-z0-9]+(?:-[a-z0-9]+)*(?:\.[a-z0-9]+(?:-[a-z0-9]+)*)*\.[a-z]{2,}$/i
@@ -134,6 +136,8 @@ export function FuncionarioForm(props: FuncionarioFormProps) {
                 e.documento = "El documento es obligatorio.";
             } else if (!DOCUMENTO_REGEX.test(documento)) {
                 e.documento = "El documento debe ser alfanumérico, sin espacios ni guiones.";
+            } else if (form.paisDocumento === "URY" && !CI_URY_REGEX.test(documento)) {
+                e.documento = "La cédula uruguaya debe tener entre 6 y 8 dígitos, sin letras.";
             } else if (form.paisDocumento === "URY" && !isValidUruguayanCi(documento)) {
                 e.documento = "La cédula uruguaya ingresada no es válida (dígito verificador incorrecto).";
             }
