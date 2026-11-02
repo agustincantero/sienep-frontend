@@ -16,4 +16,6 @@ export type AuthenticatedUser = {
   // el gating fino se hace con `permisos`, el shell con `tipo`.
   rol: string;
   permisos: string[];
+  // Ruta de la foto propia (/estudiantes/{id}/foto o /funcionarios/{id}/foto); null si no cargó ninguna.
+  urlFoto?: string | null;
 };
