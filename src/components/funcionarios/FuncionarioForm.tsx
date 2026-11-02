@@ -24,7 +24,7 @@ const MAX_DOCUMENTO = 15;
 const DOCUMENTO_REGEX = /^[A-Za-z0-9]+$/;
 // EMAIL REGEX parecido al del backend.
 const EMAIL_REGEX =
-    /^(?=.{1,50}$)[a-z0-9%+-]+(?:\.[a-z0-9%+-]+)@[a-z0-9]+(?:-[a-z0-9]+)(?:\.[a-z0-9]+(?:-[a-z0-9]+))\.[a-z]{2,}$/i
+    /^(?=.{1,50}$)[a-z0-9%+_-]+(?:\.[a-z0-9%+_-]+)*@[a-z0-9]+(?:-[a-z0-9]+)*(?:\.[a-z0-9]+(?:-[a-z0-9]+)*)*\.[a-z]{2,}$/i
 
 type FormState = {
     nombre: string;
