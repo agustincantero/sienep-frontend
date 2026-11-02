@@ -4,7 +4,7 @@ import { FuncionarioDetalle } from "@/components/funcionarios/FuncionarioDetalle
 import { tienePermiso } from "@/lib/current-user";
 
 export const metadata: Metadata = {
-    title: "Funcionario · SIENEP",
+    title: "Ficha de funcionario · SIENEP",
 };
 
 export default async function FuncionarioPage({ params }: { params: Promise<{ id: string }> }) {

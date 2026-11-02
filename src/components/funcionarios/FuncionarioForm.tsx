@@ -11,6 +11,7 @@ import {
     type Funcionario,
     type FuncionarioUpdateInput,
 } from "@/lib/funcionarios";
+import { puedoAsignarRol } from "@/lib/funcionarios-roles";
 import { PAISES, PAISES_FRECUENTES } from "@/lib/paises";
 import { listRoles, type Rol } from "@/lib/roles";
 import { useSession } from "@/lib/session-context";
@@ -21,7 +22,9 @@ import { BackButton } from "@/components/layout/BackButton";
 const MAX_NOMBRE = 50;
 const MAX_DOCUMENTO = 15;
 const DOCUMENTO_REGEX = /^[A-Za-z0-9]+$/;
-const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
+// EMAIL REGEX parecido al del backend.
+const EMAIL_REGEX =
+    /^[^\s@.()<>[\]\\,;:"]+(?:\.[^\s@.()<>[\]\\,;:"]+)*@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/;
 
 type FormState = {
     nombre: string;
@@ -94,11 +97,10 @@ export function FuncionarioForm(props: FuncionarioFormProps) {
 
     // Mismo criterio que ValidadorDePermisosDeRol, no podés asignar un rol con permisos que vos no tenés.
     function puedoAsignar(rol: Rol): boolean {
-        return rol.permisos.every((p) => misPermisos.includes(p.nombre));
+        return puedoAsignarRol(rol, misPermisos);
     }
 
-    // En edición el backend también valida el rol que el funcionario YA tiene: si tiene permisos que el actor no,
-    // cualquier guardado da 403, así que se avisa y se bloquea el botón.
+    // En edición el backend también valida el rol que el funcionario YA tiene
     const rolActual = nombreRolActual
         ? (roles.find((r) => r.nombre === nombreRolActual) ?? rolActualInactivo)
         : null;
@@ -191,6 +193,10 @@ export function FuncionarioForm(props: FuncionarioFormProps) {
                 const key = mensaje.includes("documento") ? "documento" : "email";
                 setErrores((e) => ({ ...e, [key]: err.message }));
                 document.getElementById(key)?.focus();
+            } else if (err instanceof ApiError && err.status === 409 && !esEdicion) {
+                // En el alta el documento repetido ya trae su propio mensaje
+                setErrores((e) => ({ ...e, email: "Ya hay un usuario registrado con ese email." }));
+                document.getElementById("email")?.focus();
             } else if (err instanceof ApiError && err.status === 400 && mensaje.includes("cédula")) {
                 setErrores((e) => ({ ...e, documento: err.message }));
                 document.getElementById("documento")?.focus();

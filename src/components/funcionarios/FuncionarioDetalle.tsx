@@ -2,9 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Camera, KeyRound, Pencil, UserCheck, UserX } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
-import { formatFechaHora } from "@/lib/format";
 import {
     deactivateFuncionario,
     getFuncionario,
@@ -13,13 +11,14 @@ import {
     uploadFuncionarioFoto,
     type Funcionario,
 } from "@/lib/funcionarios";
+import { useRolesGestionables } from "@/lib/funcionarios-roles";
 import { nombrePais } from "@/lib/paises";
 import { useSession } from "@/lib/session-context";
 import { BackButton } from "@/components/layout/BackButton";
-import { Dato } from "@/components/perfil/Dato";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EstadoBadge } from "@/components/students/EstadoBadge";
 import { StudentAvatar } from "@/components/students/StudentAvatar";
+import { DatoFicha } from "./DatoFicha";
 
 // Mismas reglas que FuncionarioService.subirFoto (EXTENSIONES_FOTO_PERMITIDAS, MAX_TAMANIO_FOTO_BYTES): se chequean antes de subir.
 const TIPOS_FOTO = ["image/jpeg", "image/png"];
@@ -35,12 +34,17 @@ function accionPassword(f: Funcionario) {
     }
     return {
         boton: "Restablecer contraseña",
-        confirmMensaje: `Esto invalida la contraseña actual de ${f.nombre} ${f.apellido} y se le envia una temporal por email. Va a tener que elegir una nueva en su próximo ingreso.`,
+        confirmMensaje: `Esto invalida la contraseña actual de ${f.nombre} ${f.apellido} y se le envía una temporal por email. Va a tener que elegir una nueva en su próximo ingreso.`,
         exito: "Contraseña restablecida y enviada por email.",
     };
 }
 
 type Confirmacion = "password" | "desactivar" | null;
+type Accion = "foto" | "password" | "desactivar" | "activar";
+
+function Spinner() {
+    return <span className="loading loading-spinner loading-xs" aria-hidden />;
+}
 
 export function FuncionarioDetalle({ idFuncionario }: { idFuncionario: number }) {
     const { idUsuario: miId, permisos } = useSession();
@@ -50,6 +54,8 @@ export function FuncionarioDetalle({ idFuncionario }: { idFuncionario: number })
     const puedeReactivar = permisos.includes("REACTIVAR_FUNCIONARIO");
     // El backend deja subir la foto propia sin EDITAR_FUNCIONARIO.
     const puedeSubirFoto = puedeEditar || esYo;
+    // Si el rol del funcionario tiene permisos que el usuario no, el backend responde 403 a editar/desactivar/activar.
+    const puedoGestionarRol = useRolesGestionables();
 
     const [funcionario, setFuncionario] = useState<Funcionario | null>(null);
     const [cargando, setCargando] = useState(true);
@@ -58,12 +64,11 @@ export function FuncionarioDetalle({ idFuncionario }: { idFuncionario: number })
     const [error, setError] = useState("");
     const [exito, setExito] = useState("");
     const [aviso, setAviso] = useState("");
-    const [accionEnCurso, setAccionEnCurso] = useState(false);
+    const [accionEnCurso, setAccionEnCurso] = useState<Accion | null>(null);
     const [confirmacion, setConfirmacion] = useState<Confirmacion>(null);
 
     const [versionFoto, setVersionFoto] = useState(0);
     const inputFotoRef = useRef<HTMLInputElement>(null);
-
 
     useEffect(() => {
         const valor = new URLSearchParams(window.location.search).get("aviso");
@@ -111,7 +116,7 @@ export function FuncionarioDetalle({ idFuncionario }: { idFuncionario: number })
             setError("La foto no puede superar los 5 MB.");
             return;
         }
-        setAccionEnCurso(true);
+        setAccionEnCurso("foto");
         try {
             setFuncionario(await uploadFuncionarioFoto(idFuncionario, foto));
             setVersionFoto(Date.now());
@@ -119,7 +124,7 @@ export function FuncionarioDetalle({ idFuncionario }: { idFuncionario: number })
         } catch (err) {
             setError(apiErrorMessage(err, "No se pudo subir la foto."));
         } finally {
-            setAccionEnCurso(false);
+            setAccionEnCurso(null);
         }
     }
 
@@ -128,7 +133,7 @@ export function FuncionarioDetalle({ idFuncionario }: { idFuncionario: number })
         const textos = accionPassword(funcionario);
         setConfirmacion(null);
         limpiarMensajes();
-        setAccionEnCurso(true);
+        setAccionEnCurso("password");
         try {
             await restablecerContraseniaFuncionario(idFuncionario);
             // El backend lo deja PENDIENTE_DE_ACTIVACION
@@ -137,7 +142,7 @@ export function FuncionarioDetalle({ idFuncionario }: { idFuncionario: number })
         } catch (err) {
             setError(apiErrorMessage(err, "No se pudo enviar el email. Probá de nuevo."));
         } finally {
-            setAccionEnCurso(false);
+            setAccionEnCurso(null);
         }
     }
 
@@ -145,7 +150,7 @@ export function FuncionarioDetalle({ idFuncionario }: { idFuncionario: number })
         if (!funcionario) return;
         setConfirmacion(null);
         limpiarMensajes();
-        setAccionEnCurso(true);
+        setAccionEnCurso("desactivar");
         try {
             await deactivateFuncionario(idFuncionario);
             setFuncionario({ ...funcionario, estado: "INACTIVO" });
@@ -153,20 +158,20 @@ export function FuncionarioDetalle({ idFuncionario }: { idFuncionario: number })
         } catch (err) {
             setError(apiErrorMessage(err, "No se pudo desactivar el funcionario."));
         } finally {
-            setAccionEnCurso(false);
+            setAccionEnCurso(null);
         }
     }
 
     async function handleReactivar() {
         limpiarMensajes();
-        setAccionEnCurso(true);
+        setAccionEnCurso("activar");
         try {
             setFuncionario(await reactivateFuncionario(idFuncionario));
             setExito("Funcionario activado.");
         } catch (err) {
             setError(apiErrorMessage(err, "No se pudo reactivar el funcionario."));
         } finally {
-            setAccionEnCurso(false);
+            setAccionEnCurso(null);
         }
     }
 
@@ -192,8 +197,10 @@ export function FuncionarioDetalle({ idFuncionario }: { idFuncionario: number })
     }
 
     const inactivo = funcionario.estado === "INACTIVO";
+    const gestionable = puedoGestionarRol(funcionario.rol);
     const urlFoto = funcionario.urlFoto && versionFoto ? `${funcionario.urlFoto}?v=${versionFoto}` : funcionario.urlFoto;
     const textosPassword = accionPassword(funcionario);
+    const ocupado = accionEnCurso !== null;
 
     return (
         <div className="grow overflow-auto">
@@ -201,8 +208,7 @@ export function FuncionarioDetalle({ idFuncionario }: { idFuncionario: number })
                 <BackButton href="/funcionarios" label="Volver a funcionarios" />
 
                 {aviso ? (
-                    // bg-amber-50/text-amber-800 en vez de alert-warning: el --color-warning de daisyUI no da contraste AA como texto.
-                    <div role="alert" className="alert bg-amber-50 text-amber-800 border border-amber-200 text-sm mb-4">
+                    <div role="alert" className="alert alert-warning alert-soft text-sm mb-4">
                         <span>{aviso}</span>
                     </div>
                 ) : null}
@@ -220,7 +226,7 @@ export function FuncionarioDetalle({ idFuncionario }: { idFuncionario: number })
                 ) : null}
 
                 <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 select-none cursor-default">
                         <StudentAvatar nombre={funcionario.nombre} apellido={funcionario.apellido} urlFoto={urlFoto} size="lg" />
                         <div>
                             <h1 className="text-xl font-bold mb-0">
@@ -240,77 +246,63 @@ export function FuncionarioDetalle({ idFuncionario }: { idFuncionario: number })
                                     accept=".jpg,.jpeg,.png"
                                     className="hidden"
                                     onChange={handleFoto}
-                                    disabled={accionEnCurso}
+                                    disabled={ocupado}
                                 />
                                 <button
                                     type="button"
-                                    className="btn btn-outline btn-sm gap-1"
+                                    className="btn btn-outline btn-sm"
                                     onClick={() => inputFotoRef.current?.click()}
-                                    disabled={accionEnCurso}
+                                    disabled={ocupado}
                                 >
-                                    <Camera size={14} aria-hidden />
-                                    {funcionario.urlFoto ? "Cambiar foto" : "Subir foto"}
+                                    {accionEnCurso === "foto" ? <Spinner /> : null}
+                                    Subir foto
                                 </button>
                             </>
                         ) : null}
                         {/* Para la contraseña propia está "Mi perfil" (pide la actual). El backend da 409 si está INACTIVO. */}
-                        {puedeEditar && !esYo && !inactivo ? (
+                        {puedeEditar && gestionable && !esYo && !inactivo ? (
                             <button
                                 type="button"
-                                className="btn btn-outline btn-sm gap-1"
+                                className="btn btn-outline btn-sm"
                                 onClick={() => setConfirmacion("password")}
-                                disabled={accionEnCurso}
+                                disabled={ocupado}
                             >
-                                <KeyRound size={14} aria-hidden />
+                                {accionEnCurso === "password" ? <Spinner /> : null}
                                 {textosPassword.boton}
                             </button>
                         ) : null}
-                        {!inactivo && puedeDesactivar && !esYo ? (
+                        {!inactivo && puedeDesactivar && gestionable && !esYo ? (
                             <button
                                 type="button"
-                                className="btn btn-outline btn-error btn-sm gap-1"
+                                className="btn btn-outline btn-error btn-sm"
                                 onClick={() => setConfirmacion("desactivar")}
-                                disabled={accionEnCurso}
+                                disabled={ocupado}
                             >
-                                <UserX size={14} aria-hidden />
+                                {accionEnCurso === "desactivar" ? <Spinner /> : null}
                                 Desactivar
                             </button>
                         ) : null}
-                        {inactivo && puedeReactivar ? (
-                            <button
-                                type="button"
-                                className="btn btn-outline btn-sm gap-1"
-                                onClick={handleReactivar}
-                                disabled={accionEnCurso}
-                            >
-                                <UserCheck size={14} aria-hidden />
+                        {inactivo && puedeReactivar && gestionable ? (
+                            <button type="button" className="btn btn-outline btn-sm" onClick={handleReactivar} disabled={ocupado}>
+                                {accionEnCurso === "activar" ? <Spinner /> : null}
                                 Activar
                             </button>
                         ) : null}
-                        {puedeEditar ? (
-                            <Link href={`/funcionarios/${idFuncionario}/editar`} className="btn btn-primary btn-sm gap-1">
-                                <Pencil size={14} aria-hidden />
+                        {puedeEditar && gestionable ? (
+                            <Link href={`/funcionarios/${idFuncionario}/editar`} className="btn btn-primary btn-sm">
                                 Editar
                             </Link>
                         ) : null}
                     </div>
                 </div>
 
-                <div className="card bg-base-100 border border-base-300">
-                    <div className="card-body">
-                        <h2 className="text-sm font-semibold mb-1">Datos del funcionario</h2>
-                        <Dato label="Nombre" value={funcionario.nombre} />
-                        <Dato label="Apellido" value={funcionario.apellido} />
-                        <Dato label="Documento" value={funcionario.documento} />
-                        <Dato label="País del documento" value={nombrePais(funcionario.paisDocumento)} />
-                        <Dato label="Email" value={<span className="break-all">{funcionario.email}</span>} />
-                        <Dato label="Rol" value={funcionario.rol} />
-                        <Dato label="Alta" value={funcionario.createdAt ? formatFechaHora(funcionario.createdAt) : ""} />
-                        <Dato
-                            label="Última modificación"
-                            value={funcionario.updatedAt ? formatFechaHora(funcionario.updatedAt) : ""}
-                        />
-                    </div>
+                <div>
+                    <DatoFicha
+                        label="Documento"
+                        value={`${funcionario.documento} (${nombrePais(funcionario.paisDocumento)})`}
+                    />
+                    <DatoFicha label="Email" value={<span className="break-all">{funcionario.email}</span>} />
+                    <DatoFicha label="Rol" value={funcionario.rol} />
                 </div>
             </div>
 
