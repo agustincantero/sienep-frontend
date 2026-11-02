@@ -1,4 +1,5 @@
 import { isValidUruguayanCi } from "@/lib/document-validation";
+import { EMAIL_INVALIDO_MSG, esEmailValido } from "@/lib/email";
 
 // Reglas compartidas por el formulario de estudiante (StudentForm) y la edición de contacto de "Mi perfil".
 
@@ -65,8 +66,8 @@ export function validarEstudiante(form: EstudianteFormState, esEdicion: boolean)
   }
   if (!form.email.trim()) {
     e.email = "El email es obligatorio.";
-  } else if (!/^\S+@\S+\.\S+$/.test(form.email)) {
-    e.email = "Ingresá un email válido.";
+  } else if (!esEmailValido(form.email)) {
+    e.email = EMAIL_INVALIDO_MSG;
   }
   if (!form.fechaNacimiento) {
     e.fechaNacimiento = "La fecha de nacimiento es obligatoria.";
