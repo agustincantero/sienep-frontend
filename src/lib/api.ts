@@ -112,6 +112,19 @@ export function apiGet<T>(path: string, params?: Record<string, string | number 
   return request<T>(withQuery(path, params), { method: "GET" });
 }
 
+// Prefiere filename* (RFC 5987): el filename simple puede venir codificado como =?UTF-8?Q?...?= y no sirve para mostrarlo.
+function nombreDeContentDisposition(disposicion: string): string | null {
+  const codificado = /filename\*=UTF-8''([^;]+)/i.exec(disposicion)?.[1];
+  if (codificado) {
+    try {
+      return decodeURIComponent(codificado.trim());
+    } catch {
+      // Secuencia % inválida: se usa el filename simple.
+    }
+  }
+  return /filename="?([^";]+)"?/i.exec(disposicion)?.[1] ?? null;
+}
+
 // Para respuestas binarias (PDF). Devuelve el blob y el nombre sugerido en Content-Disposition, si vino.
 export async function apiGetBlob(
   path: string,
@@ -119,8 +132,7 @@ export async function apiGetBlob(
 ): Promise<{ blob: Blob; nombreArchivo: string | null }> {
   const res = await fetchApi(withQuery(path, params), { method: "GET" });
   if (!res.ok) throw await errorDeRespuesta(res);
-  const disposicion = res.headers.get("content-disposition") ?? "";
-  const nombreArchivo = /filename="?([^";]+)"?/i.exec(disposicion)?.[1] ?? null;
+  const nombreArchivo = nombreDeContentDisposition(res.headers.get("content-disposition") ?? "");
   return { blob: await res.blob(), nombreArchivo };
 }
 
