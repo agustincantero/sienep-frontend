@@ -136,11 +136,13 @@ export function StudentForm(props: StudentFormProps) {
         router.push(destino);
       }
     } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        // EstudianteService.crear() tira dos 409 distintos según el campo
-        // duplicado ("...ese documento." / "...ese email.") — se detecta por
-        // el texto para marcar el error solo en el campo que corresponde.
-        const campo = err.message.toLowerCase().includes("documento") ? "documento" : "email";
+      const mensaje = err instanceof ApiError ? err.message.toLowerCase() : "";
+      if (err instanceof ApiError && err.status === 409 && (mensaje.includes("documento") || mensaje.includes("email"))) {
+        // El backend tira dos 409 distintos según el campo duplicado
+        // ("...ese documento." / "...ese email.") — se detecta por el texto
+        // para marcar el error solo en el campo que corresponde. Un 409 que
+        // no nombra ninguno de los dos va al error general.
+        const campo = mensaje.includes("documento") ? "documento" : "email";
         setErrores((e) => ({ ...e, [campo]: err.message }));
       } else {
         setErrorGeneral(apiErrorMessage(err, "No se pudo guardar el estudiante. Probá de nuevo."));
