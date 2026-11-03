@@ -15,8 +15,6 @@ type RecordatoriosTablaProps = {
   query?: string;
   // Dentro del detalle de una instancia la columna "Instancia" sobra (todas las filas son de esa misma), y tampoco va "Ver detalle": en esa columna angosta no entra, y la fila ya abre el detalle con clic o Enter.
   sinInstancia?: boolean;
-  // Identificador de negocio de cada instancia (ver useIdNegInstancias); la que no esté se muestra por su título.
-  idNegInstancias?: Map<number, string>;
   puedeEditar?: boolean;
   puedeDesactivar?: boolean;
   puedeReactivar?: boolean;
@@ -30,7 +28,6 @@ export function RecordatoriosTabla({
   filas,
   query = "",
   sinInstancia = false,
-  idNegInstancias,
   puedeEditar = false,
   puedeDesactivar = false,
   puedeReactivar = false,
@@ -69,7 +66,7 @@ export function RecordatoriosTabla({
             </td>
             {sinInstancia ? null : (
               <td className="text-sm whitespace-nowrap" title={r.tituloInstancia}>
-                {idNegInstancias?.get(r.codInstancia) ?? r.tituloInstancia}
+                {r.idNegInstancia ?? r.tituloInstancia}
               </td>
             )}
             <td className="whitespace-nowrap">{r.nombreCategoria}</td>

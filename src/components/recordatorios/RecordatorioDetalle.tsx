@@ -14,7 +14,6 @@ import {
   reactivateRecordatorio,
   TIPOS_RECORDATORIO,
 } from "@/lib/recordatorios";
-import { getInstancia } from "@/lib/instancias";
 import { useSession } from "@/lib/session-context";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EstadoBadge } from "@/components/instancias/EstadoBadge";
@@ -49,14 +48,6 @@ export function RecordatorioDetalle({
   const [confirmandoBaja, setConfirmandoBaja] = useState(false);
   const [creandoSeguimiento, setCreandoSeguimiento] = useState(false);
   const [procesando, setProcesando] = useState(false);
-  // Identificador de negocio de la instancia (RecordatorioResponseDTO no lo trae). Si no se puede leer, queda solo el título.
-  // Se pide aparte para no demorar el detalle; su errorCarga se ignora.
-  const codInstancia = recordatorio?.codInstancia;
-  const { data: idNegInstancia } = useApi(
-    () => (codInstancia == null ? Promise.resolve(null) : getInstancia(codInstancia).then((i) => i.idNegInstancia)),
-    [codInstancia],
-    { mensajeError: "" },
-  );
 
   async function confirmarDesactivar() {
     setConfirmandoBaja(false);
@@ -171,7 +162,7 @@ export function RecordatorioDetalle({
           label="Instancia"
           value={
             <Link href={`/instancias/${recordatorio.codInstancia}`} className="link link-hover link-primary">
-              {idNegInstancia ? `${idNegInstancia} · ${recordatorio.tituloInstancia}` : recordatorio.tituloInstancia}
+              {recordatorio.idNegInstancia ? `${recordatorio.idNegInstancia} · ${recordatorio.tituloInstancia}` : recordatorio.tituloInstancia}
             </Link>
           }
         />
