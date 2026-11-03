@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiErrorMessage, ApiError } from "@/lib/api";
+import { useSession } from "@/lib/session-context";
 import { BackButton } from "@/components/layout/BackButton";
 import { validarEstudiante, type EstudianteFormState } from "@/lib/validaciones-estudiante";
 import {
@@ -46,6 +47,9 @@ type StudentFormProps =
 export function StudentForm(props: StudentFormProps) {
   const router = useRouter();
   const esEdicion = props.mode === "editar";
+  // Sin este permiso el backend no devuelve ni guarda estos datos: la sección se vería vacía y lo escrito se perdería.
+  const { permisos } = useSession();
+  const puedeVerSalud = permisos.includes("VER_BLOQUE_CONFIDENCIAL");
 
   const [form, setForm] = useState<EstudianteFormState>(() =>
     estadoInicial(esEdicion ? props.estudiante : undefined),
@@ -192,7 +196,7 @@ export function StudentForm(props: StudentFormProps) {
             onChange={cambiarGrupos}
             guardando={guardando}
           />
-          <SaludSeccion {...seccion} />
+          {puedeVerSalud ? <SaludSeccion {...seccion} /> : null}
 
           <div className="flex justify-end gap-2">
             <button
