@@ -7,7 +7,7 @@ import { getMiPerfil } from "./students";
 
 // Foto del usuario en sesión, compartida entre el TopBar y "Mi perfil" para que, al cambiarla, se actualice en los dos lados sin recargar. El estudiante la pide a su perfil; el funcionario arranca con la urlFoto que ya trae GET /auth/me.
 type FotoPerfil = {
-  // Ruta para el proxy (/estudiantes/{id}/foto), ya con el sufijo de versión si se cambió en esta sesión.
+  // Ruta para el proxy (/estudiantes/{id}/foto o /funcionarios/{id}/foto), ya con el sufijo de versión si se cambió en esta sesión.
   urlFoto: string | null;
   actualizarFoto: (urlFoto: string | null) => void;
 };
@@ -26,7 +26,7 @@ export function FotoPerfilProvider({ children }: { children: React.ReactNode }) 
   const esEstudiante = tipo === "ESTUDIANTE";
   const urlFoto = esEstudiante ? urlFotoEstudiante : urlFotoFuncionario;
 
-  // La URL no cambia al reemplazar la foto (/estudiantes/{id}/foto): sin el ?v=, el navegador seguiría mostrando la vieja desde su caché.
+  // La URL no cambia al reemplazar la foto (/estudiantes/{id}/foto o /funcionarios/{id}/foto): sin el ?v=, el navegador seguiría mostrando la vieja desde su caché.
   const actualizarFoto = useCallback((nueva: string | null) => {
     const versionada = nueva ? `${nueva}?v=${Date.now()}` : null;
     if (esEstudiante) setUrlFotoEstudiante(versionada);
