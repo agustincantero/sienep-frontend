@@ -197,10 +197,6 @@ export function FuncionarioForm(props: FuncionarioFormProps) {
                 const key = mensaje.includes("documento") ? "documento" : "email";
                 setErrores((e) => ({ ...e, [key]: err.message }));
                 document.getElementById(key)?.focus();
-            } else if (err instanceof ApiError && err.status === 409 && !esEdicion) {
-                // En el alta el documento repetido ya trae su propio mensaje
-                setErrores((e) => ({ ...e, email: "Ya hay un usuario registrado con ese email." }));
-                document.getElementById("email")?.focus();
             } else if (err instanceof ApiError && err.status === 400 && mensaje.includes("cédula")) {
                 setErrores((e) => ({ ...e, documento: err.message }));
                 document.getElementById("documento")?.focus();
