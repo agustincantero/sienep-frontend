@@ -16,7 +16,7 @@ import { PAISES, PAISES_FRECUENTES } from "@/lib/paises";
 import { listRoles, type Rol } from "@/lib/roles";
 import { useSession } from "@/lib/session-context";
 import { EMAIL_INVALIDO_MSG, esEmailValido } from "@/lib/email";
-import { TEXTO_REGEX } from "@/lib/validaciones-estudiante";
+import { NOMBRE_REGEX } from "@/lib/validaciones-estudiante";
 import { BackButton } from "@/components/layout/BackButton";
 
 // Mismas reglas que FuncionarioRequestDTO
@@ -118,15 +118,15 @@ export function FuncionarioForm(props: FuncionarioFormProps) {
             e.nombre = "El nombre es obligatorio.";
         } else if (form.nombre.trim().length > MAX_NOMBRE) {
             e.nombre = `El nombre no puede superar los ${MAX_NOMBRE} caracteres.`;
-        } else if (!TEXTO_REGEX.test(form.nombre.trim())) {
-            e.nombre = "Ingresá un nombre válido (solo letras, números y espacios).";
+        } else if (!NOMBRE_REGEX.test(form.nombre.trim())) {
+            e.nombre = "Ingresá un nombre válido (solo letras, números, espacios, apóstrofos y guiones).";
         }
         if (!form.apellido.trim()) {
             e.apellido = "El apellido es obligatorio.";
         } else if (form.apellido.trim().length > MAX_NOMBRE) {
             e.apellido = `El apellido no puede superar los ${MAX_NOMBRE} caracteres.`;
-        } else if (!TEXTO_REGEX.test(form.apellido.trim())) {
-            e.apellido = "Ingresá un apellido válido (solo letras, números y espacios).";
+        } else if (!NOMBRE_REGEX.test(form.apellido.trim())) {
+            e.apellido = "Ingresá un apellido válido (solo letras, números, espacios, apóstrofos y guiones).";
         }
         if (!esEdicion) {
             const documento = form.documento.trim();
