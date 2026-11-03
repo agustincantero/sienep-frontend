@@ -15,7 +15,8 @@ import { puedoAsignarRol } from "@/lib/funcionarios-roles";
 import { PAISES, PAISES_FRECUENTES } from "@/lib/paises";
 import { listRoles, type Rol } from "@/lib/roles";
 import { useSession } from "@/lib/session-context";
-import { TEXTO_REGEX } from "@/lib/validaciones-estudiante";
+import { EMAIL_INVALIDO_MSG, esEmailValido } from "@/lib/email";
+import { NOMBRE_REGEX } from "@/lib/validaciones-estudiante";
 import { BackButton } from "@/components/layout/BackButton";
 
 // Mismas reglas que FuncionarioRequestDTO
@@ -24,9 +25,6 @@ const MAX_DOCUMENTO = 15;
 const DOCUMENTO_REGEX = /^[A-Za-z0-9]+$/;
 // isValidUruguayanCi descarta lo que no es dígito, así que "1234a567" pasaría como "1234567".
 const CI_URY_REGEX = /^[0-9]{6,8}$/;
-// EMAIL REGEX parecido al del backend.
-const EMAIL_REGEX =
-    /^(?=.{1,50}$)[a-z0-9%+_-]+(?:\.[a-z0-9%+_-]+)*@[a-z0-9]+(?:-[a-z0-9]+)*(?:\.[a-z0-9]+(?:-[a-z0-9]+)*)*\.[a-z]{2,}$/i
 
 type FormState = {
     nombre: string;
@@ -120,15 +118,15 @@ export function FuncionarioForm(props: FuncionarioFormProps) {
             e.nombre = "El nombre es obligatorio.";
         } else if (form.nombre.trim().length > MAX_NOMBRE) {
             e.nombre = `El nombre no puede superar los ${MAX_NOMBRE} caracteres.`;
-        } else if (!TEXTO_REGEX.test(form.nombre.trim())) {
-            e.nombre = "Ingresá un nombre válido (solo letras, números y espacios).";
+        } else if (!NOMBRE_REGEX.test(form.nombre.trim())) {
+            e.nombre = "Ingresá un nombre válido (solo letras, números, espacios, apóstrofos y guiones).";
         }
         if (!form.apellido.trim()) {
             e.apellido = "El apellido es obligatorio.";
         } else if (form.apellido.trim().length > MAX_NOMBRE) {
             e.apellido = `El apellido no puede superar los ${MAX_NOMBRE} caracteres.`;
-        } else if (!TEXTO_REGEX.test(form.apellido.trim())) {
-            e.apellido = "Ingresá un apellido válido (solo letras, números y espacios).";
+        } else if (!NOMBRE_REGEX.test(form.apellido.trim())) {
+            e.apellido = "Ingresá un apellido válido (solo letras, números, espacios, apóstrofos y guiones).";
         }
         if (!esEdicion) {
             const documento = form.documento.trim();
@@ -144,8 +142,8 @@ export function FuncionarioForm(props: FuncionarioFormProps) {
         }
         if (!form.email.trim()) {
             e.email = "El email es obligatorio.";
-        } else if (!EMAIL_REGEX.test(form.email.trim())) {
-            e.email = "Ingresá un email válido.";
+        } else if (!esEmailValido(form.email)) {
+            e.email = EMAIL_INVALIDO_MSG;
         }
         if (!form.idRol) {
             e.idRol = "Elegí un rol.";

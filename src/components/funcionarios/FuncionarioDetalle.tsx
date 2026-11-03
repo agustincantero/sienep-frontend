@@ -11,6 +11,7 @@ import {
     uploadFuncionarioFoto,
     type Funcionario,
 } from "@/lib/funcionarios";
+import { useFotoPerfil } from "@/lib/foto-perfil-context";
 import { useRolesGestionables } from "@/lib/funcionarios-roles";
 import { nombrePais } from "@/lib/paises";
 import { useSession } from "@/lib/session-context";
@@ -49,6 +50,7 @@ function Spinner() {
 export function FuncionarioDetalle({ idFuncionario }: { idFuncionario: number }) {
     const { idUsuario: miId, permisos } = useSession();
     const esYo = idFuncionario === miId;
+    const { actualizarFoto } = useFotoPerfil();
     const puedeEditar = permisos.includes("EDITAR_FUNCIONARIO");
     const puedeDesactivar = permisos.includes("DESACTIVAR_FUNCIONARIO");
     const puedeReactivar = permisos.includes("REACTIVAR_FUNCIONARIO");
@@ -118,8 +120,11 @@ export function FuncionarioDetalle({ idFuncionario }: { idFuncionario: number })
         }
         setAccionEnCurso("foto");
         try {
-            setFuncionario(await uploadFuncionarioFoto(idFuncionario, foto));
+            const actualizado = await uploadFuncionarioFoto(idFuncionario, foto);
+            setFuncionario(actualizado);
             setVersionFoto(Date.now());
+            // Si es la foto propia, refresca también el avatar del TopBar.
+            if (esYo) actualizarFoto(actualizado.urlFoto);
             setExito("Foto actualizada.");
         } catch (err) {
             setError(apiErrorMessage(err, "No se pudo subir la foto."));
