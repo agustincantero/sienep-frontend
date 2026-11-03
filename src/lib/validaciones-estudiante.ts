@@ -5,8 +5,8 @@ import { EMAIL_INVALIDO_MSG, esEmailValido } from "@/lib/email";
 
 // Mismo patrón para ciudad, departamento, calle y sistemaSalud (EstudianteRequestDTO/UpdateDTO usan exactamente este regex en los cuatro).
 export const TEXTO_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9 ]+$/;
-// Nombre y apellido admiten además apóstrofo y guion (D'Alessandro, Pérez-Gómez); debe coincidir con el CHECK de usuarios y los @Pattern del backend.
-export const NOMBRE_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9 '-]+$/;
+// Nombre y apellido admiten además ç, ã, apóstrofo y guion (Françoise, João, D'Alessandro, Pérez-Gómez); debe coincidir con el CHECK de usuarios y los @Pattern del backend.
+export const NOMBRE_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜüÇçÃã0-9 '-]+$/;
 export const TELEFONO_REGEX = /^[0-9]{8,12}$/;
 export const TEXTO_INVALIDO_MSG = "Solo se permiten letras, números y espacios.";
 export const NRO_PUERTA_INVALIDO_MSG = "Tiene que ser un número entero entre 1 y 9999.";
