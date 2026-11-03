@@ -18,7 +18,7 @@ import { SeccionCard } from "./SeccionCard";
 const EXTENSIONES_FOTO = [".jpg", ".jpeg", ".png"];
 const MAX_FOTO_BYTES = 5 * 1024 * 1024;
 
-// "Mi perfil" para funcionario y estudiante. Además de la contraseña, el estudiante puede editar su foto (Funcionario no tiene foto en el modelo) y sus datos de contacto (dirección y teléfonos).
+// "Mi perfil" para funcionario y estudiante. Además de la contraseña, tanto el estudiante como el funcionario pueden cambiar su foto, y solo el estudiante edita sus datos de contacto (dirección y teléfonos).
 export function MiPerfil() {
   const user = useSession();
   const esEstudiante = user.tipo === "ESTUDIANTE";

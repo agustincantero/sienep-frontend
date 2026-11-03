@@ -1,4 +1,4 @@
-// Espeja el CHECK de proyecto.dom_email (proyecto_schema.sql, VARCHAR(50)) y no el @Email de los DTO, que es más permisivo y deja pasar mails que la base después rechaza.
+// Parte del CHECK de proyecto.dom_email (proyecto_schema.sql, VARCHAR(50)) y no del @Email de los DTO, que es más permisivo y deja pasar mails que la base después rechaza; es a propósito algo más estricta que el CHECK (por ejemplo rechaza "--" en el dominio).
 const EMAIL_REGEX =
   /^(?=.{1,50}$)[a-z0-9%+_-]+(?:\.[a-z0-9%+_-]+)*@[a-z0-9]+(?:-[a-z0-9]+)*(?:\.[a-z0-9]+(?:-[a-z0-9]+)*)*\.[a-z]{2,}$/i;
 
