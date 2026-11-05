@@ -23,6 +23,7 @@ export type Recordatorio = {
   tipo: TipoRecordatorio;
   fechaHora: string;
   codInstancia: number;
+  idNegInstancia: string | null;
   tituloInstancia: string;
   idCategoria: number;
   nombreCategoria: string;

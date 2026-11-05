@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Pencil, ShieldCheck, ShieldX } from "lucide-react";
+import { Pencil, Plus, ShieldCheck, ShieldX } from "lucide-react";
 import { useAvisoVisible } from "@/lib/use-aviso-visible";
 import { apiErrorMessage } from "@/lib/api";
 import { useApi } from "@/hooks/useApi";
@@ -17,7 +17,6 @@ import {
 import { coincideTexto } from "@/lib/buscar-estudiante";
 import { useSession } from "@/lib/session-context";
 import { DataTable } from "@/components/ui/DataTable";
-import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Toolbar, type ToolbarFilter } from "@/components/ui/Toolbar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EstadoRolBadge } from "./EstadoRolBadge";
@@ -117,11 +116,15 @@ export function RolesListView() {
   return (
     <div className="grow overflow-auto">
       <div className="max-w-[1200px] mx-auto w-full px-4 py-5">
-        <SectionHeader
-          title="Roles"
-          action={puedeCrear ? "+ Nuevo rol" : undefined}
-          onAction={puedeCrear ? () => router.push("/roles/nuevo") : undefined}
-        />
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <h1 className="text-xl font-bold mb-0">Roles</h1>
+          {puedeCrear ? (
+            <button type="button" className="btn btn-primary btn-sm gap-1" onClick={() => router.push("/roles/nuevo")}>
+              <Plus size={14} aria-hidden />
+              Nuevo rol
+            </button>
+          ) : null}
+        </div>
 
         <Toolbar
           placeholder="Buscar por nombre o descripción"

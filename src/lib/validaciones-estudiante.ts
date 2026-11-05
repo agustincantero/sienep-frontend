@@ -1,10 +1,12 @@
 import { isValidUruguayanCi } from "@/lib/document-validation";
+import { EMAIL_INVALIDO_MSG, esEmailValido } from "@/lib/email";
 
 // Reglas compartidas por el formulario de estudiante (StudentForm) y la edición de contacto de "Mi perfil".
 
-// Mismo patrón para nombre/apellido/ciudad/departamento/calle/sistemaSalud —
-// EstudianteRequestDTO/UpdateDTO usan exactamente este regex en los seis.
+// Mismo patrón para ciudad, departamento, calle y sistemaSalud (EstudianteRequestDTO/UpdateDTO usan exactamente este regex en los cuatro).
 export const TEXTO_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9 ]+$/;
+// Nombre y apellido admiten además ç, ã, apóstrofo y guion (Françoise, João, D'Alessandro, Pérez-Gómez); debe coincidir con el CHECK de usuarios y los @Pattern del backend.
+export const NOMBRE_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜüÇçÃã0-9 '-]+$/;
 export const TELEFONO_REGEX = /^[0-9]{8,12}$/;
 export const TEXTO_INVALIDO_MSG = "Solo se permiten letras, números y espacios.";
 export const NRO_PUERTA_INVALIDO_MSG = "Tiene que ser un número entero entre 1 y 9999.";
@@ -46,13 +48,13 @@ export function validarEstudiante(form: EstudianteFormState, esEdicion: boolean)
   // Vacío y formato inválido van por separado: con un solo if, un campo obligatorio vacío mostraba el mensaje de formato ("debe ser alfanumérico...") en vez de avisar que falta completarlo.
   if (!form.nombre.trim()) {
     e.nombre = "El nombre es obligatorio.";
-  } else if (!TEXTO_REGEX.test(form.nombre)) {
-    e.nombre = "Ingresá un nombre válido (solo letras, números y espacios).";
+  } else if (!NOMBRE_REGEX.test(form.nombre)) {
+    e.nombre = "Ingresá un nombre válido (solo letras, números, espacios, apóstrofos y guiones).";
   }
   if (!form.apellido.trim()) {
     e.apellido = "El apellido es obligatorio.";
-  } else if (!TEXTO_REGEX.test(form.apellido)) {
-    e.apellido = "Ingresá un apellido válido (solo letras, números y espacios).";
+  } else if (!NOMBRE_REGEX.test(form.apellido)) {
+    e.apellido = "Ingresá un apellido válido (solo letras, números, espacios, apóstrofos y guiones).";
   }
   if (!esEdicion) {
     if (!form.documento.trim()) {
@@ -65,8 +67,8 @@ export function validarEstudiante(form: EstudianteFormState, esEdicion: boolean)
   }
   if (!form.email.trim()) {
     e.email = "El email es obligatorio.";
-  } else if (!/^\S+@\S+\.\S+$/.test(form.email)) {
-    e.email = "Ingresá un email válido.";
+  } else if (!esEmailValido(form.email)) {
+    e.email = EMAIL_INVALIDO_MSG;
   }
   if (!form.fechaNacimiento) {
     e.fechaNacimiento = "La fecha de nacimiento es obligatoria.";

@@ -8,7 +8,7 @@ import { Logo } from "./Logo";
 type TopBarProps = {
   userName: string;
   userRole: string;
-  // Ruta de la foto para el proxy (/api<urlFoto>); null -> iniciales. Solo los estudiantes tienen foto.
+  // Ruta de la foto para el proxy (/api<urlFoto>); null -> iniciales.
   urlFoto?: string | null;
   onLogout: () => void;
 };

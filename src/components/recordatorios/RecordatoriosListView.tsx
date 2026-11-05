@@ -19,7 +19,6 @@ import { PaginationFooter } from "@/components/ui/PaginationFooter";
 import { Toolbar, type ToolbarFilter } from "@/components/ui/Toolbar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { RecordatoriosTabla } from "./RecordatoriosTabla";
-import { useIdNegInstancias } from "./useIdNegInstancias";
 
 const ESTADO_A_VALOR: Record<string, string> = { Activo: "ACTIVO", Inactivo: "INACTIVO" };
 // "Estado: Todos": /recordatorios acepta un solo estado por consulta, así que se piden los dos y se juntan.
@@ -81,7 +80,6 @@ export function RecordatoriosListView() {
     [estadoLabel],
     { inicial: [] as Recordatorio[], mensajeError: "No se pudieron cargar los recordatorios.", spinnerAlCambiar: true },
   );
-  const idNegInstancias = useIdNegInstancias();
   // Error de una baja o reactivación; el de carga es errorCarga.
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
@@ -103,9 +101,9 @@ export function RecordatoriosListView() {
       (r) =>
         (!nomCategoria || r.nombreCategoria === nomCategoria) &&
         (!cuando || cuando.includes(r.estadoOperativo)) &&
-        coincideTexto(texto, r.titulo, r.idNegRecordatorio, idNegInstancias.get(r.codInstancia), r.tituloInstancia, r.nombreResponsable),
+        coincideTexto(texto, r.titulo, r.idNegRecordatorio, r.idNegInstancia, r.tituloInstancia, r.nombreResponsable),
     );
-  }, [recordatorios, texto, nomCategoria, cuandoLabel, idNegInstancias]);
+  }, [recordatorios, texto, nomCategoria, cuandoLabel]);
 
   // Si un filtro o una baja deja la página actual vacía, se muestra la última que tiene filas.
   const ultimaPagina = Math.max(0, Math.ceil(filtrados.length / TAMANIO_PAGINA) - 1);
@@ -238,7 +236,6 @@ export function RecordatoriosListView() {
           <>
             <RecordatoriosTabla
               filas={visibles}
-              idNegInstancias={idNegInstancias}
               puedeEditar={puedeEditar}
               puedeDesactivar={puedeDesactivar}
               puedeReactivar={puedeReactivar}
