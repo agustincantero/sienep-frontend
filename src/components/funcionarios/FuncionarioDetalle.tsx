@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { apiErrorMessage } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import {
     deactivateFuncionario,
     getFuncionario,
@@ -59,10 +60,12 @@ export function FuncionarioDetalle({ idFuncionario }: { idFuncionario: number })
     // Si el rol del funcionario tiene permisos que el usuario no, el backend responde 403 a editar/desactivar/activar.
     const puedoGestionarRol = useRolesGestionables();
 
-    const [funcionario, setFuncionario] = useState<Funcionario | null>(null);
-    const [cargando, setCargando] = useState(true);
-
-    const [errorCarga, setErrorCarga] = useState("");
+    const {
+        data: funcionario,
+        setData: setFuncionario,
+        cargando,
+        errorCarga,
+    } = useApi(() => getFuncionario(idFuncionario), [idFuncionario], { mensajeError: "No se pudo cargar el funcionario." });
     const [error, setError] = useState("");
     const [exito, setExito] = useState("");
     const [aviso, setAviso] = useState("");
@@ -80,25 +83,6 @@ export function FuncionarioDetalle({ idFuncionario }: { idFuncionario: number })
             window.history.replaceState(null, "", window.location.pathname);
         }
     }, []);
-
-    useEffect(() => {
-        let cancelado = false;
-        getFuncionario(idFuncionario)
-            .then((f) => {
-                if (cancelado) return;
-                setFuncionario(f);
-                setErrorCarga("");
-            })
-            .catch((err) => {
-                if (!cancelado) setErrorCarga(apiErrorMessage(err, "No se pudo cargar el funcionario."));
-            })
-            .finally(() => {
-                if (!cancelado) setCargando(false);
-            });
-        return () => {
-            cancelado = true;
-        };
-    }, [idFuncionario]);
 
     function limpiarMensajes() {
         setError("");

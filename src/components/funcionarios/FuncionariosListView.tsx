@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, FilterX, Pencil, Plus, UserCheck, UserX } from "lucide-react";
 import { apiErrorMessage } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { coincideTexto, TAMANIO_PAGINA } from "@/lib/buscar-estudiante";
 import {
     deactivateFuncionario,
@@ -81,12 +82,22 @@ export function FuncionariosListView({ filtrosIniciales }: { filtrosIniciales: F
     const [listo, setListo] = useState(false);
     const restauracionHecha = useRef(false);
 
-    const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
-    const [cargando, setCargando] = useState(true);
+    const {
+        data: funcionarios,
+        setData: setFuncionarios,
+        cargando,
+        errorCarga,
+    } = useApi(() => listFuncionariosPorEstados(estadosDeFiltro(estadoLabel)), [estadoLabel], {
+        inicial: [] as Funcionario[],
+        mensajeError: "No se pudieron cargar los funcionarios.",
+        spinnerAlCambiar: true,
+        esperar: !listo,
+    });
+    // Error de una baja o reactivación; el de carga es errorCarga.
     const [error, setError] = useState("");
     const [exito, setExito] = useState("");
     const avisoExitoRef = useAvisoVisible<HTMLDivElement>(exito);
-    const avisoErrorRef = useAvisoVisible<HTMLDivElement>(error);
+    const avisoErrorRef = useAvisoVisible<HTMLDivElement>(errorCarga || error);
     const [accionEnCursoId, setAccionEnCursoId] = useState<number | null>(null);
     const [idADesactivar, setIdADesactivar] = useState<number | null>(null);
 
@@ -98,18 +109,14 @@ export function FuncionariosListView({ filtrosIniciales }: { filtrosIniciales: F
         };
     }
     const handleTextoChange = conResetDePagina(setTexto);
-    // El estado es el único filtro que vuelve a pedir al backend: se muestra el spinner mientras llega.
-    const handleEstadoChange = conResetDePagina((valor: string) => {
-        if (valor !== estadoLabel) setCargando(true);
-        setEstadoLabel(valor);
-    });
+    // El estado es el único filtro que vuelve a pedir al backend (useApi muestra el spinner mientras llega).
+    const handleEstadoChange = conResetDePagina(setEstadoLabel);
     const handleRolChange = conResetDePagina(setNomRol);
     const handleOrdenChange = conResetDePagina(setOrden);
 
     function aplicarFiltros(f: FiltrosFuncionarios) {
         setTexto(f.texto);
         setTextoDebounced(f.texto);
-        if (f.estado !== estadoLabel) setCargando(true);
         setEstadoLabel(f.estado);
         setNomRol(f.rol);
         setOrden(f.orden);
@@ -151,27 +158,6 @@ export function FuncionariosListView({ filtrosIniciales }: { filtrosIniciales: F
         }
         guardarFiltros(queryActual);
     }, [listo, queryActual]);
-
-    useEffect(() => {
-        if (!listo) return;
-        let cancelado = false;
-        listFuncionariosPorEstados(estadosDeFiltro(estadoLabel))
-            .then((res) => {
-                if (cancelado) return;
-                setFuncionarios(res);
-                setError("");
-            })
-            .catch((err) => {
-                if (cancelado) return;
-                setError(apiErrorMessage(err, "No se pudieron cargar los funcionarios."));
-            })
-            .finally(() => {
-                if (!cancelado) setCargando(false);
-            });
-        return () => {
-            cancelado = true;
-        };
-    }, [listo, estadoLabel]);
 
     // Mismos campos que filtra el backend (nombre, apellido y documento), igual que el buscador de estudiantes.
     const filtrados = useMemo(() => {
@@ -313,9 +299,9 @@ export function FuncionariosListView({ filtrosIniciales }: { filtrosIniciales: F
                     </div>
                 ) : null}
 
-                {error ? (
+                {errorCarga || error ? (
                     <div ref={avisoErrorRef} role="alert" className="alert alert-error alert-soft text-sm mb-3">
-                        <span>{error}</span>
+                        <span>{errorCarga || error}</span>
                     </div>
                 ) : null}
 

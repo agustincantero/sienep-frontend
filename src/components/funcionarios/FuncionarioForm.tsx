@@ -1,9 +1,10 @@
 "use client";
 
-import { cloneElement, isValidElement, useEffect, useState } from "react";
+import { cloneElement, isValidElement, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IdCard, ShieldAlert, UserRound } from "lucide-react";
 import { ApiError, apiErrorMessage } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { isValidUruguayanCi } from "@/lib/document-validation";
 import {
     createFuncionario,
@@ -55,45 +56,36 @@ export function FuncionarioForm(props: FuncionarioFormProps) {
     const { permisos: misPermisos } = useSession();
 
     const [form, setForm] = useState<FormState>(() => estadoInicial(funcionarioOriginal));
-    const [roles, setRoles] = useState<Rol[]>([]);
-
-    const [rolActualInactivo, setRolActualInactivo] = useState<Rol | null>(null);
-    const [cargandoRoles, setCargandoRoles] = useState(true);
-    const [rolesError, setRolesError] = useState("");
     const [errores, setErrores] = useState<Record<string, string>>({});
     const [errorGeneral, setErrorGeneral] = useState("");
     const [guardando, setGuardando] = useState(false);
 
     const nombreRolActual = funcionarioOriginal?.rol;
 
-    useEffect(() => {
-        let cancelado = false;
-        Promise.all([
-            listRoles({ estado: "ACTIVO" }),
-            nombreRolActual ? listRoles({ estado: "INACTIVO" }) : Promise.resolve<Rol[]>([]),
-        ])
-            .then(([activos, inactivos]) => {
-                if (cancelado) return;
-                // ESTUDIANTE es un rol solo para estudiantes, no se puede usar en funcionario.
-                setRoles(activos.filter((r) => r.nombre !== "ESTUDIANTE"));
-                if (nombreRolActual) {
-                    const actual = activos.find((r) => r.nombre === nombreRolActual);
-                    const inactivo = actual ? null : (inactivos.find((r) => r.nombre === nombreRolActual) ?? null);
-                    setRolActualInactivo(inactivo);
-                    const idActual = (actual ?? inactivo)?.idRol;
-                    if (idActual != null) setForm((f) => ({ ...f, idRol: String(idActual) }));
-                }
-            })
-            .catch((err) => {
-                if (!cancelado) setRolesError(apiErrorMessage(err, "No se pudieron cargar los roles."));
-            })
-            .finally(() => {
-                if (!cancelado) setCargandoRoles(false);
-            });
-        return () => {
-            cancelado = true;
-        };
-    }, [nombreRolActual]);
+    const {
+        data: { roles, rolActualInactivo, idRolActual },
+        cargando: cargandoRoles,
+        errorCarga: rolesError,
+    } = useApi(
+        () =>
+            Promise.all([
+                listRoles({ estado: "ACTIVO" }),
+                nombreRolActual ? listRoles({ estado: "INACTIVO" }) : Promise.resolve<Rol[]>([]),
+            ]).then(([activos, inactivos]) => {
+                const actual = nombreRolActual ? activos.find((r) => r.nombre === nombreRolActual) : undefined;
+                const inactivo = nombreRolActual && !actual ? (inactivos.find((r) => r.nombre === nombreRolActual) ?? null) : null;
+                return {
+                    // ESTUDIANTE es un rol solo para estudiantes, no se puede usar en funcionario.
+                    roles: activos.filter((r) => r.nombre !== "ESTUDIANTE"),
+                    rolActualInactivo: inactivo,
+                    idRolActual: (actual ?? inactivo)?.idRol ?? null,
+                };
+            }),
+        [nombreRolActual],
+        { inicial: { roles: [] as Rol[], rolActualInactivo: null as Rol | null, idRolActual: null as number | null }, mensajeError: "No se pudieron cargar los roles." },
+    );
+    // En edición el rol sale del nombre que trae el DTO: hasta que el usuario elige otro, vale el actual.
+    const idRol = form.idRol || (idRolActual != null ? String(idRolActual) : "");
 
     // Mismo criterio que ValidadorDePermisosDeRol, no podés asignar un rol con permisos que vos no tenés.
     function puedoAsignar(rol: Rol): boolean {
@@ -145,7 +137,7 @@ export function FuncionarioForm(props: FuncionarioFormProps) {
         } else if (!esEmailValido(form.email)) {
             e.email = EMAIL_INVALIDO_MSG;
         }
-        if (!form.idRol) {
+        if (!idRol) {
             e.idRol = "Elegí un rol.";
         }
         return e;
@@ -167,7 +159,7 @@ export function FuncionarioForm(props: FuncionarioFormProps) {
             nombre: form.nombre.trim(),
             apellido: form.apellido.trim(),
             email: form.email.trim(),
-            idRol: Number(form.idRol),
+            idRol: Number(idRol),
         };
 
         setGuardando(true);
@@ -333,7 +325,7 @@ export function FuncionarioForm(props: FuncionarioFormProps) {
                                 <Field label="Rol" fieldKey="idRol" error={errores.idRol} required>
                                     <select
                                         className={`select w-full${errores.idRol ? " select-error" : ""}`}
-                                        value={form.idRol}
+                                        value={idRol}
                                         onChange={(e) => campo("idRol", e.target.value)}
                                         disabled={guardando}
                                         required
