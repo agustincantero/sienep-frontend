@@ -1,4 +1,4 @@
-# Proyecto Final de Tecnicatura Cuarto Semestre DZA Grupo 1 – SIENEP
+# Proyecto Final de Tecnicatura Cuarto Semestre DZA Grupo 1 - SIENEP
 
 **Sistema Integral de Estudiantes con Necesidades Educativas Personalizadas**
 
@@ -9,127 +9,60 @@ Forma parte del **Proyecto Final de Tecnicatura** del cuarto semestre de la **Li
 ## Tabla de contenidos
 
 - [Requisitos previos](#requisitos-previos)
-- [Estado del proyecto](#estado-del-proyecto)
-- [UI y estilos](#ui-y-estilos)
+- [Qué incluye](#qué-incluye)
+- [Arquitectura](#arquitectura)
 - [Estructura del código](#estructura-del-código)
-- [Componentes disponibles](#componentes-disponibles)
+- [UI y estilos](#ui-y-estilos)
 - [Configuración y ejecución](#configuración-y-ejecución)
 - [Documentación de referencia](#documentación-de-referencia)
 
 ## Requisitos previos
 
-1. **Node.js 20+** y **npm**.
+1. **Node.js 22+** y **npm**.
 2. La **API de SIENEP** (backend, [repo](https://git.utec.edu.uy/pdi-tercer-semestre-dza-grupo-1/sienep)). Por defecto el frontend apunta a una instancia alojada en un servidor; también se puede levantar localmente siguiendo el README de ese repo.
 
-## Estado del proyecto
+## Qué incluye
 
-En construcción. Lo que ya funciona:
+Los 11 módulos previstos están implementados. Lo que ve cada persona depende de su tipo de usuario (funcionario o estudiante) y de los permisos de su rol.
 
-- **Autenticación**: login con email/contraseña, con Google (Google Identity Services) y con cuenta UTEC (Active Directory, `/auth/ad`), "olvidé mi contraseña" y restablecimiento, todo conectado a la API. Si el usuario está `PENDIENTE_DE_ACTIVACION` (alta reciente, contraseña temporal), se lo fuerza a elegir contraseña nueva antes de entrar a la app: `SetPasswordForm` lo resuelve ahí mismo en el login, y `SetPasswordScreen` hace de respaldo cuando se llega con una sesión que ya estaba iniciada.
-- **Sesión**: el JWT del backend viaja en una cookie `httpOnly` que el JavaScript no puede leer. Un proxy propio (`src/app/api/**`) recibe las llamadas del cliente, saca el token de la cookie y lo reenvía a la API como `Authorization: Bearer`. El acceso al área autenticada se valida contra `GET /auth/me`; sin sesión válida, redirige a `/login`. Si la sesión muere en medio del uso, un modal no descartable (`SesionExpiradaModal`) obliga a volver a `/login`.
-- **Inicio** (`/`): panel post-login con accesos a los módulos, filtrados según el `tipo` de usuario (funcionario/estudiante) y sus `permisos`.
-- **Estudiantes**: listado con búsqueda/filtros/paginación, alta, ficha (datos, comentarios normales y confidenciales, informes médicos adjuntos), edición, foto de perfil, asignación de grupo e ITR, desactivar/reactivar y reenvío de contraseña temporal. La ficha también muestra las instancias e incidencias del estudiante. Nombre y apellido admiten apóstrofo, guion, ç y ã, y el email se valida con la misma regla que la base (`src/lib/email.ts`). El formulario oculta la sección de salud a quien no tiene `VER_BLOQUE_CONFIDENCIAL`, porque el backend no devuelve ni guarda esos datos sin ese permiso.
-- **Instancias** e **Incidencias**: listado con filtros, alta, detalle y edición; las instancias llevan comentarios y las incidencias, involucrados.
-- **Recordatorios**: listado con búsqueda y filtros por categoría, "cuándo" (vencidos, hoy, futuros) y estado, alta, detalle, edición, repetición opcional (frecuencia hasta una fecha o una cantidad de veces), desactivar/reactivar y "Registrar seguimiento", que crea la instancia de seguimiento y deja el recordatorio cumplido (RF27). La instancia se elige con un buscador (identificador, título o estudiante) y el responsable es quien crea el recordatorio. El identificador de la instancia viene en el propio recordatorio, así que no hace falta el permiso `VER_INSTANCIAS` para verlo. Todo recordatorio pertenece a una instancia: el detalle de la instancia lista los suyos y permite crear uno nuevo con ella ya elegida. El backend solo filtra `/recordatorios` por estado, así que la búsqueda, los demás filtros y la paginación se resuelven en el cliente.
-- **Funcionarios**: listado que junta activos, inactivos y pendientes de activación (filtra, ordena y pagina en el cliente), ficha con foto y acciones, alta y edición. El rol se elige por nombre y solo se ofrecen los roles cuyos permisos tiene también quien actúa.
-- **Reportes**: indicadores IND-01 a IND-07 del Data Warehouse, filtrados por período (meses completos), sin librería de gráficos (barras, línea en SVG y mapa de calor en tabla, cada uno con los números en texto). Permite exportar el reporte a PDF (`EXPORTAR_REPORTES`) y validar un PDF ya emitido.
-- **Roles**: listado, alta y edición de roles con sus permisos agrupados por dominio.
-- **Auditoría**: listado de eventos (quién hizo qué, y cuándo).
-- **Catálogos**: carreras, grupos, ITRs, categorías de instancia y de recordatorio, y frecuencias de repetición de los recordatorios (que usan los permisos de recordatorio, porque el backend no tiene permisos propios para frecuencias), con un listado por catálogo (`/catalogos/[catalogo]`, cada pestaña es su propia ruta) y alta y edición en páginas aparte (`/catalogos/[catalogo]/nuevo` y `/[id]/editar`). `/catalogos` redirige al primer catálogo que el usuario puede ver. Un catálogo inexistente en la URL (mal escrito o link viejo) redirige a `/catalogos` en vez de mostrar el 404: la página 404 es una pantalla de fuera de sesión y, disparada desde adentro de la app, se dibuja debajo de la TopBar.
-- **Mi perfil** (`/perfil`): autoservicio con los datos de la persona, cambio de contraseña y cambio de foto, tanto para el estudiante como para el funcionario. El estudiante además edita su contacto y ve solo lo suyo en `/perfil/instancias`, `/perfil/incidencias`, `/perfil/comentarios` y `/perfil/informes` (informes adjuntos).
-- **PWA instalable**: `src/app/manifest.webmanifest` y los metadatos de `layout.tsx` permiten instalar la app desde el navegador. No hay service worker, así que no funciona sin conexión.
-- **Autorización**: la navegación se filtra por los `permisos` del usuario, y cada página de módulo vuelve a chequear el permiso en el server (`SinPermiso` si falta).
-- **Estructura de página**: `TopBar` en toda pantalla autenticada, `Sidebar` dentro de las secciones de funcionario. Las pantallas sin sesión (login, recuperación) y la página 404 comparten otra estructura, con `Footer`.
+- **Autenticación**: login con email y contraseña, con Google y con cuenta UTEC (Active Directory), recuperación de contraseña y cambio obligatorio de la contraseña temporal en el primer ingreso.
+- **Estudiantes**: listado con búsqueda, filtros y paginación; alta, edición, foto de perfil, grupos y carrera; ficha con datos, información de salud (confidencial, según permiso), instancias, incidencias, informes médicos adjuntos y comentarios; desactivar, reactivar y reenvío de contraseña temporal.
+- **Instancias** e **Incidencias**: registro de las acciones de apoyo (reuniones, llamadas, acuerdos) y de los hechos puntuales, con listado, filtros, alta, edición y detalle. Las instancias llevan comentarios y las incidencias, involucrados.
+- **Recordatorios**: listado con filtros por categoría, vencimiento y estado; alta, edición, repetición opcional y registro de seguimiento, que crea la instancia correspondiente. Se sincronizan con Google Calendar desde el backend.
+- **Funcionarios**: listado, ficha con foto, alta y edición, con el rol asignable según los permisos de quien lo gestiona.
+- **Roles**: alta y edición de roles con sus permisos agrupados por dominio.
+- **Catálogos**: carreras, grupos, ITRs, categorías de instancia y de recordatorio, y frecuencias de repetición.
+- **Auditoría**: listado de eventos del sistema (quién hizo qué, y cuándo).
+- **Reportes**: indicadores del Data Warehouse por período, con exportación a PDF y validación de un PDF emitido.
+- **Mi perfil**: autoservicio con los datos de la persona, cambio de contraseña y de foto. El estudiante además edita su contacto y ve solo sus propias instancias, incidencias, comentarios e informes.
 
-Los 11 módulos previstos están implementados: Autenticación, Estudiantes, Instancias, Incidencias, Recordatorios, Funcionarios, Roles, Catálogos, Auditoría, Reportes y Perfil. La capa de datos quedó resuelta con un cliente `fetch` propio en `src/lib/api.ts` (`apiGet`/`apiPost`/`apiPut`/`apiPatch`/`apiDelete`, más variantes `*Form` para `multipart/form-data`).
+También es una **PWA instalable** (se puede agregar a la pantalla de inicio), sin modo sin conexión.
 
-## UI y estilos
+## Arquitectura
 
-**Se prioriza usar componentes de daisyUI** (`btn`, `card`, `alert`, `input`, `dropdown`, `table`, etc.) antes que construir UI a mano con clases de Tailwind. Solo se recurre a Tailwind puro cuando daisyUI no cubre el caso, y a CSS propio como último recurso.
-
-- La paleta de marca está aplicada sobre el theme `light` de daisyUI en `src/app/globals.css` (sin toggle de tema todavía: la app corre siempre en `data-theme="light"`).
-- `docs/prototipo.html` es la referencia visual (prototipo React + Tailwind + daisyUI, sin build).
+- **Sesión**: el token del backend viaja en una cookie `httpOnly` que el JavaScript del navegador no puede leer. El navegador solo habla con rutas propias de Next (`/api/*`), que sacan el token de la cookie y lo reenvían al backend como `Authorization: Bearer`.
+- **Acceso**: el área autenticada se valida contra `GET /auth/me`; sin sesión válida se redirige a `/login`. Si la sesión vence en medio del uso, un aviso obliga a volver a iniciar sesión.
+- **Autorización**: la navegación se filtra por los permisos del usuario, y cada página de módulo vuelve a chequear el permiso en el servidor.
+- **Datos**: un cliente `fetch` propio (`src/lib/api.ts`) y el hook `useApi` (`src/hooks/useApi.ts`) para las cargas desde componentes cliente.
 
 ## Estructura del código
 
-- `src/app/`: rutas de Next.js (App Router). `(auth)/` tiene el login y la recuperación de contraseña; `(app)/` es el área autenticada, con `(secciones)/` para las páginas de módulo (`estudiantes/`, `instancias/`, `incidencias/`, `recordatorios/`, `funcionarios/`, `reportes/`, `roles/`, `auditoria/`, `catalogos/` y `perfil/`); `api/` es el proxy al backend.
-- `src/components/`: `auth/` (pantallas sin sesión), `layout/` (TopBar, Sidebar, Footer y demás piezas de la estructura de página), `ui/` (bloques reutilizables) y una carpeta por módulo (`students/`, `instancias/`, `incidencias/`, `recordatorios/`, `funcionarios/`, `reportes/`, `roles/`, `audit/`, `catalogos/`, `perfil/`).
-- `src/hooks/`: hooks compartidos (`useApi.ts`, para las cargas de datos del cliente).
-- `src/lib/`: acceso a la API y lógica de dominio. `api.ts`, `auth.ts`, `auth-handlers.ts`, `auth-paths.ts`, `session.ts`, `backend.ts`, `current-user.ts` y `session-context.tsx` manejan la sesión y las llamadas HTTP; `nav-items.ts` define la navegación y `permisos.ts` agrupa el catálogo de permisos; el resto son tipos y funciones por módulo (`students.ts`, `instancias.ts`, `incidencias.ts`, `recordatorios.ts`, `frecuencias.ts`, `funcionarios.ts`, `reportes.ts`, `roles.ts`, `audit.ts`, `catalogos-tabs.ts`, etc.). Las reglas de validación compartidas están en `validaciones-estudiante.ts` y `email.ts`.
+- `src/app/`: rutas de Next.js. `(auth)/` tiene las pantallas sin sesión, `(app)/` el área autenticada con una carpeta por módulo, y `api/` el proxy al backend.
+- `src/components/`: una carpeta por módulo, más `layout/` (barra superior, menú lateral y demás piezas de la estructura de página), `auth/` (pantallas sin sesión) y `ui/` (bloques reutilizables).
+- `src/lib/`: acceso a la API y lógica de dominio, con un archivo por módulo (tipos y funciones sobre `api.ts`), más los archivos transversales de sesión, navegación y permisos.
+- `src/hooks/`: hooks compartidos.
 
-## Componentes disponibles
+Las páginas de módulo siguen el mismo patrón: la `page.tsx` (Server Component) chequea el permiso y delega en una vista cliente (`*ListView`, `*Detalle` o `*Form`) que usa `src/lib/<modulo>.ts`.
 
-### Estructura de página (`src/components/layout/`)
+Bloques reutilizables para páginas de listado (`src/components/ui/`): `SectionHeader`, `Toolbar` (búsqueda y filtros), `DataTable`, `PaginationFooter` y `ConfirmDialog`.
 
-Normalmente **no** se instancian a mano: ya vienen puestos por los layouts de `src/app/(app)/**`. Se listan para saber qué cubre cada uno.
+## UI y estilos
 
-| Componente | Qué es / dónde | Props |
-|---|---|---|
-| `AppShell` | Estructura de toda pantalla autenticada: `TopBar` arriba + contenido. La incluye `(app)/layout.tsx`. | `children` |
-| `TopBar` | Barra superior: logo; a la derecha avatar + nombre/rol + menú con "Cerrar sesión". | `userName`, `userRole`, `urlFoto?`, `onLogout` |
-| `Footer` | Pie de página de las pantallas sin sesión y de la 404 (lo incluye `AuthLayout`). El área autenticada no lo usa. | - |
-| `SeccionShell` | Estructura de página de los módulos. Funcionario → `Sidebar` + botón "Menú" mobile + contenido. Estudiante → `BackButton` + contenido. Lo incluye `(app)/(secciones)/layout.tsx`. | `children` |
-| `Sidebar` | Nav lateral de funcionario, filtrada por los `permisos` del usuario; offcanvas en mobile. Devuelve `null` para estudiante. | `show`, `onClose` |
-| `SinPermiso` | Pantalla que muestran las páginas de módulo cuando el usuario no tiene el permiso requerido. | `volverHref`, `volverLabel` |
-| `ErrorPantalla`, `PantallaCard`, `PantallaCargando` | Pantallas de error y de carga de los `error.tsx` / `loading.tsx`, en variante `"seccion"` o `"auth"`. | `variante` (`ErrorPantalla` además `error`, `retry`) |
-| `SesionExpiradaModal` | Modal no descartable que se abre al evento `SESION_EXPIRADA` (`src/lib/api.ts`); fuerza `window.location.href = "/login"`. Montado en `AppShell`. | - |
-| `BackButton` | Botón "volver" con chevron: navega a un `href` o ejecuta un `onClick` (ej. "Cancelar" con `router.back()`). | `href` \| `onClick`, `label?` (default `"Volver al inicio"`) |
-| `Logo` | Isotipo "SIENEP" (`next/image`), dos variantes. | `variant?` (`"blanco"` \| `"negro"`, default `"blanco"`), `className?` |
+Se prioriza usar componentes de **daisyUI** (`btn`, `card`, `alert`, `input`, `table`, etc.) antes que armar la interfaz a mano con Tailwind; Tailwind puro solo cuando daisyUI no cubre el caso, y CSS propio como último recurso.
 
-### Autenticación (`src/components/auth/`)
-
-| Componente | Qué es | Props |
-|---|---|---|
-| `AuthLayout` | Estructura de página de las pantallas sin sesión: `LoginBackground` de fondo, logo arriba, `Footer` abajo. | `children` |
-| `AuthCard` | Card blanca centrada dentro de `AuthLayout`. | `title`, `description?`, `focusOnMount?`, `children` |
-| `LoginBackground` | Fondo decorativo: tres fotos del campus que se funden lentamente entre sí, con un velo celeste para que el texto blanco de encima tenga contraste. | - |
-| `UtecLoginForm` | Formulario de login con cuenta UTEC (AD); se abre desde `LoginForm`. | `onSuccess`, `onVolver` |
-| `LoginForm`, `ForgotPasswordForm`, `ResetPasswordForm`, `SetPasswordForm` | Formularios de login, pedido de recuperación, restablecimiento con token y cambio de contraseña obligatorio (`PENDIENTE_DE_ACTIVACION`). | propios de cada uno |
-| `GoogleLoginButton` | Botón de login con Google (Google Identity Services); deshabilitado sin `NEXT_PUBLIC_GOOGLE_CLIENT_ID`. | `onSuccess`, `onError` |
-| `PasswordInput` | Campo de contraseña con toggle de visibilidad. | `label`, `value`, `onChange`, `autoComplete`, `disabled?`, `required?`, `error?`, `hint?`, `errorId?` |
-| `GoogleIcon` | SVG inline de la marca de Google a color (ninguna librería de íconos la trae). | - |
-
-### Módulo Estudiantes (`src/components/students/`)
-
-| Componente | Qué es | Props |
-|---|---|---|
-| `StudentsListView` | Vista de listado: `Toolbar` + `DataTable` + `PaginationFooter` conectados a `GET /estudiantes`. | - |
-| `StudentForm` | Alta y edición; secciones en `fieldset`s: datos personales, dirección, teléfonos, grupos (filtrado por ITR y carrera) e información de salud. | `{ mode: "crear" }` \| `{ mode: "editar", estudianteId, estudiante }` |
-| `StudentProfile` | Ficha del estudiante en tabs: datos generales, salud (confidencial, según permiso), instancias e incidencias (`StudentInstanciasPanel`), informes médicos y comentarios. | `idEstudiante`, `tabInicial?` |
-| `StudentCommentsPanel` | Comentarios normales y confidenciales, paginados. | `idEstudiante` |
-| `MedicalReportsPanel` | Informes médicos adjuntos: listar, subir, borrar. | `idEstudiante`, `estadoEstudiante` |
-| `StudentInstanciasPanel` | Instancias e incidencias del estudiante, dentro de la ficha. | propios |
-| `StudentAvatar` | Foto de perfil (proxy autenticado) o iniciales si no hay foto o la imagen falla al cargar. | `nombre`, `apellido`, `urlFoto?`, `size?` (`"sm"` \| `"lg"`) |
-| `EstadoBadge` | Chip de estado del estudiante (Activo/Inactivo/etc.), colores vía `describeEstado()` en `src/lib/students.ts`. | `estado` |
-
-### Bloques de listado (`src/components/ui/`)
-
-Reutilizables para las páginas de cualquier módulo.
-
-| Componente | Qué es | Props |
-|---|---|---|
-| `SectionHeader` | Encabezado de sección: título + botón de acción opcional (ej. "Nuevo…"). | `title`, `action?` (texto del botón), `onAction?` |
-| `Toolbar` | Barra de búsqueda + `select`s de filtro, controlada por props. Con `searchOptions` el buscador pasa a autocompletado (`<datalist>`); `trailing` agrega un control extra al final de la fila (ej. "Ordenar por"). | `placeholder?`, `searchValue?`, `onSearchChange?`, `searchOptions?`, `filters?` (`{ label, emptyLabel, options, value?, onChange? }[]`), `trailing?` |
-| `DataTable` | `<table>` de daisyUI: recibe `headers` y las filas como `children` (`<tr>…`). Un header puede ser un string o `{ label, align? }` para columnas centradas o a la derecha. | `headers: (string \| { label, align? })[]`, `children` |
-| `ConfirmDialog` | Reemplazo de `window.confirm()` para acciones como desactivar o reenviar contraseña; variante destructiva en rojo y `aviso` opcional. | `open`, `title`, `message`, `aviso?`, `confirmLabel`, `destructive?`, `onConfirm`, `onCancel` |
-| `PaginationFooter` | Pie de listado: "Mostrando X de Y …" + Anterior / Siguiente. Con `page` y `pageSize` (o `offset`, para páginas de tamaño variable) muestra el rango real (ej. "21-40"). | `shown`, `total`, `noun`, `page?`, `pageSize?`, `offset?`, `hasPrevious?`, `hasNext?`, `onPrevious?`, `onNext?` |
-
-### Otros módulos
-
-`instancias/`, `incidencias/`, `recordatorios/`, `funcionarios/`, `reportes/`, `roles/`, `audit/`, `catalogos/` y `perfil/` siguen el mismo patrón: la `page.tsx` (Server Component) chequea el permiso y delega en un `*ListView` / `*Detalle` / `*Form` cliente que usa `src/lib/<modulo>.ts`. Se reutilizan entre módulos `EstadoBadge`, `InstanciasTabla`, `InstanciaComentarios` y `EstudianteSelector` (de `instancias/`); `RecordatoriosTabla` (de `recordatorios/`) se usa en el listado y en el detalle de la instancia.
-
-### Íconos
-
-**lucide-react**, importado directo donde se usa:
-
-```tsx
-import { User } from "lucide-react";
-<User size={16} aria-hidden />
-```
-
-Los íconos de la navegación se guardan como componente en `src/lib/nav-items.ts` (`icon: User`) y se renderizan con `<item.icon size={15} />`.
-
-El ícono multicolor de Google va aparte en `src/components/auth/GoogleIcon.tsx` (SVG inline): es la marca oficial de Google y ninguna librería de íconos la trae a color.
+- La paleta de marca está aplicada sobre el theme `light` de daisyUI en `src/app/globals.css`. No hay selector de tema: la app corre siempre en modo claro.
+- Íconos: **lucide-react**, importados directo donde se usan.
+- `docs/prototipo.html` es la referencia visual (prototipo React + Tailwind + daisyUI, sin build).
 
 ## Configuración y ejecución
 
@@ -160,8 +93,8 @@ Los defaults por entorno ya están commiteados (`.env.development`, `.env.produc
 En `docs/` se versionan estos insumos:
 
 - `openapi.json`: spec OpenAPI 3 de la API del backend, contra la que se codea.
-- `prototipo.html`: prototipo de UI (React + Tailwind + daisyUI, sin build) usado como referencia visual. No se copia tal cual: se porta a componentes tipados y reutilizables.
+- `prototipo.html`: prototipo de UI usado como referencia visual. No se copia tal cual: se porta a componentes tipados y reutilizables.
 
 En `ux/` están los documentos de UX/UI. `Documento de Entregas UI-UX - Entrega 1 y 2.pdf` reúne los wireframes, los arquetipos y el mapa de empatía de las entregas 1 y 2, y `Documento de Entregas UI-UX - Entrega Final.pdf` es el documento de la entrega final.
 
-La documentación del backend (arquitectura, auth, cómo levantarlo) está en su propio repositorio: <https://git.utec.edu.uy/pdi-tercer-semestre-dza-grupo-1/sienep>. Los assets de marca están en `public/`; el favicon usa la convención de archivos de Next (`src/app/favicon.ico`, `icon.svg`, `apple-icon.png`, `manifest.webmanifest`).
+La documentación del backend (arquitectura, auth, cómo levantarlo) está en su propio repositorio: <https://git.utec.edu.uy/pdi-tercer-semestre-dza-grupo-1/sienep>. Los assets de marca están en `public/`.
